@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
 import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useRealtimeStream } from "@/lib/realtime/useRealtimeStream";
-import { ModeBadge } from "@/components/ui/ModeBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { DigitalTwin } from "@/components/simulation/DigitalTwin";
+import { Notice } from "@/components/ui/Notice";
 import { fetchRobotState } from "@/lib/api-client";
 import { RobotState } from "@neuromove/contracts";
 import { Bot, Compass, Gauge, Battery, Activity } from "lucide-react";
@@ -53,24 +54,13 @@ export default function RobotMobilityPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
-              Robot Mobility Platform & ESP32 Telemetry
-            </h1>
-            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-              SIMULATION
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-sans mt-1">
-            Differential drive motor translation, serial packet verification, and real-time odometry stream.
-          </p>
-        </div>
-        <ModeBadge mode={operatingMode} />
-      </div>
+    <div className="space-y-6 font-sans">
+      <PageHeader
+        category="Control Station"
+        title="Robot Mobility Platform & ESP32 Telemetry"
+        description="Differential drive motor actuation translation, serial packet verification, and real-time odometry stream."
+        mode={operatingMode}
+      />
 
       {/* Primary Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -111,12 +101,12 @@ export default function RobotMobilityPage() {
         <div className="lg:col-span-5 space-y-6">
           <SectionCard
             title="Differential Motor Actuation"
-            description="Left & Right PWM motor driver channels"
+            description="Left & Right PWM motor driver output channels"
           >
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-semibold text-slate-700">Left Motor (PWM)</span>
+                  <span className="font-semibold text-slate-700">Left Motor Channel (PWM)</span>
                   <span className="font-mono font-bold text-blue-600">
                     {robotState.left_motor_pwm} / 255
                   </span>
@@ -133,7 +123,7 @@ export default function RobotMobilityPage() {
 
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-semibold text-slate-700">Right Motor (PWM)</span>
+                  <span className="font-semibold text-slate-700">Right Motor Channel (PWM)</span>
                   <span className="font-mono font-bold text-teal-600">
                     {robotState.right_motor_pwm} / 255
                   </span>
@@ -148,12 +138,9 @@ export default function RobotMobilityPage() {
                 </div>
               </div>
 
-              <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-900 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>
-                  Real-time robot telemetry transported over <code>/ws/robot</code> stream.
-                </span>
-              </div>
+              <Notice variant="info" icon={<Activity className="w-4 h-4 text-blue-600 shrink-0" />}>
+                Real-time robot telemetry transported over dedicated <code className="text-code">/ws/robot</code> stream.
+              </Notice>
             </div>
           </SectionCard>
         </div>

@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
 import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useRealtimeStream, useRealtimeEvents } from "@/lib/realtime/useRealtimeStream";
-import { ModeBadge } from "@/components/ui/ModeBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { DecisionCard } from "@/components/ui/DecisionCard";
 import { ConnectionIndicator } from "@/components/ui/ConnectionIndicator";
+import { Button } from "@/components/ui/Button";
 import {
   EventTimeline,
   TimelineEventItem,
@@ -61,6 +62,8 @@ export default function LiveControlPage() {
       type: "SYSTEM_STATUS",
       summary: "Local Control Station initialized in SIMULATION mode.",
       status: "READY",
+      sequence: 1,
+      source: "neuromove.core",
     },
     {
       id: "evt_02",
@@ -68,6 +71,8 @@ export default function LiveControlPage() {
       type: "SAFETY_APPROVED",
       summary: "Fail-closed safety arbitration engine armed.",
       status: "SAFE",
+      sequence: 2,
+      source: "safety.arbiter",
     },
   ]);
 
@@ -108,6 +113,8 @@ export default function LiveControlPage() {
           (evt.payload as any)?.message ||
           `Canonical event ${evt.event_type} received`,
         status: (evt.payload as any)?.decision || evt.mode || "SIMULATION",
+        sequence: evt.sequence,
+        source: evt.source,
       },
       ...prev.slice(0, 49),
     ]);
@@ -188,6 +195,8 @@ export default function LiveControlPage() {
           type: "EMERGENCY_STOP",
           summary: "Emergency stop triggered by operator.",
           status: "EMERGENCY",
+          sequence: prev.length + 1,
+          source: "control.station.ui",
         },
         ...prev,
       ]);
@@ -197,44 +206,35 @@ export default function LiveControlPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
-              Live Command Center
-            </h1>
-            <ModeBadge mode={operatingMode} />
-          </div>
-          <p className="text-xs text-slate-500 font-sans mt-1">
-            Real-time neural decoding, safety arbitration, and virtual mobility dispatch monitor.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={refreshTelemetry}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 shadow-xs transition-all"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
-            />
-            <span>Sync Status</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleEStop}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-xs font-semibold tracking-wide transition-all shadow-xs"
-          >
-            <Power className="w-3.5 h-3.5 text-red-600" />
-            <span>Emergency Stop</span>
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6 font-sans">
+      {/* Page Header */}
+      <PageHeader
+        category="Control Station"
+        title="Live Command Center"
+        description="Real-time neural decoding, safety arbitration, and virtual mobility dispatch monitor (Phase 06 Preparation)."
+        mode={operatingMode}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshTelemetry}
+              loading={loading}
+              icon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
+            >
+              Sync Status
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleEStop}
+              icon={<Power className="w-3.5 h-3.5" />}
+            >
+              Emergency Stop
+            </Button>
+          </>
+        }
+      />
 
       {/* Subsystem Health Ribbon */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs text-xs">
@@ -333,7 +333,7 @@ export default function LiveControlPage() {
             title="Canonical Event Stream"
             description="Monotonically sequenced event envelope audit log"
           >
-            <EventTimeline events={events} />
+            <EventTimeline events={events} showFilters={true} />
           </SectionCard>
         </div>
       </div>

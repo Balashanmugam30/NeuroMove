@@ -4,44 +4,106 @@
 
 @layer base {
   :root {
+    /* Foundation Surfaces */
     --background: #F8FAFC;
     --surface: #FFFFFF;
     --surface-alt: #F1F5F9;
     --surface-subtle: #F8FAFC;
-    
-    --border: #E2E8F0;
-    --border-strong: #CBD5E1;
+    --surface-elevated: #FFFFFF;
+    --surface-interactive: #F8FAFC;
+    --surface-selected: #EFF6FF;
 
+    /* Structural Borders */
+    --border: #E2E8F0;
+    --border-subtle: #F1F5F9;
+    --border-strong: #CBD5E1;
+    --border-focus: #2563EB;
+
+    /* Typography Hierarchy */
     --text-primary: #0F172A;
     --text-secondary: #475569;
     --text-muted: #64748B;
     --text-disabled: #94A3B8;
+    --text-inverse: #FFFFFF;
 
+    /* Primary Action Brand Palette (Blue) */
     --color-brand: #2563EB;
     --color-brand-hover: #1D4ED8;
+    --color-brand-active: #1E40AF;
     --color-brand-soft: #EFF6FF;
+    --color-brand-subtle: #DBEAFE;
 
+    /* Biomedical Telemetry Accent Palette (Teal) */
     --color-accent: #0D9488;
+    --color-accent-hover: #0F766E;
     --color-accent-soft: #F0FDFA;
+    --color-accent-subtle: #CCFBF1;
 
+    /* Semantic Status Roles */
     --color-success: #15803D;
     --color-success-soft: #F0FDF4;
+    --color-success-border: #DCFCE7;
 
     --color-warning: #B45309;
     --color-warning-soft: #FFFBEB;
+    --color-warning-border: #FEF3C7;
 
     --color-danger: #DC2626;
     --color-danger-soft: #FEF2F2;
+    --color-danger-border: #FEE2E2;
+
+    --color-info: #2563EB;
+    --color-info-soft: #EFF6FF;
+    --color-info-border: #DBEAFE;
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--background);
+    color: var(--text-primary);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Universal Accessibility Focus Rings */
+  *:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
   }
 }
 
-/* Light Theme Scrollbars */
+@layer utilities {
+  /* Typography Scale Classes */
+  .text-display {
+    @apply text-2xl font-bold tracking-tight text-slate-900;
+  }
+  .text-h1 {
+    @apply text-xl font-bold tracking-tight text-slate-900;
+  }
+  .text-h2 {
+    @apply text-lg font-semibold tracking-tight text-slate-900;
+  }
+  .text-h3 {
+    @apply text-sm font-semibold tracking-normal text-slate-900;
+  }
+  .text-section {
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+  .text-body {
+    @apply text-sm font-normal text-slate-600 leading-relaxed;
+  }
+  .text-body-sm {
+    @apply text-xs font-normal text-slate-500 leading-normal;
+  }
+  .text-caption {
+    @apply text-[11px] font-medium text-slate-400;
+  }
+  .text-code {
+    @apply font-mono text-xs text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200;
+  }
+}
+
+/* Light Theme Precision Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -58,4 +120,16 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* Accessibility: Respect Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

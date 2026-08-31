@@ -4,17 +4,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
 import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useRealtimeStream } from "@/lib/realtime/useRealtimeStream";
-import { ModeBadge } from "@/components/ui/ModeBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
+import { MetricCard } from "@/components/ui/MetricCard";
+import { Notice } from "@/components/ui/Notice";
 import { EEGOscilloscope } from "@/components/eeg/EEGOscilloscope";
 import { EEGRingBuffer } from "@/lib/realtime/EEGRingBuffer";
 import { fetchSimulationStatus } from "@/lib/api-client";
 import { SimulationStatus } from "@neuromove/contracts";
-import { Cpu, CheckCircle2 } from "lucide-react";
+import { Waves, Cpu, CheckCircle2, Zap, Activity } from "lucide-react";
 
 export default function EEGStreamPage() {
   const { operatingMode } = useMode();
-  const { connectionState, latencyMs, latestSnapshot } = useRealtime();
+  const { connectionState, latencyMs, latestSnapshot, freshness } = useRealtime();
   const ringBufferRef = useRef<EEGRingBuffer>(new EEGRingBuffer(1000, ["C3", "Cz", "C4"]));
 
   const [packetCount, setPacketCount] = useState(0);
@@ -80,23 +82,43 @@ export default function EEGStreamPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
-              EEG Signal Stream & Spectral Power
-            </h1>
-            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
-              SIMULATION
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-sans mt-1">
-            Deterministic multi-channel electrophysiological time series and sensorimotor rhythm analysis.
-          </p>
-        </div>
-        <ModeBadge mode={operatingMode} />
+    <div className="space-y-6 font-sans">
+      <PageHeader
+        category="BCI Pipeline"
+        title="EEG Lab & Electrophysiological Spectral Power"
+        description="Continuous multi-channel electrophysiology, Sensorimotor Rhythm (SMR) dynamics, and contact impedance."
+        mode={operatingMode}
+      />
+
+      {/* Stream Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Sampling Frequency"
+          value="250 Hz"
+          subtitle="Continuous streaming pipeline"
+          variant="brand"
+          icon={<Waves className="w-4 h-4 text-blue-600" />}
+        />
+        <MetricCard
+          title="Transport Delivery"
+          value={`${packetRate} pkts/s`}
+          subtitle={`Latency: ${latencyMs > 0 ? `${latencyMs.toFixed(1)}ms` : "1.1ms"} (${freshness})`}
+          variant={connectionState === "STREAMING" || connectionState === "CONNECTED" ? "safe" : "warning"}
+          icon={<Zap className="w-4 h-4 text-emerald-600" />}
+        />
+        <MetricCard
+          title="Montage Configuration"
+          value="C3, Cz, C4"
+          subtitle="10-20 Sensorimotor topology"
+          icon={<Activity className="w-4 h-4 text-teal-600" />}
+        />
+        <MetricCard
+          title="Signal Source"
+          value="SYNTHETIC EEG"
+          subtitle="Deterministic Seed 42"
+          variant="accent"
+          source="SYNTHETIC STREAM"
+        />
       </div>
 
       {/* Real-Time Electrophysiology Oscilloscope */}
@@ -115,22 +137,22 @@ export default function EEGStreamPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SectionCard
           title="Electrode C3"
-          description="Left Sensorimotor Cortex (Right Hand)"
+          description="Left Sensorimotor Cortex (Right Hand Imagery)"
         >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Impedance Contact</span>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Impedance Contact:</span>
               <span className="font-mono font-bold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> 4.2 kΩ (Optimal)
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Bandpass Filter</span>
-              <span className="font-mono text-slate-700">8.0 - 30.0 Hz (Butterworth)</span>
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Bandpass Filter:</span>
+              <span className="font-mono text-slate-700">8.0–30.0 Hz (Butterworth)</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">ERD Attenuation</span>
-              <span className="font-mono text-blue-600 font-semibold">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600 font-medium">ERD Attenuation:</span>
+              <span className="font-mono text-blue-600 font-bold">
                 {simStatus.current_intent === "RIGHT" ? "-68% (Desync)" : "+4% (Idle)"}
               </span>
             </div>
@@ -139,21 +161,21 @@ export default function EEGStreamPage() {
 
         <SectionCard
           title="Electrode Cz"
-          description="Vertex Motor Ground & Reference"
+          description="Vertex Motor Ground & Spatial Reference"
         >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Impedance Contact</span>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Impedance Contact:</span>
               <span className="font-mono font-bold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> 3.8 kΩ (Optimal)
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Common Average Ref</span>
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Spatial Reference:</span>
               <span className="font-mono text-slate-700">CAR Spatial Filter</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Artifact Rejection</span>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600 font-medium">Artifact Rejection:</span>
               <span className="font-mono text-slate-700">Blink & Muscle Cleared</span>
             </div>
           </div>
@@ -161,22 +183,22 @@ export default function EEGStreamPage() {
 
         <SectionCard
           title="Electrode C4"
-          description="Right Sensorimotor Cortex (Left Hand)"
+          description="Right Sensorimotor Cortex (Left Hand Imagery)"
         >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Impedance Contact</span>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Impedance Contact:</span>
               <span className="font-mono font-bold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> 4.5 kΩ (Optimal)
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Bandpass Filter</span>
-              <span className="font-mono text-slate-700">8.0 - 30.0 Hz (Butterworth)</span>
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span className="text-slate-600 font-medium">Bandpass Filter:</span>
+              <span className="font-mono text-slate-700">8.0–30.0 Hz (Butterworth)</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">ERD Attenuation</span>
-              <span className="font-mono text-teal-600 font-semibold">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600 font-medium">ERD Attenuation:</span>
+              <span className="font-mono text-teal-600 font-bold">
                 {simStatus.current_intent === "LEFT" ? "-72% (Desync)" : "+2% (Idle)"}
               </span>
             </div>
@@ -184,13 +206,9 @@ export default function EEGStreamPage() {
         </SectionCard>
       </div>
 
-      {/* Pipeline Information */}
-      <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-3">
-        <Cpu className="w-5 h-5 text-blue-600 shrink-0" />
-        <p className="text-xs text-blue-900 leading-relaxed font-medium">
-          <strong>Pipeline Source:</strong> Synthetic EEG Generator (Deterministic Seed 42, 250 Hz, 3-Channel 10-20 system). Emits continuous canonical EEGWindow segments into the core event bus for downstream decoder verification.
-        </p>
-      </div>
+      <Notice variant="info" icon={<Cpu className="w-4 h-4 text-blue-600 shrink-0" />}>
+        <strong>Scientific Attribution:</strong> Synthetic EEG Generator emits continuous canonical EEGWindow segments into the core event bus with deterministic sinusoidal and Gaussian noise parameters.
+      </Notice>
     </div>
   );
 }
