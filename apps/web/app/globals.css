@@ -4,56 +4,58 @@
 
 @layer base {
   :root {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
+    --background: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-alt: #F1F5F9;
+    --surface-subtle: #F8FAFC;
+    
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
 
-    --card: 222.2 47.4% 13.5%;
-    --card-foreground: 210 40% 98%;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-disabled: #94A3B8;
 
-    --popover: 222.2 47.4% 11.2%;
-    --popover-foreground: 210 40% 98%;
+    --color-brand: #2563EB;
+    --color-brand-hover: #1D4ED8;
+    --color-brand-soft: #EFF6FF;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --color-accent: #0D9488;
+    --color-accent-soft: #F0FDFA;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --color-success: #15803D;
+    --color-success-soft: #F0FDF4;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --color-warning: #B45309;
+    --color-warning-soft: #FFFBEB;
 
-    --accent: 217.2 32.6% 22%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 20%;
-    --input: 217.2 32.6% 20%;
-    --ring: 224.3 76.3% 48%;
+    --color-danger: #DC2626;
+    --color-danger-soft: #FEF2F2;
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-blue-500 selection:text-white;
+    background-color: #F8FAFC;
+    color: #0F172A;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom Scrollbar */
+/* Light Theme Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: #CBD5E1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(71, 85, 105, 1);
+  background: #94A3B8;
 }

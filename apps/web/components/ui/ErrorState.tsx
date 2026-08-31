@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ErrorStateProps {
@@ -10,7 +10,7 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = "Telemetry Error",
+  title = "Connection / Telemetry Error",
   message,
   onRetry,
   className,
@@ -18,21 +18,24 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-6 text-center rounded-lg border border-rose-900/50 bg-rose-950/20 text-rose-300",
+        "p-6 rounded-xl border border-red-200 bg-red-50/40 text-center flex flex-col items-center justify-center",
         className,
       )}
     >
-      <AlertTriangle className="w-6 h-6 text-rose-400 mb-2" />
-      <h4 className="text-sm font-mono font-medium uppercase tracking-wide">
-        {title}
-      </h4>
-      <p className="text-xs text-rose-400/80 max-w-sm mt-1">{message}</p>
+      <div className="p-3 rounded-full bg-red-100/70 text-red-600 mb-3">
+        <AlertTriangle className="w-5 h-5" />
+      </div>
+      <h4 className="text-sm font-semibold text-red-950 font-sans">{title}</h4>
+      <p className="text-xs text-red-700 max-w-md mt-1 font-normal">
+        {message}
+      </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-3 px-3 py-1 text-xs font-mono rounded bg-rose-900/40 border border-rose-700/60 hover:bg-rose-900/60 transition-colors"
+          className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-300 bg-white text-red-700 hover:bg-red-50 text-xs font-semibold shadow-xs transition-all"
         >
-          Retry Connection
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Retry Local Connection</span>
         </button>
       )}
     </div>

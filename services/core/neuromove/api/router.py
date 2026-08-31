@@ -127,8 +127,8 @@ def get_robot_state() -> RobotState:
     """Return physical or simulated mobility platform status."""
     settings = get_settings()
     return RobotState(
-        connection=ConnectionState.DISCONNECTED,
-        battery_percentage=0.0,
+        connection_state=ConnectionState.DISCONNECTED,
+        battery_pct=0.0,
         linear_velocity_mps=0.0,
         angular_velocity_radps=0.0,
         emergency_stop_triggered=default_safety_state_machine.current_state
@@ -141,10 +141,9 @@ def get_robot_state() -> RobotState:
 def get_user_profile() -> UserProfile:
     """Retrieve active operator profile."""
     return UserProfile(
-        user_id="U001",
-        name="Research Operator",
-        experience_level="expert",
-        total_sessions=0,
+        user_id="usr_001",
+        display_label="Research Operator",
+        status="active",
     )
 
 

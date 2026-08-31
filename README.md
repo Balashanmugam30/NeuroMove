@@ -185,20 +185,32 @@ pnpm build
 
 ---
 
-## 8. Current Phase & Roadmap
+## 8. Development Roadmap (24 Phases)
 
-- [x] **Phase 01: Repository Foundation & Engineering Platform** (Current)
-  - Monorepo workspace structure
-  - Canonical domain enums & universal event envelope
-  - Safety state machine foundation (safe `IDLE` fail-closed container)
-  - FastAPI local core & diagnostic `/api/system/status` endpoint
-  - Next.js Web Command Center shell with Product/Research mode support
-  - Automated test harness, CI workflows, and architecture documentation
-- [ ] **Phase 02**: Synthetic Signal Generators, Epoching & Session Protocol
-- [ ] **Phase 03**: Feature Extraction (CSP/FBCSP) & Classifier Training (LDA/SVM)
-- [ ] **Phase 04**: Temporal Confirmation & Multi-Tier Safety Engine
-- [ ] **Phase 05**: ESP32 Serial Protocol, Watchdogs & Hardware Integration
-- [ ] **Phase 06–24**: Cybathlon Race Compliance, Closed-Loop Replay & Field Trials
+- [x] **01 Foundation** — Monorepo, CI, and local core scaffolds
+- [x] **02 Domain/Event Contracts** — Canonical domain model, event envelope, cross-language Zod/Pydantic parity, and light visual foundation
+- [ ] **03 Simulation Engine** — Synthetic motor-imagery EEG stream generator & SMR signal emulator
+- [ ] **04 Real-Time Streaming** — WebSocket chunking, buffer pipelines, and synchronization
+- [ ] **05 Product UI Foundation** — High-fidelity design components and user workflows
+- [ ] **06 Live Command Center** — Real-time telemetry, state observation, and emergency controls
+- [ ] **07 EEG Lab** — Time-series oscilloscope, Welch PSD, and electrode topography
+- [ ] **08 Public Dataset** — Graz / BCI Competition dataset ingestion & benchmarking
+- [ ] **09 Preprocessing** — Bandpass (8–30 Hz), notch (50/60 Hz), CAR, and Laplacian filtering
+- [ ] **10 CSP + LDA** — Common Spatial Patterns spatial filter & Shrinkage Linear Discriminant Analysis
+- [ ] **11 CSP + SVM** — Non-linear Support Vector Machine classifier & kernel optimization
+- [ ] **12 Model Lab** — Model artifact inspection, ROC curves, and cross-validation matrix
+- [ ] **13 Calibration** — Standardized Graz visual cue presentation engine & protocol
+- [ ] **14 User Adaptation** — Subject-specific adaptation & online covariance shifting
+- [ ] **15 Confidence / Temporal Confirmation** — Bayesian posterior estimation & temporal debounce windows
+- [ ] **16 State Machine** — Full deterministic runtime lifecycle state transitions
+- [ ] **17 Safety Arbitration** — Multi-tier gated safety arbitrator with sensor fusion
+- [ ] **18 Failure Injection** — Chaos engineering, packet loss, electrode lead-off, and sensor faults
+- [ ] **19 ESP32 Protocol** — Serial binary packet framing, CRC16 checksums, and heartbeat watchdogs
+- [ ] **20 Hardware-in-the-Loop** — HIL mock mobility platform and hardware simulator
+- [ ] **21 Real EEG** — BioAmp hardware acquisition integration and serial streaming
+- [ ] **22 Replay / Analytics** — Session recording, synchronized replay, and ITR metrics
+- [ ] **23 Sensors / Advanced Research** — Ultrasonic obstacle avoidance and ocular artifact removal
+- [ ] **24 Competition Release** — Cybathlon race compliance, packaging, and formal release
 
 ---
 

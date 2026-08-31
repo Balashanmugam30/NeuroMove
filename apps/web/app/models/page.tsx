@@ -12,12 +12,12 @@ export default function ModelsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between p-5 rounded-lg border border-slate-800 bg-slate-900/40 backdrop-blur-md">
+      <div className="flex items-center justify-between p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
         <div>
-          <h1 className="text-xl font-mono font-bold uppercase tracking-wider text-slate-100">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
             BCI Models & CSP Spatial Filters
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">
+          <p className="text-xs text-slate-500 font-sans mt-1">
             Spatial pattern decompositions, shrinkage LDA classifiers, and
             cross-validation diagnostics.
           </p>
@@ -31,9 +31,9 @@ export default function ModelsPage() {
           description="Loaded inference weights for real-time intent decoding"
         >
           <EmptyState
-            title="No Trained Model Available"
-            description="Phase 01 operates in simulation scaffold. Model training pipelines (CSP + LDA/SVM/EEGNet) will be implemented in Phase 03."
-            icon={<BrainCircuit className="w-6 h-6 text-purple-400" />}
+            title="Model Artifact Contracts Active"
+            description="Canonical ModelArtifact and Prediction contracts defined. Training pipelines (CSP + LDA/SVM/EEGNet) will be implemented in dedicated model lab phases."
+            icon={<BrainCircuit className="w-6 h-6 text-blue-600" />}
           />
         </SectionCard>
 
@@ -43,8 +43,8 @@ export default function ModelsPage() {
         >
           <EmptyState
             title="Spatial Filters Uninitialized"
-            description="Awaiting subject calibration dataset and covariance matrix estimation."
-            icon={<Cpu className="w-6 h-6 text-blue-400" />}
+            description="Awaiting calibration dataset and covariance matrix estimation."
+            icon={<Cpu className="w-6 h-6 text-teal-600" />}
           />
         </SectionCard>
       </div>

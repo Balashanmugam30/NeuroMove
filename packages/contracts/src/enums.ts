@@ -41,6 +41,29 @@ export const ConnectionStateEnum = z.enum([
 ]);
 export type ConnectionState = z.infer<typeof ConnectionStateEnum>;
 
+export const CommandStatusEnum = z.enum([
+  "REQUESTED",
+  "APPROVED",
+  "BLOCKED",
+  "SENT",
+  "ACKNOWLEDGED",
+  "FAILED",
+  "CANCELLED",
+]);
+export type CommandStatus = z.infer<typeof CommandStatusEnum>;
+
+export const SessionStatusEnum = z.enum([
+  "CREATED",
+  "ACTIVE",
+  "PAUSED",
+  "COMPLETED",
+  "ABORTED",
+]);
+export type SessionStatus = z.infer<typeof SessionStatusEnum>;
+
+export const TrialQualityEnum = z.enum(["VALID", "DEGRADED", "REJECTED"]);
+export type TrialQuality = z.infer<typeof TrialQualityEnum>;
+
 export const ComponentStatusEnum = z.enum([
   "healthy",
   "ready",
@@ -53,15 +76,68 @@ export const ComponentStatusEnum = z.enum([
 export type ComponentStatus = z.infer<typeof ComponentStatusEnum>;
 
 export const EventTypeEnum = z.enum([
+  // System Lifecycle & Health
+  "SYSTEM_STARTED",
+  "SYSTEM_STOPPED",
   "SYSTEM_STATUS",
-  "STATE_TRANSITION",
+
+  // Session Lifecycle
+  "SESSION_CREATED",
+  "SESSION_STARTED",
+  "SESSION_PAUSED",
+  "SESSION_RESUMED",
+  "SESSION_ENDED",
+
+  // Trial Protocol
+  "TRIAL_STARTED",
+  "TRIAL_CUE",
+  "TRIAL_IMAGERY_STARTED",
+  "TRIAL_ENDED",
+
+  // EEG Stream & Signal Quality
+  "EEG_PACKET",
+  "EEG_WINDOW",
+  "EEG_SIGNAL_QUALITY",
+  "EEG_DISCONNECTED",
+  "TELEMETRY",
+
+  // BCI Prediction & Intent
+  "PREDICTION",
   "INTENT_CANDIDATE",
   "INTENT_CONFIRMED",
-  "DECISION",
-  "SAFETY_ALERT",
+  "INTENT_REJECTED",
+
+  // Safety State Machine & Arbitration
+  "STATE_TRANSITION",
+  "SAFETY_CHECK",
+  "SAFETY_APPROVED",
+  "SAFETY_BLOCKED",
+  "SAFETY_STOP",
   "EMERGENCY_STOP",
+  "SAFETY_ALERT",
+  "DECISION",
+  "FAULT",
+
+  // Robot Mobility & Command Protocol
+  "ROBOT_STATE",
+  "ROBOT_COMMAND_REQUESTED",
+  "ROBOT_COMMAND_APPROVED",
+  "ROBOT_COMMAND_BLOCKED",
+  "ROBOT_COMMAND_SENT",
+  "ROBOT_COMMAND_ACK",
+  "ROBOT_COMMAND_FAILED",
   "ROBOT_COMMAND",
-  "TELEMETRY",
+
+  // Calibration Protocols
+  "CALIBRATION_STARTED",
+  "CALIBRATION_TRIAL",
+  "CALIBRATION_COMPLETED",
+  "CALIBRATION_FAILED",
   "CALIBRATION",
+
+  // Experiment Management
+  "EXPERIMENT_CREATED",
+  "EXPERIMENT_STARTED",
+  "EXPERIMENT_COMPLETED",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;

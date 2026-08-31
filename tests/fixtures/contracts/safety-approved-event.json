@@ -1,0 +1,28 @@
+{
+  "event_id": "evt_712a45de998112ab",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-31T10:00:01.460Z",
+  "occurred_at": "2026-08-31T10:00:01.458Z",
+  "processed_at": "2026-08-31T10:00:01.460Z",
+  "mode": "SIMULATION",
+  "event_type": "SAFETY_APPROVED",
+  "session_id": "ses_98f12a4b1234",
+  "trial_id": "trl_01a2b3c4d5e6",
+  "user_id": "usr_9921ab45ef",
+  "correlation_id": "cor_78ef9012a456",
+  "source": "neuromove.safety_arbitrator",
+  "sequence": 103,
+  "payload": {
+    "decision": "APPROVED",
+    "risk_level": "SAFE",
+    "reason_code": "DECISION_OK",
+    "reason": "Signal quality nominal, no obstacle detected, system in EXECUTING state.",
+    "evaluated_at": "2026-08-31T10:00:01.458Z",
+    "intent": "RIGHT",
+    "neural_confidence": 0.94,
+    "signal_quality": 0.91,
+    "obstacle_state": "CLEAR",
+    "emergency_state": false,
+    "robot_state": "READY"
+  }
+}

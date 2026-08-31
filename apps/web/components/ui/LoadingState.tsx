@@ -8,20 +8,18 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({
-  message = "Acquiring telemetry...",
+  message = "Connecting to NeuroMove Local Control Station...",
   className,
 }: LoadingStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 text-center",
+        "p-8 rounded-xl border border-slate-200 bg-white flex flex-col items-center justify-center text-center shadow-xs",
         className,
       )}
     >
-      <Loader2 className="w-5 h-5 text-blue-400 animate-spin mb-2" />
-      <span className="text-xs font-mono text-slate-400 tracking-wider uppercase">
-        {message}
-      </span>
+      <Loader2 className="w-6 h-6 text-blue-600 animate-spin mb-3" />
+      <p className="text-xs text-slate-600 font-medium">{message}</p>
     </div>
   );
 }

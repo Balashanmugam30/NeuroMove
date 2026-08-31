@@ -10,7 +10,9 @@ interface ConnectionIndicatorProps {
     | "ready"
     | "not_connected"
     | "not_initialized"
-    | "unavailable";
+    | "unavailable"
+    | "degraded"
+    | "error";
   className?: string;
 }
 
@@ -20,21 +22,28 @@ export function ConnectionIndicator({
   className,
 }: ConnectionIndicatorProps) {
   const isOnline = ["CONNECTED", "healthy", "ready"].includes(state);
-  const isDegraded = ["DEGRADED"].includes(state);
+  const isDegraded = ["DEGRADED", "degraded"].includes(state);
 
   return (
-    <div className={cn("flex items-center gap-2 text-xs font-mono", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-2 text-xs font-sans font-medium",
+        className,
+      )}
+    >
       <span
         className={cn(
           "w-2 h-2 rounded-full",
           isOnline
-            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+            ? "bg-emerald-600"
             : isDegraded
-              ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-              : "bg-slate-600",
+              ? "bg-amber-500"
+              : "bg-slate-400",
         )}
       />
-      <span className="text-slate-400 uppercase tracking-wider">{label}</span>
+      <span className="text-slate-600 uppercase tracking-wide text-[11px]">
+        {label}
+      </span>
     </div>
   );
 }

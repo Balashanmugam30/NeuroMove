@@ -19,6 +19,12 @@ class EventDispatcher:
         self._listeners: dict[EventType | None, list[EventListener]] = {}
         self._history: list[EventEnvelope[Any]] = []
         self._max_history: int = 1000
+        self._sequence_counter: int = 0
+
+    def next_sequence(self) -> int:
+        """Increment and return the next monotonic sequence number."""
+        self._sequence_counter += 1
+        return self._sequence_counter
 
     def subscribe(self, listener: EventListener, event_type: EventType | None = None) -> None:
         """Register an event listener for a specific event type or all events."""
@@ -67,9 +73,10 @@ class EventDispatcher:
         return self._history[-limit:]
 
     def clear(self) -> None:
-        """Clear listeners and history buffer."""
+        """Clear listeners, sequence counter, and history buffer."""
         self._listeners.clear()
         self._history.clear()
+        self._sequence_counter = 0
 
 
 # Global singleton event bus instance for local core

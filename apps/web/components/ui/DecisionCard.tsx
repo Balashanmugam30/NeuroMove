@@ -31,12 +31,12 @@ export function DecisionCard({
   const getDecisionIcon = () => {
     switch (decision) {
       case "APPROVED":
-        return <ShieldCheck className="w-5 h-5 text-emerald-400" />;
+        return <ShieldCheck className="w-5 h-5 text-emerald-600" />;
       case "BLOCKED":
-        return <ShieldAlert className="w-5 h-5 text-amber-400" />;
+        return <ShieldAlert className="w-5 h-5 text-amber-600" />;
       case "STOP":
       default:
-        return <AlertOctagon className="w-5 h-5 text-rose-400" />;
+        return <AlertOctagon className="w-5 h-5 text-red-600" />;
     }
   };
 
@@ -44,41 +44,43 @@ export function DecisionCard({
     <div
       data-testid="decision-card"
       className={cn(
-        "p-5 rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-md",
+        "p-5 rounded-xl border border-slate-200 bg-white shadow-xs transition-all",
         className,
       )}
     >
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
           {getDecisionIcon()}
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-            Safety Arbitration
-          </span>
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 font-sans">
+              Independent Safety Arbitration
+            </span>
+          </div>
         </div>
         <StatusBadge status={decision} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-        <div>
-          <span className="text-[11px] font-mono uppercase text-slate-400">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+          <span className="text-[11px] font-medium uppercase text-slate-500 font-sans">
             Neural Intent
           </span>
-          <div className="mt-1 text-base font-mono font-bold text-slate-100">
+          <div className="mt-1 text-base font-bold text-slate-900">
             {intent}
           </div>
         </div>
 
-        <div>
-          <span className="text-[11px] font-mono uppercase text-slate-400">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+          <span className="text-[11px] font-medium uppercase text-slate-500 font-sans">
             Confidence
           </span>
-          <div className="mt-1 text-base font-mono font-semibold text-slate-200">
+          <div className="mt-1 text-base font-bold text-slate-900">
             {(confidence * 100).toFixed(0)}%
           </div>
         </div>
 
-        <div>
-          <span className="text-[11px] font-mono uppercase text-slate-400">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+          <span className="text-[11px] font-medium uppercase text-slate-500 font-sans">
             Runtime State
           </span>
           <div className="mt-1">
@@ -86,8 +88,8 @@ export function DecisionCard({
           </div>
         </div>
 
-        <div>
-          <span className="text-[11px] font-mono uppercase text-slate-400">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+          <span className="text-[11px] font-medium uppercase text-slate-500 font-sans">
             Risk Profile
           </span>
           <div className="mt-1">
@@ -97,9 +99,11 @@ export function DecisionCard({
       </div>
 
       {rationale && (
-        <div className="mt-4 pt-3 border-t border-slate-800/80 text-xs font-mono text-slate-400 flex items-center justify-between">
-          <span className="text-slate-400">Arbitration Rationale:</span>
-          <span className="text-slate-300">{rationale}</span>
+        <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-sans text-slate-600 flex items-center justify-between">
+          <span className="text-slate-400 font-medium">
+            Arbitration Rationale:
+          </span>
+          <span className="text-slate-700 font-medium">{rationale}</span>
         </div>
       )}
     </div>

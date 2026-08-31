@@ -1,0 +1,16 @@
+{
+  "session_id": "ses_98f12a4b1234",
+  "user_id": "usr_9921ab45ef",
+  "mode": "SIMULATION",
+  "status": "ACTIVE",
+  "started_at": "2026-08-31T09:30:00Z",
+  "ended_at": null,
+  "source": "synthetic.generator",
+  "application_version": "0.1.0",
+  "model_version": "baseline_csp_lda_v1",
+  "notes": "Calibration and synthetic benchmark session",
+  "metadata": {
+    "sampling_rate": 250,
+    "electrodes": ["C3", "Cz", "C4"]
+  }
+}

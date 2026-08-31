@@ -1,0 +1,21 @@
+{
+  "event_id": "evt_883a42d991b10123",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-31T10:00:01.450Z",
+  "occurred_at": "2026-08-31T10:00:01.450Z",
+  "processed_at": "2026-08-31T10:00:01.452Z",
+  "mode": "SIMULATION",
+  "event_type": "INTENT_CONFIRMED",
+  "session_id": "ses_98f12a4b1234",
+  "trial_id": "trl_01a2b3c4d5e6",
+  "user_id": "usr_9921ab45ef",
+  "correlation_id": "cor_78ef9012a456",
+  "source": "neuromove.intent_engine",
+  "sequence": 102,
+  "payload": {
+    "intent": "RIGHT",
+    "confidence": 0.94,
+    "confirmation_window_ms": 350,
+    "consecutive_epochs": 3
+  }
+}

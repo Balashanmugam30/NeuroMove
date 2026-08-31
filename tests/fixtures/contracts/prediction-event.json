@@ -1,0 +1,29 @@
+{
+  "event_id": "evt_9a4f21bc08412e89",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-31T10:00:01.120Z",
+  "occurred_at": "2026-08-31T10:00:01.100Z",
+  "processed_at": "2026-08-31T10:00:01.120Z",
+  "mode": "SIMULATION",
+  "event_type": "PREDICTION",
+  "session_id": "ses_98f12a4b1234",
+  "trial_id": "trl_01a2b3c4d5e6",
+  "user_id": "usr_9921ab45ef",
+  "correlation_id": "cor_78ef9012a456",
+  "source": "neuromove.inference",
+  "sequence": 101,
+  "payload": {
+    "intent": "RIGHT",
+    "class_probabilities": {
+      "LEFT": 0.05,
+      "RIGHT": 0.92,
+      "FORWARD": 0.02,
+      "BACKWARD": 0.01
+    },
+    "neural_confidence": 0.92,
+    "raw_label": "class_2_right_hand",
+    "model_id": "mdl_csp_lda_001",
+    "model_version": "1.0.0",
+    "window_id": "win_0042"
+  }
+}

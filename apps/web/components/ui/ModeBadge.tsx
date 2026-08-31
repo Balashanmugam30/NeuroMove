@@ -13,23 +13,21 @@ export function ModeBadge({ mode, className }: ModeBadgeProps) {
     switch (mode) {
       case "LIVE":
         return {
-          bg: "bg-emerald-950/80 text-emerald-300 border-emerald-500/50 shadow-emerald-950/30",
-          icon: (
-            <ShieldAlert className="w-3.5 h-3.5 mr-1 text-emerald-400 animate-pulse" />
-          ),
-          label: "LIVE STREAM",
+          bg: "bg-emerald-50 text-emerald-800 border-emerald-200 shadow-xs",
+          icon: <ShieldAlert className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />,
+          label: "LIVE",
         };
       case "REPLAY":
         return {
-          bg: "bg-amber-950/80 text-amber-300 border-amber-500/50 shadow-amber-950/30",
-          icon: <Play className="w-3.5 h-3.5 mr-1 text-amber-400" />,
-          label: "REPLAY PLAYBACK",
+          bg: "bg-amber-50 text-amber-800 border-amber-200 shadow-xs",
+          icon: <Play className="w-3.5 h-3.5 mr-1.5 text-amber-600" />,
+          label: "REPLAY",
         };
       case "SIMULATION":
       default:
         return {
-          bg: "bg-blue-950/80 text-blue-300 border-blue-500/50 shadow-blue-950/30",
-          icon: <Cpu className="w-3.5 h-3.5 mr-1 text-blue-400" />,
+          bg: "bg-blue-50 text-blue-700 border-blue-200 shadow-xs",
+          icon: <Cpu className="w-3.5 h-3.5 mr-1.5 text-blue-600" />,
           label: "SIMULATION",
         };
     }
@@ -41,13 +39,13 @@ export function ModeBadge({ mode, className }: ModeBadgeProps) {
     <span
       data-testid="mode-badge"
       className={cn(
-        "inline-flex items-center px-2.5 py-1 text-xs font-mono font-medium tracking-wide uppercase rounded-md border shadow-sm transition-all",
+        "inline-flex items-center px-2.5 py-1 text-xs font-medium tracking-wide uppercase rounded-full border transition-all",
         bg,
         className,
       )}
     >
       {icon}
-      {label}
+      <span>{label}</span>
     </span>
   );
 }

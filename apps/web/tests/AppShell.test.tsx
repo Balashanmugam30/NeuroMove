@@ -1,11 +1,11 @@
-import React from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AppShell } from "@/components/layout/AppShell";
-import { ModeProvider } from "@/components/providers/ModeProvider";
+import React from "react";
+import { AppShell } from "../components/layout/AppShell";
+import { ModeProvider } from "../components/providers/ModeProvider";
 
-describe("AppShell", () => {
-  it("renders branding title and navigation sidebar items", () => {
+describe("AppShell Layout", () => {
+  it("renders topbar, sidebar navigation, and main content", () => {
     render(
       <ModeProvider>
         <AppShell>
@@ -16,7 +16,7 @@ describe("AppShell", () => {
 
     expect(screen.getByText(/neuromove/i)).toBeInTheDocument();
     expect(screen.getByText("Live Control")).toBeInTheDocument();
-    expect(screen.getByText("EEG Stream")).toBeInTheDocument();
+    expect(screen.getByText("EEG Lab")).toBeInTheDocument();
     expect(screen.getByText("Safety Engine")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });

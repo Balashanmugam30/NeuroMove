@@ -21,38 +21,74 @@ export function StatusBadge({
   className,
   size = "md",
 }: StatusBadgeProps) {
-  const getStyle = (val: string) => {
+  const getStyleAndIndicator = (val: string) => {
     const upper = val.toUpperCase();
-    if (["APPROVED", "READY", "HEALTHY", "SAFE", "OK"].includes(upper)) {
-      return "bg-emerald-950/60 text-emerald-400 border-emerald-800/60";
+    if (
+      ["APPROVED", "READY", "HEALTHY", "SAFE", "OK", "VALID"].includes(upper)
+    ) {
+      return {
+        style: "bg-emerald-50 text-emerald-800 border-emerald-200",
+        indicator: "●",
+        indicatorColor: "text-emerald-600",
+      };
     }
     if (
-      ["WARNING", "CANDIDATE", "CONFIRMED", "CALIBRATING", "DEGRADED"].includes(
-        upper,
-      )
+      [
+        "WARNING",
+        "CANDIDATE",
+        "CONFIRMED",
+        "CALIBRATING",
+        "DEGRADED",
+        "UNCERTAIN",
+      ].includes(upper)
     ) {
-      return "bg-amber-950/60 text-amber-400 border-amber-800/60";
+      return {
+        style: "bg-amber-50 text-amber-800 border-amber-200",
+        indicator: "▲",
+        indicatorColor: "text-amber-600",
+      };
     }
     if (
-      ["EMERGENCY", "BLOCKED", "FAULT", "CRITICAL", "ERROR", "STOP"].includes(
-        upper,
-      )
+      [
+        "EMERGENCY",
+        "BLOCKED",
+        "FAULT",
+        "CRITICAL",
+        "ERROR",
+        "STOP",
+        "REJECTED",
+      ].includes(upper)
     ) {
-      return "bg-rose-950/60 text-rose-400 border-rose-800/60";
+      return {
+        style: "bg-red-50 text-red-800 border-red-200",
+        indicator: "■",
+        indicatorColor: "text-red-600",
+      };
     }
-    return "bg-slate-900/80 text-slate-400 border-slate-800";
+    return {
+      style: "bg-slate-100 text-slate-700 border-slate-200",
+      indicator: "○",
+      indicatorColor: "text-slate-500",
+    };
   };
+
+  const { style, indicator, indicatorColor } = getStyleAndIndicator(
+    String(status),
+  );
 
   return (
     <span
       className={cn(
-        "inline-flex items-center font-mono font-medium rounded border uppercase tracking-wider",
+        "inline-flex items-center gap-1.5 font-medium rounded-full border uppercase tracking-wide",
         size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs",
-        getStyle(String(status)),
+        style,
         className,
       )}
     >
-      {String(status)}
+      <span className={cn("text-[8px]", indicatorColor)} aria-hidden="true">
+        {indicator}
+      </span>
+      <span>{String(status)}</span>
     </span>
   );
 }

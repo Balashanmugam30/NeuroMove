@@ -7,7 +7,7 @@ interface MetricCardProps {
   unit?: string;
   subtitle?: string;
   icon?: React.ReactNode;
-  variant?: "default" | "safe" | "warning" | "danger";
+  variant?: "default" | "safe" | "warning" | "danger" | "brand";
   className?: string;
 }
 
@@ -23,40 +23,44 @@ export function MetricCard({
   const getVariantStyles = () => {
     switch (variant) {
       case "safe":
-        return "border-emerald-900/40 bg-emerald-950/10 text-emerald-300";
+        return "border-emerald-200 bg-emerald-50/30 text-emerald-950";
       case "warning":
-        return "border-amber-900/40 bg-amber-950/10 text-amber-300";
+        return "border-amber-200 bg-amber-50/30 text-amber-950";
       case "danger":
-        return "border-rose-900/40 bg-rose-950/10 text-rose-300";
+        return "border-red-200 bg-red-50/30 text-red-950";
+      case "brand":
+        return "border-blue-200 bg-blue-50/30 text-blue-950";
       default:
-        return "border-slate-800 bg-slate-900/40 text-slate-100";
+        return "border-slate-200 bg-white text-slate-900";
     }
   };
 
   return (
     <div
       className={cn(
-        "p-4 rounded-lg border backdrop-blur-sm transition-all hover:border-slate-700",
+        "p-4 rounded-xl border shadow-xs transition-all hover:shadow-sm",
         getVariantStyles(),
         className,
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-sans">
           {title}
         </span>
         {icon && <div className="text-slate-400">{icon}</div>}
       </div>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <span className="text-2xl font-mono font-semibold tracking-tight">
+        <span className="text-2xl font-bold tracking-tight text-slate-900">
           {value}
         </span>
         {unit && (
-          <span className="text-xs font-mono text-slate-400">{unit}</span>
+          <span className="text-xs font-medium text-slate-500 font-sans">
+            {unit}
+          </span>
         )}
       </div>
       {subtitle && (
-        <p className="mt-1 text-xs text-slate-400 font-sans">{subtitle}</p>
+        <p className="mt-1 text-xs text-slate-500 font-normal">{subtitle}</p>
       )}
     </div>
   );

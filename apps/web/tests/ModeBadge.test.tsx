@@ -10,10 +10,10 @@ describe("ModeBadge", () => {
     expect(badge).toHaveTextContent(/simulation/i);
   });
 
-  it("renders LIVE mode badge with warning indicators", () => {
+  it("renders LIVE mode badge with indicators", () => {
     render(<ModeBadge mode="LIVE" />);
     const badge = screen.getByTestId("mode-badge");
-    expect(badge).toHaveTextContent(/live stream/i);
+    expect(badge).toHaveTextContent(/live/i);
   });
 
   it("renders REPLAY mode badge", () => {

@@ -14,7 +14,7 @@ import {
   History,
   FileText,
   BarChart3,
-  Terminal,
+  BookOpen,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,25 +22,25 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/live", label: "Live Control", icon: Activity },
-  { href: "/eeg", label: "EEG Stream", icon: Waves },
+  { href: "/eeg", label: "EEG Lab", icon: Waves },
   { href: "/calibration", label: "Calibration", icon: Crosshair },
-  { href: "/models", label: "Models & CSP", icon: BrainCircuit },
+  { href: "/models", label: "AI Models", icon: BrainCircuit },
   { href: "/safety", label: "Safety Engine", icon: ShieldCheck },
   { href: "/robot", label: "Robot Mobility", icon: Bot },
   { href: "/sessions", label: "Sessions", icon: History },
-  { href: "/research", label: "Research", icon: BarChart3 },
+  { href: "/research", label: "Research Lab", icon: BarChart3 },
   { href: "/results", label: "Results", icon: FileText },
-  { href: "/docs", label: "Architecture Docs", icon: Terminal },
-  { href: "/system", label: "System Diagnostics", icon: Settings },
+  { href: "/docs", label: "Documentation", icon: BookOpen },
+  { href: "/system", label: "System", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-950 flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 border-r border-slate-200 bg-white flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)]">
       <div className="p-4 space-y-1">
-        <div className="px-3 py-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+        <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 font-sans">
           Navigation Architecture
         </div>
         {NAV_ITEMS.map((item) => {
@@ -54,16 +54,16 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-xs font-mono transition-all",
+                "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all",
                 isActive
-                  ? "bg-blue-950/60 border border-blue-800/60 text-blue-300 font-semibold"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900",
+                  ? "bg-blue-50 border border-blue-100 text-blue-700 font-semibold shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
               )}
             >
               <Icon
                 className={cn(
                   "w-4 h-4",
-                  isActive ? "text-blue-400" : "text-slate-400",
+                  isActive ? "text-blue-600" : "text-slate-400",
                 )}
               />
               <span>{item.label}</span>
@@ -72,13 +72,16 @@ export function Sidebar() {
         })}
       </div>
 
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 text-[11px] font-mono text-slate-400">
-        <div className="flex items-center justify-between">
+      <div className="p-4 border-t border-slate-100 bg-slate-50/70 text-xs font-sans text-slate-500">
+        <div className="flex items-center justify-between font-medium">
           <span>PIPELINE</span>
-          <span className="text-emerald-400 font-semibold">ONLINE</span>
+          <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            ONLINE
+          </span>
         </div>
-        <div className="text-[10px] text-slate-400 mt-1">
-          Local Control Station
+        <div className="text-[11px] text-slate-400 mt-1">
+          Local Control Station (Air-Gapped)
         </div>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { OperatingMode } from "@neuromove/contracts";
 
 export type UIIdentityMode = "PRODUCT" | "RESEARCH";

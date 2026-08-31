@@ -1,0 +1,14 @@
+{
+  "service": "neuromove-core",
+  "status": "ok",
+  "version": "0.1.0",
+  "mode": "SIMULATION",
+  "timestamp": "2026-08-31T10:00:00Z",
+  "components": {
+    "api": "healthy",
+    "database": "ready",
+    "eeg": "not_connected",
+    "robot": "not_connected",
+    "safety": "ready"
+  }
+}

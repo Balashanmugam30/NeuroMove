@@ -1,0 +1,13 @@
+{
+  "trial_id": "trl_01a2b3c4d5e6",
+  "session_id": "ses_98f12a4b1234",
+  "trial_index": 12,
+  "label": "RIGHT",
+  "paradigm": "Graz_Visual_Cue",
+  "cue": "ARROW_RIGHT",
+  "started_at": "2026-08-31T09:35:00Z",
+  "imagery_started_at": "2026-08-31T09:35:01.500Z",
+  "ended_at": "2026-08-31T09:35:05.500Z",
+  "duration_ms": 4000,
+  "quality_status": "VALID"
+}

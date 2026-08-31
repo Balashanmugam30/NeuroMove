@@ -1,0 +1,25 @@
+{
+  "event_id": "evt_3321ab998124cdfa",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-31T10:00:02.500Z",
+  "occurred_at": "2026-08-31T10:00:02.495Z",
+  "processed_at": "2026-08-31T10:00:02.500Z",
+  "mode": "SIMULATION",
+  "event_type": "ROBOT_STATE",
+  "session_id": "ses_98f12a4b1234",
+  "trial_id": "trl_01a2b3c4d5e6",
+  "user_id": "usr_9921ab45ef",
+  "correlation_id": "cor_78ef9012a456",
+  "source": "neuromove.robot_bridge",
+  "sequence": 105,
+  "payload": {
+    "connection_state": "CONNECTED",
+    "motion_state": "MOVING",
+    "heading": 90.0,
+    "battery": 88.5,
+    "left_motor": 140,
+    "right_motor": 140,
+    "linear_velocity": 0.25,
+    "angular_velocity": 0.0
+  }
+}

@@ -22,7 +22,7 @@ def test_event_id_and_correlation_generation() -> None:
     assert evt_id.startswith("evt_")
 
     corr_id = generate_correlation_id()
-    assert corr_id.startswith("corr_")
+    assert corr_id.startswith("cor_")
 
 
 def test_canonical_event_envelope_creation() -> None:

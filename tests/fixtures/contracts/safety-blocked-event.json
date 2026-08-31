@@ -1,0 +1,28 @@
+{
+  "event_id": "evt_554a98fe11234abc",
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-31T10:00:02.100Z",
+  "occurred_at": "2026-08-31T10:00:02.098Z",
+  "processed_at": "2026-08-31T10:00:02.100Z",
+  "mode": "SIMULATION",
+  "event_type": "SAFETY_BLOCKED",
+  "session_id": "ses_98f12a4b1234",
+  "trial_id": "trl_01a2b3c4d5e6",
+  "user_id": "usr_9921ab45ef",
+  "correlation_id": "cor_78ef9012a456",
+  "source": "neuromove.safety_arbitrator",
+  "sequence": 104,
+  "payload": {
+    "decision": "BLOCKED",
+    "risk_level": "WARNING",
+    "reason_code": "PROXIMITY_OBSTACLE",
+    "reason": "Front ultrasonic/simulated proximity sensor indicates obstacle within 25cm safe perimeter.",
+    "evaluated_at": "2026-08-31T10:00:02.098Z",
+    "intent": "FORWARD",
+    "neural_confidence": 0.91,
+    "signal_quality": 0.88,
+    "obstacle_state": "DETECTED_FRONT",
+    "emergency_state": false,
+    "robot_state": "STOPPED"
+  }
+}

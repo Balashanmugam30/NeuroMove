@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
@@ -20,17 +20,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center p-8 text-center rounded-lg border border-dashed border-slate-800 bg-slate-900/20",
+        "flex flex-col items-center justify-center p-8 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50",
         className,
       )}
     >
-      <div className="p-3 rounded-full bg-slate-900 border border-slate-800 text-slate-400 mb-3">
+      <div className="p-3 rounded-full bg-white border border-slate-200 text-slate-500 mb-3 shadow-xs">
         {icon || <Terminal className="w-5 h-5" />}
       </div>
-      <h4 className="text-sm font-mono font-medium text-slate-200 uppercase tracking-wide">
+      <h4 className="text-sm font-semibold text-slate-900 font-sans tracking-tight">
         {title}
       </h4>
-      <p className="text-xs text-slate-400 max-w-sm mt-1.5">{description}</p>
+      <p className="text-xs text-slate-500 max-w-sm mt-1.5 font-normal">
+        {description}
+      </p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
