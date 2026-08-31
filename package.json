@@ -1,0 +1,27 @@
+{
+  "name": "neuromove-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NeuroMove — Real-Time Motor-Imagery EEG Mobility Platform Engineering Foundation",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "pnpm --filter @neuromove/web dev",
+    "dev:core": "uv run uvicorn services.core.neuromove.api.app:app --reload --port 8000 --host 127.0.0.1",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" && turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @neuromove/web test:e2e",
+    "py:test": "uv run pytest services/core/tests tests/unit",
+    "py:lint": "uv run ruff check .",
+    "py:format": "uv run ruff format --check .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@10.20.0"
+}
