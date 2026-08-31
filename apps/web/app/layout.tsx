@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ModeProvider } from "@/components/providers/ModeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
@@ -20,10 +21,13 @@ export default function RootLayout({
       <body className="bg-slate-50 text-slate-900 antialiased min-h-screen font-sans">
         <QueryProvider>
           <ModeProvider>
-            <AppShell>{children}</AppShell>
+            <RealtimeProvider>
+              <AppShell>{children}</AppShell>
+            </RealtimeProvider>
           </ModeProvider>
         </QueryProvider>
       </body>
     </html>
   );
 }
+

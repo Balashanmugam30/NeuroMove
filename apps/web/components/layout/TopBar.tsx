@@ -3,6 +3,7 @@
 import React from "react";
 import { ModeBadge } from "../ui/ModeBadge";
 import { ModeToggle } from "../ui/ModeToggle";
+import { RealtimeStatusBadge } from "../ui/RealtimeStatusBadge";
 import { useMode } from "../providers/ModeProvider";
 import { Radio, Power } from "lucide-react";
 import { triggerEmergencyStop } from "@/lib/api-client";
@@ -42,6 +43,7 @@ export function TopBar() {
         </div>
 
         <ModeBadge mode={operatingMode} />
+        <RealtimeStatusBadge />
       </div>
 
       <div className="flex items-center gap-3">
@@ -59,3 +61,4 @@ export function TopBar() {
     </header>
   );
 }
+

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Activity, Radio, Info } from "lucide-react";
+import { Activity, Radio, Info, Zap } from "lucide-react";
 import { SignalQualityMetrics } from "@neuromove/contracts";
+import { EEGRingBuffer } from "@/lib/realtime/EEGRingBuffer";
 
 interface EEGOscilloscopeProps {
   channels?: string[];
@@ -10,6 +11,9 @@ interface EEGOscilloscopeProps {
   activeIntent?: string;
   signalQuality?: SignalQualityMetrics | null;
   isRunning?: boolean;
+  ringBuffer?: EEGRingBuffer | null;
+  packetRate?: number;
+  latencyMs?: number;
 }
 
 export function EEGOscilloscope({
@@ -18,6 +22,9 @@ export function EEGOscilloscope({
   activeIntent = "NONE",
   signalQuality,
   isRunning = true,
+  ringBuffer,
+  packetRate = 25,
+  latencyMs = 1.2,
 }: EEGOscilloscopeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [muPowerC3, setMuPowerC3] = useState(12.4);
@@ -88,16 +95,30 @@ export function EEGOscilloscope({
           ctx.lineWidth = 1.5;
           ctx.beginPath();
 
+          const hasBufferedData =
+            ringBuffer && ringBuffer.getTotalSamplesPushed() > 0;
+          const channelBuffer = hasBufferedData
+            ? ringBuffer.getOrderedChannelData(ch)
+            : null;
+
           for (let x = 0; x < width; x++) {
-            const t = (x / width) * 4 + time;
-            const amp = ch === "C3" ? c3Amp : ch === "C4" ? c4Amp : 14;
+            let y: number;
+            if (channelBuffer && channelBuffer.length > 0) {
+              const sampleIdx = Math.floor(
+                (x / width) * Math.min(width, channelBuffer.length)
+              );
+              const val = channelBuffer[sampleIdx] || 0;
+              y = centerY - val * 2.5;
+            } else {
+              const t = (x / width) * 4 + time;
+              const amp = ch === "C3" ? c3Amp : ch === "C4" ? c4Amp : 14;
+              const mu = amp * Math.sin(2 * Math.PI * 10.0 * (t * 0.05));
+              const beta =
+                amp * 0.4 * Math.sin(2 * Math.PI * 20.0 * (t * 0.05));
+              const noise = (Math.random() - 0.5) * 4;
+              y = centerY + mu + beta + noise;
+            }
 
-            // Synthesis equation
-            const mu = amp * Math.sin(2 * Math.PI * 10.0 * (t * 0.05));
-            const beta = (amp * 0.4) * Math.sin(2 * Math.PI * 20.0 * (t * 0.05));
-            const noise = (Math.random() - 0.5) * 4;
-
-            const y = centerY + mu + beta + noise;
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -124,7 +145,7 @@ export function EEGOscilloscope({
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [channels, isRunning, activeIntent]);
+  }, [channels, isRunning, activeIntent, ringBuffer]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
@@ -144,14 +165,22 @@ export function EEGOscilloscope({
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Sensorimotor rhythm (\u03bc / \u03b2 band) waveform synthesis @ {sampleRateHz} Hz
+              Sensorimotor rhythm (μ / β band) waveform synthesis @ {sampleRateHz} Hz
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-          <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-          {isRunning ? "STREAMING" : "IDLE"} | {sampleRateHz} Hz | 3 Channels
+        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-600">
+          <div className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+            {isRunning ? "STREAMING" : "IDLE"} | {sampleRateHz} Hz | 3 Channels
+          </div>
+          {packetRate > 0 && (
+            <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-200 flex items-center gap-1 text-2xs font-semibold">
+              <Zap className="w-3 h-3" />
+              {packetRate} pkts/s ({latencyMs.toFixed(1)}ms)
+            </div>
+          )}
         </div>
       </div>
 
@@ -224,7 +253,6 @@ export function EEGOscilloscope({
           </div>
         </div>
       </div>
-
 
       {/* Scientific Disclaimer Footer */}
       <div className="mt-3 flex items-start gap-1.5 p-2 bg-amber-50/70 border border-amber-200/60 rounded-lg text-2xs text-amber-800">

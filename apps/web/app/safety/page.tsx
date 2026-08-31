@@ -2,20 +2,51 @@
 
 import React, { useState, useEffect } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { useRealtimeStream } from "@/lib/realtime/useRealtimeStream";
 import { ModeBadge } from "@/components/ui/ModeBadge";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { fetchSafetyState, triggerEmergencyStop } from "@/lib/api-client";
-import { ShieldCheck, ShieldAlert, AlertTriangle, Power } from "lucide-react";
+import { SafetyState } from "@neuromove/contracts";
+import { ShieldCheck, ShieldAlert, AlertTriangle, Power, Radio } from "lucide-react";
 
 export default function SafetyEnginePage() {
   const { operatingMode } = useMode();
-  const [safetyState, setSafetyState] = useState<any>({
+  const { connectionState, latestSnapshot, freshness } = useRealtime();
+  const [safetyState, setSafetyState] = useState<SafetyState>({
     runtime_state: "IDLE",
     last_decision: "STOP",
     risk_level: "SAFE",
     emergency_active: false,
+    fault_code: null,
+    reason_code: "SYS_IDLE",
     reason: "Safe default idle state active.",
+    updated_at: new Date().toISOString(),
+  });
+
+  // Absorb snapshot
+  useEffect(() => {
+    if (latestSnapshot?.safety_state) {
+      setSafetyState(latestSnapshot.safety_state);
+    }
+  }, [latestSnapshot]);
+
+  // Subscribe to real-time safety stream
+  useRealtimeStream("safety", (msg) => {
+    if (msg.event?.payload) {
+      const p = msg.event.payload as any;
+      setSafetyState((prev) => ({
+        ...prev,
+        runtime_state: p.target_state || p.runtime_state || prev.runtime_state,
+        last_decision: p.decision || prev.last_decision,
+        risk_level: p.risk_level || prev.risk_level,
+        emergency_active:
+          msg.event?.event_type === "EMERGENCY_STOP" || p.emergency_active || false,
+        reason: p.reason || p.message || prev.reason,
+        updated_at: msg.timestamp || new Date().toISOString(),
+      }));
+    }
   });
 
   useEffect(() => {
@@ -27,12 +58,14 @@ export default function SafetyEnginePage() {
   const handleEStop = async () => {
     try {
       await triggerEmergencyStop();
-      setSafetyState((prev: any) => ({
+      setSafetyState((prev) => ({
         ...prev,
         runtime_state: "EMERGENCY",
         emergency_active: true,
         last_decision: "STOP",
         risk_level: "CRITICAL",
+        reason: "Emergency stop triggered by operator API command.",
+        updated_at: new Date().toISOString(),
       }));
     } catch (e) {
       console.error(e);
@@ -41,14 +74,19 @@ export default function SafetyEnginePage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
-            Safety Engine & Fail-Safe State Machine
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 font-sans">
+              Safety Engine & Fail-Safe State Machine
+            </h1>
+            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+              SIMULATION
+            </span>
+          </div>
           <p className="text-xs text-slate-500 font-sans mt-1">
-            Deterministic state transition matrix, fail-closed arbitration, and
-            watchdog timers.
+            Deterministic state transition matrix, fail-closed arbitration, and real-time safety stream.
           </p>
         </div>
         <ModeBadge mode={operatingMode} />
@@ -58,7 +96,7 @@ export default function SafetyEnginePage() {
         <MetricCard
           title="Current State"
           value={safetyState.runtime_state}
-          subtitle="Deterministic container"
+          subtitle={`Transport: ${connectionState} (${freshness})`}
           variant={safetyState.emergency_active ? "danger" : "safe"}
           icon={<ShieldCheck className="w-4 h-4 text-emerald-600" />}
         />
@@ -72,7 +110,8 @@ export default function SafetyEnginePage() {
         <MetricCard
           title="Risk Classification"
           value={safetyState.risk_level}
-          subtitle="Obstacle & signal quality tier"
+          subtitle={safetyState.reason || "Obstacle & signal quality tier"}
+          variant={safetyState.risk_level === "CRITICAL" ? "danger" : safetyState.risk_level === "WARNING" ? "warning" : "safe"}
           icon={<AlertTriangle className="w-4 h-4 text-red-600" />}
         />
       </div>
@@ -83,6 +122,7 @@ export default function SafetyEnginePage() {
         action={
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleEStop}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 shadow-xs transition-all"
             >
@@ -109,12 +149,20 @@ export default function SafetyEnginePage() {
               Interrupts ALL States Instantly
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
             <span className="text-slate-600 font-medium">
               Motor Actuation Permission:
             </span>
             <span className="text-slate-900 font-semibold">
               Requires EXECUTING state + APPROVED decision
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600 font-medium">
+              Real-Time Transport Pathway:
+            </span>
+            <span className="text-blue-700 font-semibold flex items-center gap-1">
+              <Radio className="w-3.5 h-3.5" /> /ws/safety (Priority Channel)
             </span>
           </div>
         </div>

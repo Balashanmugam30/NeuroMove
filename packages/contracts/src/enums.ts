@@ -75,6 +75,45 @@ export const ComponentStatusEnum = z.enum([
 ]);
 export type ComponentStatus = z.infer<typeof ComponentStatusEnum>;
 
+// --- Transport & Realtime Enums (Phase 04) ---
+
+export const TransportMessageTypeEnum = z.enum([
+  "HELLO",
+  "WELCOME",
+  "PING",
+  "PONG",
+  "SUBSCRIBE",
+  "UNSUBSCRIBE",
+  "EVENT",
+  "SNAPSHOT",
+  "RESET",
+  "ERROR",
+]);
+export type TransportMessageType = z.infer<typeof TransportMessageTypeEnum>;
+
+export const TransportStreamEnum = z.enum([
+  "live",
+  "eeg",
+  "robot",
+  "safety",
+  "all",
+]);
+export type TransportStream = z.infer<typeof TransportStreamEnum>;
+
+export const DataFreshnessEnum = z.enum(["FRESH", "STALE", "DISCONNECTED"]);
+export type DataFreshness = z.infer<typeof DataFreshnessEnum>;
+
+export const ClientLifecycleStateEnum = z.enum([
+  "CONNECTING",
+  "CONNECTED",
+  "SUBSCRIBING",
+  "STREAMING",
+  "DEGRADED",
+  "DISCONNECTED",
+  "RECONNECTING",
+]);
+export type ClientLifecycleState = z.infer<typeof ClientLifecycleStateEnum>;
+
 export const EventTypeEnum = z.enum([
   // System Lifecycle & Health
   "SYSTEM_STARTED",

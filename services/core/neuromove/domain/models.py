@@ -6,7 +6,7 @@ User, Session, Trial, Experiment, ModelArtifact, Safety, Robot, and System diagn
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -22,6 +22,30 @@ from .enums import (
     SessionStatus,
     TrialQuality,
 )
+
+ObstacleDirection = Literal["FRONT", "LEFT", "RIGHT", "NONE"]
+
+
+class ObstacleData(BaseModel):
+    """Environmental proximity and obstacle telemetry."""
+
+    front_cm: float = Field(
+        default=200.0, ge=0.0, description="Front proximity sensor distance (cm)"
+    )
+    left_cm: float = Field(default=200.0, ge=0.0, description="Left proximity sensor distance (cm)")
+    right_cm: float = Field(
+        default=200.0, ge=0.0, description="Right proximity sensor distance (cm)"
+    )
+    obstacle_present: bool = Field(
+        default=False, description="True if any sensor is below safe threshold"
+    )
+    direction: ObstacleDirection = Field(default="NONE", description="Closest obstacle sector")
+    distance_cm: float = Field(
+        default=200.0, ge=0.0, description="Minimum distance to detected obstacle (cm)"
+    )
+    confidence: float = Field(
+        default=0.98, ge=0.0, le=1.0, description="Sensor measurement confidence"
+    )
 
 
 def utc_now() -> datetime:

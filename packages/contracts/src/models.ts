@@ -3,14 +3,18 @@ import {
   CommandStatusEnum,
   ComponentStatusEnum,
   ConnectionStateEnum,
+  DataFreshnessEnum,
   IntentEnum,
   OperatingModeEnum,
   RiskLevelEnum,
   RuntimeStateEnum,
   SafetyDecisionEnum,
   SessionStatusEnum,
+  TransportMessageTypeEnum,
+  TransportStreamEnum,
   TrialQualityEnum,
 } from "./enums";
+import { EventEnvelopeSchema } from "./events";
 
 export const UserSchema = z.object({
   user_id: z.string().startsWith("usr_"),
@@ -32,7 +36,7 @@ export const SessionSchema = z.object({
   application_version: z.string().default("0.1.0"),
   model_version: z.string().default("baseline_csp_lda_v1"),
   notes: z.string().default(""),
-  metadata: z.record(z.any()).default({}),
+  metadata: z.record(z.string(), z.any()).default({}),
 });
 export type Session = z.infer<typeof SessionSchema>;
 
@@ -70,7 +74,7 @@ export const ModelArtifactSchema = z.object({
   training_dataset: z.string().default("synthetic_sim_v1"),
   feature_pipeline: z.string().default("Butterworth_8_30Hz_CAR_CSP"),
   classifier: z.string().default("Shrinkage_LDA"),
-  metrics_reference: z.record(z.number()).default({}),
+  metrics_reference: z.record(z.string(), z.number()).default({}),
   artifact_path: z.string().default(""),
   status: z.string().default("ready"),
 });
@@ -78,7 +82,7 @@ export type ModelArtifact = z.infer<typeof ModelArtifactSchema>;
 
 export const SignalQualityMetricsSchema = z.object({
   overall_score: z.number().min(0).max(1).default(0),
-  channels: z.record(z.number()).default({ C3: 0, Cz: 0, C4: 0 }),
+  channels: z.record(z.string(), z.number()).default({ C3: 0, Cz: 0, C4: 0 }),
   dropped_samples: z.number().int().min(0).default(0),
   artifact_flags: z.array(z.string()).default([]),
   sampling_rate_hz: z.number().min(100).default(250),
@@ -229,7 +233,7 @@ export const EEGLatestResponseSchema = z.object({
   timestamp: z.string().datetime(),
   channels: z.array(z.string()).default(["C3", "Cz", "C4"]),
   sampling_rate_hz: z.number().default(250),
-  samples: z.array(z.record(z.any())).default([]),
+  samples: z.array(z.record(z.string(), z.any())).default([]),
   signal_quality: SignalQualityMetricsSchema,
   is_live_stream: z.boolean().default(false),
   mode: OperatingModeEnum.default("SIMULATION"),
@@ -257,3 +261,104 @@ export const ErrorResponseSchema = z.object({
   details: z.array(ErrorDetailSchema).default([]),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+// --- Realtime & WebSocket Transport Schemas (Phase 04) ---
+
+export const TransportHelloPayloadSchema = z.object({
+  client_id: z.string().default("client_web_001"),
+  client_name: z.string().default("NeuroMove Web Command Center"),
+  client_version: z.string().default("0.1.0"),
+  requested_streams: z
+    .array(TransportStreamEnum)
+    .default(["live", "robot", "safety"]),
+});
+export type TransportHelloPayload = z.infer<typeof TransportHelloPayloadSchema>;
+
+export const TransportWelcomePayloadSchema = z.object({
+  protocol_version: z.string().default("1.0"),
+  schema_version: z.string().default("1.0.0"),
+  server_version: z.string().default("0.1.0"),
+  mode: OperatingModeEnum.default("SIMULATION"),
+  connection_id: z.string().startsWith("conn_"),
+  available_streams: z
+    .array(TransportStreamEnum)
+    .default(["live", "eeg", "robot", "safety", "all"]),
+  heartbeat_interval_ms: z.number().int().default(5000),
+  heartbeat_timeout_ms: z.number().int().default(3000),
+});
+export type TransportWelcomePayload = z.infer<
+  typeof TransportWelcomePayloadSchema
+>;
+
+export const TransportPingPayloadSchema = z.object({
+  client_time: z.string().datetime(),
+  seq: z.number().int().default(0),
+});
+export type TransportPingPayload = z.infer<typeof TransportPingPayloadSchema>;
+
+export const TransportPongPayloadSchema = z.object({
+  client_time: z.string().datetime(),
+  server_time: z.string().datetime(),
+  seq: z.number().int().default(0),
+});
+export type TransportPongPayload = z.infer<typeof TransportPongPayloadSchema>;
+
+export const TransportSubscribePayloadSchema = z.object({
+  streams: z.array(TransportStreamEnum),
+  filter_session_id: z.string().nullable().optional(),
+  filter_mode: OperatingModeEnum.nullable().optional(),
+});
+export type TransportSubscribePayload = z.infer<
+  typeof TransportSubscribePayloadSchema
+>;
+
+export const TransportSnapshotPayloadSchema = z.object({
+  mode: OperatingModeEnum.default("SIMULATION"),
+  server_time: z.string().datetime(),
+  latest_event_sequence: z.number().int().min(0).default(0),
+  active_session: SessionSchema.nullable().optional(),
+  active_trial: TrialSchema.nullable().optional(),
+  robot_state: RobotStateSchema.nullable().optional(),
+  safety_state: SafetyStateSchema.nullable().optional(),
+  signal_quality: SignalQualityMetricsSchema.nullable().optional(),
+  obstacle_data: ObstacleDataSchema.nullable().optional(),
+  simulation_status: SimulationStatusSchema.nullable().optional(),
+});
+export type TransportSnapshotPayload = z.infer<
+  typeof TransportSnapshotPayloadSchema
+>;
+
+export const TransportErrorPayloadSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  request_id: z.string().nullable().optional(),
+  details: z.record(z.string(), z.any()).nullable().optional(),
+});
+export type TransportErrorPayload = z.infer<typeof TransportErrorPayloadSchema>;
+
+export const TransportDiagnosticsSchema = z.object({
+  active_connections: z.number().int().default(0),
+  total_connections: z.number().int().default(0),
+  connection_failures: z.number().int().default(0),
+  reconnect_count: z.number().int().default(0),
+  events_sent: z.number().int().default(0),
+  events_dropped: z.number().int().default(0),
+  queue_overflows: z.number().int().default(0),
+  heartbeat_timeouts: z.number().int().default(0),
+  invalid_messages: z.number().int().default(0),
+  bytes_sent: z.number().int().default(0),
+  bytes_received: z.number().int().default(0),
+  average_latency_ms: z.number().default(0),
+  timestamp: z.string().datetime(),
+});
+export type TransportDiagnostics = z.infer<typeof TransportDiagnosticsSchema>;
+
+export const TransportMessageSchema = z.object({
+  type: TransportMessageTypeEnum,
+  stream: TransportStreamEnum.optional(),
+  transport_seq: z.number().int().min(0).optional(),
+  timestamp: z.string().datetime(),
+  event: EventEnvelopeSchema.optional(),
+  payload: z.record(z.string(), z.any()).optional(),
+});
+export type TransportMessage = z.infer<typeof TransportMessageSchema>;

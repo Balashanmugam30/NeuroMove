@@ -1,16 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { useRealtimeStream } from "@/lib/realtime/useRealtimeStream";
 import { ModeBadge } from "@/components/ui/ModeBadge";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { EEGOscilloscope } from "@/components/eeg/EEGOscilloscope";
+import { EEGRingBuffer } from "@/lib/realtime/EEGRingBuffer";
 import { fetchSimulationStatus } from "@/lib/api-client";
 import { SimulationStatus } from "@neuromove/contracts";
 import { Cpu, CheckCircle2 } from "lucide-react";
 
 export default function EEGStreamPage() {
   const { operatingMode } = useMode();
+  const { connectionState, latencyMs, latestSnapshot } = useRealtime();
+  const ringBufferRef = useRef<EEGRingBuffer>(new EEGRingBuffer(1000, ["C3", "Cz", "C4"]));
+
+  const [packetCount, setPacketCount] = useState(0);
+  const [packetRate, setPacketRate] = useState(25);
+  const lastPacketCountRef = useRef(0);
+
   const [simStatus, setSimStatus] = useState<SimulationStatus>({
     is_running: true,
     is_paused: false,
@@ -28,6 +38,35 @@ export default function EEGStreamPage() {
     active_faults: [],
   });
 
+  // Absorb snapshot when available
+  useEffect(() => {
+    if (latestSnapshot?.simulation_status) {
+      setSimStatus((prev) => ({
+        ...prev,
+        ...latestSnapshot.simulation_status,
+      }));
+    }
+  }, [latestSnapshot]);
+
+  // Subscribe to high-frequency EEG transport stream
+  useRealtimeStream("eeg", (msg) => {
+    if (msg.payload && msg.payload.channels) {
+      ringBufferRef.current.pushChunk(msg.payload.channels);
+      setPacketCount((c) => c + 1);
+    }
+  });
+
+  // Calculate transport packet rate per second
+  useEffect(() => {
+    const rateInterval = setInterval(() => {
+      const diff = packetCount - lastPacketCountRef.current;
+      lastPacketCountRef.current = packetCount;
+      if (diff > 0) setPacketRate(diff);
+    }, 1000);
+
+    return () => clearInterval(rateInterval);
+  }, [packetCount]);
+
   useEffect(() => {
     const check = async () => {
       try {
@@ -38,8 +77,6 @@ export default function EEGStreamPage() {
       }
     };
     check();
-    const interval = setInterval(check, 2000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -68,7 +105,10 @@ export default function EEGStreamPage() {
         sampleRateHz={250}
         activeIntent={simStatus.current_intent}
         signalQuality={simStatus.signal_quality}
-        isRunning={simStatus.is_running}
+        isRunning={simStatus.is_running && connectionState !== "DISCONNECTED"}
+        ringBuffer={ringBufferRef.current}
+        packetRate={packetRate}
+        latencyMs={latencyMs}
       />
 
       {/* Multi-Channel Contact Impedance & Topography */}
@@ -143,7 +183,6 @@ export default function EEGStreamPage() {
           </div>
         </SectionCard>
       </div>
-
 
       {/* Pipeline Information */}
       <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-3">

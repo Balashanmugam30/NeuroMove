@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { useRealtimeStream, useRealtimeEvents } from "@/lib/realtime/useRealtimeStream";
 import { ModeBadge } from "@/components/ui/ModeBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -19,7 +21,6 @@ import {
   fetchSimulationScenarios,
   triggerEmergencyStop,
 } from "@/lib/api-client";
-
 import { SimulationScenario, SimulationStatus } from "@neuromove/contracts";
 import {
   Activity,
@@ -32,6 +33,7 @@ import {
 
 export default function LiveControlPage() {
   const { operatingMode } = useMode();
+  const { connectionState, latestSnapshot } = useRealtime();
   const [loading, setLoading] = useState(false);
   const [scenarios, setScenarios] = useState<SimulationScenario[]>([]);
   const [simStatus, setSimStatus] = useState<SimulationStatus>({
@@ -69,7 +71,85 @@ export default function LiveControlPage() {
     },
   ]);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  // Absorb snapshot when available
+  useEffect(() => {
+    if (latestSnapshot) {
+      if (latestSnapshot.simulation_status) {
+        setSimStatus((prev) => ({
+          ...prev,
+          ...latestSnapshot.simulation_status,
+        }));
+      }
+      if (latestSnapshot.robot_state) {
+        setSimStatus((prev) => ({
+          ...prev,
+          robot_state: latestSnapshot.robot_state,
+        }));
+      }
+      if (latestSnapshot.safety_state) {
+        setSimStatus((prev) => ({
+          ...prev,
+          runtime_state: latestSnapshot.safety_state?.runtime_state || prev.runtime_state,
+          safety_decision: latestSnapshot.safety_state?.last_decision || prev.safety_decision,
+        }));
+      }
+    }
+  }, [latestSnapshot]);
+
+  // Subscribe to real-time canonical events
+  useRealtimeEvents((evt) => {
+    setEvents((prev) => [
+      {
+        id: evt.event_id || `evt_${Date.now()}`,
+        timestamp: evt.occurred_at || new Date().toISOString(),
+        type: evt.event_type,
+        summary:
+          (evt.payload as any)?.reason ||
+          (evt.payload as any)?.message ||
+          `Canonical event ${evt.event_type} received`,
+        status: (evt.payload as any)?.decision || evt.mode || "SIMULATION",
+      },
+      ...prev.slice(0, 49),
+    ]);
+
+    const evtTypeVal = evt.event_type.toString();
+
+    if (evtTypeVal === "ROBOT_STATE" && evt.payload) {
+      setSimStatus((prev) => ({
+        ...prev,
+        robot_state: {
+          ...prev.robot_state,
+          ...(evt.payload as any),
+        },
+      }));
+    } else if (evtTypeVal === "PREDICTION" && evt.payload) {
+      const pred = evt.payload as any;
+      setSimStatus((prev) => ({
+        ...prev,
+        current_intent: pred.intent || prev.current_intent,
+      }));
+    } else if (evtTypeVal === "SAFETY_APPROVED" || evtTypeVal === "SAFETY_BLOCKED" || evtTypeVal === "EMERGENCY_STOP") {
+      const dec = evt.payload as any;
+      setSimStatus((prev) => ({
+        ...prev,
+        safety_decision: dec.decision || (evtTypeVal === "SAFETY_APPROVED" ? "APPROVED" : "STOP"),
+        runtime_state: evtTypeVal === "EMERGENCY_STOP" ? "EMERGENCY" : prev.runtime_state,
+      }));
+    }
+  });
+
+  // Subscribe to robot stream
+  useRealtimeStream("robot", (msg) => {
+    if (msg.event?.payload) {
+      setSimStatus((prev) => ({
+        ...prev,
+        robot_state: {
+          ...prev.robot_state,
+          ...(msg.event?.payload as any),
+        },
+      }));
+    }
+  });
 
   const refreshTelemetry = async () => {
     setLoading(true);
@@ -80,7 +160,7 @@ export default function LiveControlPage() {
         fetchSimulationScenarios(),
       ]);
       setSystemStatus(sys);
-      setSimStatus(sim);
+      setSimStatus((prev) => ({ ...prev, ...sim }));
       if (scs && scs.length > 0) setScenarios(scs);
     } catch {
       // Safe fallback
@@ -91,63 +171,6 @@ export default function LiveControlPage() {
 
   useEffect(() => {
     refreshTelemetry();
-    const interval = setInterval(refreshTelemetry, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // WebSocket Live Stream Connection
-  useEffect(() => {
-    const wsUrl = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000")
-      .replace(/^http/, "ws") + "/ws/live";
-
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event_type) {
-            setEvents((prev) => [
-              {
-                id: data.event_id || `evt_${Date.now()}`,
-                timestamp: data.occurred_at || new Date().toISOString(),
-                type: data.event_type,
-                summary:
-                  data.payload?.reason ||
-                  data.payload?.message ||
-                  `Canonical event ${data.event_type} received`,
-                status: data.payload?.decision || data.mode || "SIMULATION",
-              },
-              ...prev.slice(0, 49),
-            ]);
-
-            // Update live simulation telemetry
-            if (data.event_type === "ROBOT_STATE" && data.payload) {
-              setSimStatus((prev) => ({
-                ...prev,
-                robot_state: {
-                  ...prev.robot_state,
-                  ...data.payload,
-                },
-              }));
-            }
-          }
-        } catch {
-          // parse error ignored
-        }
-      };
-
-      ws.onerror = () => {
-        // Fallback polling handles updates
-      };
-
-      return () => {
-        ws.close();
-      };
-    } catch {
-      // Offline fallback
-    }
   }, []);
 
   const handleEStop = async () => {
@@ -220,8 +243,8 @@ export default function LiveControlPage() {
           state={systemStatus?.components?.api || "healthy"}
         />
         <ConnectionIndicator
-          label="Database"
-          state={systemStatus?.components?.database || "not_initialized"}
+          label="Realtime Transport"
+          state={connectionState === "STREAMING" || connectionState === "CONNECTED" ? "CONNECTED" : "DISCONNECTED"}
         />
         <ConnectionIndicator
           label="Simulation EEG"
@@ -235,7 +258,6 @@ export default function LiveControlPage() {
           label="Safety Engine"
           state={simStatus.runtime_state === "EMERGENCY" ? "DEGRADED" : "ready"}
         />
-
       </div>
 
       {/* Simulation Engine Operator Controls */}

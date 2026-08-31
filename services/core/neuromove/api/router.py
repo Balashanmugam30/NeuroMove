@@ -1,10 +1,9 @@
 """API Endpoint Router for NeuroMove Control Station."""
 
 import uuid
-from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, WebSocket, status
 from pydantic import BaseModel, Field
 
 from ..config.settings import get_settings
@@ -27,6 +26,8 @@ from ..domain.models import (
 from ..safety.state_machine import default_safety_state_machine
 from ..simulation.runner import SimulationStatus, simulation_engine
 from ..simulation.scenarios import SimulationScenario, list_scenarios
+from ..transport.connection_registry import connection_registry
+from ..transport.models import TransportDiagnostics
 from .schemas import (
     CalibrationStartRequest,
     CalibrationStartResponse,
@@ -290,6 +291,19 @@ def test_command(payload: CommandPayload) -> dict[str, Any]:
     }
 
 
+# --- Transport & Realtime Diagnostics (Phase 04) ---
+
+
+@api_router.get(
+    "/transport/diagnostics",
+    response_model=TransportDiagnostics,
+    tags=["System"],
+)
+def get_transport_diagnostics() -> TransportDiagnostics:
+    """Return real-time WebSocket transport metrics and connection telemetry."""
+    return connection_registry.get_diagnostics()
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")
@@ -299,56 +313,27 @@ ws_router = APIRouter(prefix="/ws")
 async def ws_live_endpoint(websocket: WebSocket) -> None:
     """Real-time live telemetry stream WebSocket."""
     await ws_manager.connect_live(websocket)
-    try:
-        await websocket.send_json(
-            {
-                "type": "CONNECTION_ESTABLISHED",
-                "message": "NeuroMove Live WebSocket connected (SIMULATION mode).",
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        ws_manager.disconnect_live(websocket)
 
 
 @ws_router.websocket("/eeg")
 async def ws_eeg_endpoint(websocket: WebSocket) -> None:
     """Real-time high-frequency synthetic EEG streaming socket."""
     await ws_manager.connect_eeg(websocket)
-    try:
-        await websocket.send_json(
-            {
-                "type": "CONNECTION_ESTABLISHED",
-                "message": "NeuroMove Synthetic EEG Stream connected.",
-                "sample_rate_hz": simulation_engine.config.sample_rate_hz,
-                "channels": simulation_engine.config.channels,
-            }
-        )
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        ws_manager.disconnect_eeg(websocket)
 
 
 @ws_router.websocket("/robot")
 async def ws_robot_endpoint(websocket: WebSocket) -> None:
     """Real-time robot telemetry and odometry stream socket."""
     await ws_manager.connect_robot(websocket)
-    try:
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        ws_manager.disconnect_robot(websocket)
 
 
 @ws_router.websocket("/safety")
 async def ws_safety_endpoint(websocket: WebSocket) -> None:
     """Real-time safety state and alert event stream socket."""
     await ws_manager.connect_safety(websocket)
-    try:
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        ws_manager.disconnect_safety(websocket)
+
+
+@ws_router.websocket("/stream")
+async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
+    """Multiplexed real-time WebSocket carrying all subscribed channels."""
+    await ws_manager.connect_all(websocket)
