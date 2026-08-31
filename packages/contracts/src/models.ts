@@ -147,6 +147,65 @@ export const RobotCommandSchema = z
   );
 export type RobotCommand = z.infer<typeof RobotCommandSchema>;
 
+export const ObstacleDataSchema = z.object({
+  front_cm: z.number().min(0).default(200),
+  left_cm: z.number().min(0).default(200),
+  right_cm: z.number().min(0).default(200),
+  obstacle_present: z.boolean().default(false),
+  direction: z.enum(["FRONT", "LEFT", "RIGHT", "NONE"]).default("NONE"),
+  distance_cm: z.number().min(0).default(200),
+  confidence: z.number().min(0).max(1).default(0.98),
+});
+export type ObstacleData = z.infer<typeof ObstacleDataSchema>;
+
+export const ScenarioStepSchema = z.object({
+  time_seconds: z.number(),
+  cue: z.string().default("REST"),
+  target_intent: IntentEnum.default("NONE"),
+  confidence_profile: z.string().default("HIGH"),
+  obstacle_direction: z.string().default("NONE"),
+  obstacle_distance_cm: z.number().default(200),
+  inject_fault: z.string().nullable().optional(),
+  trigger_emergency: z.boolean().default(false),
+  description: z.string().default(""),
+});
+export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
+
+export const SimulationScenarioSchema = z.object({
+  scenario_id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  seed: z.number().int().default(42),
+  duration_seconds: z.number().default(12),
+  trials_count: z.number().int().default(1),
+  expected_behavior: z.string().default(""),
+  steps: z.array(ScenarioStepSchema).default([]),
+});
+export type SimulationScenario = z.infer<typeof SimulationScenarioSchema>;
+
+export const SimulationStatusSchema = z.object({
+  is_running: z.boolean().default(false),
+  is_paused: z.boolean().default(false),
+  mode: OperatingModeEnum.default("SIMULATION"),
+  scenario_id: z.string().nullable().optional(),
+  scenario_name: z.string().nullable().optional(),
+  seed: z.number().int().default(42),
+  speed: z.number().default(1.0),
+  elapsed_seconds: z.number().default(0),
+  total_duration_seconds: z.number().default(0),
+  active_session_id: z.string().nullable().optional(),
+  active_trial_id: z.string().nullable().optional(),
+  current_intent: IntentEnum.default("NONE"),
+  current_cue: z.string().default("REST"),
+  runtime_state: RuntimeStateEnum.default("IDLE"),
+  safety_decision: SafetyDecisionEnum.default("STOP"),
+  signal_quality: SignalQualityMetricsSchema.nullable().optional(),
+  robot_state: RobotStateSchema.nullable().optional(),
+  obstacle_data: ObstacleDataSchema.nullable().optional(),
+  active_faults: z.array(z.string()).default([]),
+});
+export type SimulationStatus = z.infer<typeof SimulationStatusSchema>;
+
 export const ComponentHealthSchema = z.object({
   api: ComponentStatusEnum.default("healthy"),
   database: ComponentStatusEnum.default("not_initialized"),

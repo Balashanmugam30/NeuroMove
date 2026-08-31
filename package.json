@@ -16,8 +16,10 @@
     "py:test": "uv run pytest services/core/tests tests/unit",
     "py:lint": "uv run ruff check .",
     "py:format": "uv run ruff format --check .",
+    "simulation:run": "uv run python -m neuromove.simulation.cli",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\""
   },
+
   "devDependencies": {
     "prettier": "^3.5.0",
     "turbo": "^2.4.0",

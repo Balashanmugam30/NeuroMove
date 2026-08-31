@@ -163,7 +163,10 @@ Open [http://localhost:3000](http://localhost:3000) to view the NeuroMove Web Co
 ## 7. Verification & Testing Commands
 
 ```bash
-# Run all Python unit tests
+# Run deterministic simulation CLI
+pnpm simulation:run -- --scenario right-turn --seed 42
+
+# Run all Python unit tests & determinism checks
 pnpm py:test
 
 # Run Python code quality & lint checks
@@ -176,9 +179,6 @@ pnpm typecheck
 # Run Frontend unit tests (Vitest)
 pnpm test
 
-# Run End-to-End Browser smoke tests (Playwright)
-pnpm test:e2e
-
 # Build production artifacts
 pnpm build
 ```
@@ -189,8 +189,9 @@ pnpm build
 
 - [x] **01 Foundation** — Monorepo, CI, and local core scaffolds
 - [x] **02 Domain/Event Contracts** — Canonical domain model, event envelope, cross-language Zod/Pydantic parity, and light visual foundation
-- [ ] **03 Simulation Engine** — Synthetic motor-imagery EEG stream generator & SMR signal emulator
-- [ ] **04 Real-Time Streaming** — WebSocket chunking, buffer pipelines, and synchronization
+- [x] **03 Simulation Engine** — Deterministic simulation engine, synthetic SMR EEG generator (C3, Cz, C4), 9 scenarios, 2D digital twin, and scenario protocol
+- [ ] **04 Real-Time Streaming** — Dedicated real-time streaming core, WebSocket chunking, buffer pipelines, and synchronization
+
 - [ ] **05 Product UI Foundation** — High-fidelity design components and user workflows
 - [ ] **06 Live Command Center** — Real-time telemetry, state observation, and emergency controls
 - [ ] **07 EEG Lab** — Time-series oscilloscope, Welch PSD, and electrode topography

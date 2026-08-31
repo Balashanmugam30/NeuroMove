@@ -7,7 +7,12 @@ import {
   RobotStateSchema,
   EmergencyStopResponse,
   EmergencyStopResponseSchema,
+  SimulationStatus,
+  SimulationStatusSchema,
+  SimulationScenario,
+  SimulationScenarioSchema,
 } from "@neuromove/contracts";
+import { z } from "zod";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -23,7 +28,6 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
     const data = await res.json();
     return SystemStatusSchema.parse(data);
   } catch {
-    // Fallback safe simulation shell status if local backend is offline
     return {
       service: "neuromove-core",
       status: "offline",
@@ -95,4 +99,130 @@ export async function triggerEmergencyStop(): Promise<EmergencyStopResponse> {
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   const data = await res.json();
   return EmergencyStopResponseSchema.parse(data);
+}
+
+// --- Simulation Engine API Operations (Phase 03) ---
+
+export async function fetchSimulationStatus(): Promise<SimulationStatus> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/simulation/status`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return SimulationStatusSchema.parse(data);
+  } catch {
+    return {
+      is_running: false,
+      is_paused: false,
+      mode: "SIMULATION",
+      scenario_id: "right-turn",
+      scenario_name: "2. Right Turn Motor Imagery",
+      seed: 42,
+      speed: 1.0,
+      elapsed_seconds: 0,
+      total_duration_seconds: 10,
+      current_intent: "NONE",
+      current_cue: "REST",
+      runtime_state: "IDLE",
+      safety_decision: "STOP",
+      active_faults: [],
+    };
+  }
+}
+
+export async function fetchSimulationScenarios(): Promise<SimulationScenario[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/simulation/scenarios`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return z.array(SimulationScenarioSchema).parse(data);
+  } catch {
+    return [
+      {
+        scenario_id: "idle",
+        name: "1. Baseline Idle & Rest",
+        description: "Continuous baseline resting state with zero obstacles.",
+        seed: 42,
+        duration_seconds: 8,
+        trials_count: 1,
+        expected_behavior: "Safe IDLE state.",
+        steps: [],
+      },
+      {
+        scenario_id: "right-turn",
+        name: "2. Right Turn Motor Imagery",
+        description: "Standard Graz trial: Fixation -> Right Cue -> High confidence RIGHT.",
+        seed: 42,
+        duration_seconds: 10,
+        trials_count: 1,
+        expected_behavior: "Confirmed RIGHT intent.",
+        steps: [],
+      },
+    ];
+  }
+}
+
+export async function startSimulation(
+  scenario_id: string,
+  seed?: number,
+  speed?: number
+): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id, seed, speed }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
+}
+
+export async function pauseSimulation(): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/pause`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
+}
+
+export async function resumeSimulation(): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/resume`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
+}
+
+export async function setSimulationSpeed(speed: number): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/speed`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ speed }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
+}
+
+export async function stopSimulation(): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/stop`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
+}
+
+export async function resetSimulation(): Promise<SimulationStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/simulation/reset`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SimulationStatusSchema.parse(data);
 }

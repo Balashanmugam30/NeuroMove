@@ -5,12 +5,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
+from pydantic import BaseModel, Field
 
 from ..config.settings import get_settings
 from ..database.health import get_database_status
 from ..domain.enums import (
     ComponentStatus,
-    ConnectionState,
     RuntimeState,
     SafetyDecision,
 )
@@ -25,6 +25,8 @@ from ..domain.models import (
     utc_now,
 )
 from ..safety.state_machine import default_safety_state_machine
+from ..simulation.runner import SimulationStatus, simulation_engine
+from ..simulation.scenarios import SimulationScenario, list_scenarios
 from .schemas import (
     CalibrationStartRequest,
     CalibrationStartResponse,
@@ -32,8 +34,12 @@ from .schemas import (
     EEGSpectrumResponse,
     EmergencyStopResponse,
 )
+from .ws_manager import ws_manager
 
 api_router = APIRouter(prefix="/api")
+
+
+# --- System Diagnostic & Health ---
 
 
 @api_router.get("/system/status", response_model=SystemStatus, tags=["System"])
@@ -47,8 +53,12 @@ def get_system_status() -> SystemStatus:
     components = ComponentHealth(
         api=ComponentStatus.HEALTHY,
         database=db_status,
-        eeg=ComponentStatus.NOT_CONNECTED,
-        robot=ComponentStatus.NOT_CONNECTED,
+        eeg=ComponentStatus.HEALTHY
+        if simulation_engine.clock.is_running
+        else ComponentStatus.NOT_CONNECTED,
+        robot=ComponentStatus.HEALTHY
+        if simulation_engine.clock.is_running
+        else ComponentStatus.NOT_CONNECTED,
         safety=ComponentStatus.READY
         if not safety_state.emergency_active
         else ComponentStatus.DEGRADED,
@@ -64,6 +74,98 @@ def get_system_status() -> SystemStatus:
     )
 
 
+# --- Simulation Control Endpoints (Phase 03) ---
+
+
+class SimulationStartRequest(BaseModel):
+    scenario_id: str = Field(default="right-turn", description="Predefined scenario ID to run")
+    seed: int | None = Field(default=None, description="Optional random seed for reproducibility")
+    speed: float | None = Field(default=None, ge=0.1, le=20.0, description="Clock speed multiplier")
+
+
+class SimulationSpeedRequest(BaseModel):
+    speed: float = Field(
+        default=1.0, ge=0.1, le=20.0, description="Clock speed multiplier (1x, 2x, 5x, 10x)"
+    )
+
+
+class SimulationStepRequest(BaseModel):
+    delta_seconds: float = Field(
+        default=0.1, ge=0.01, le=5.0, description="Time delta to advance simulation"
+    )
+
+
+@api_router.get("/simulation/status", response_model=SimulationStatus, tags=["Simulation"])
+def get_simulation_status() -> SimulationStatus:
+    """Return live status of the deterministic simulation engine."""
+    return simulation_engine.get_status()
+
+
+@api_router.get(
+    "/simulation/scenarios", response_model=list[SimulationScenario], tags=["Simulation"]
+)
+def get_simulation_scenarios() -> list[SimulationScenario]:
+    """List all available predefined simulation scenarios."""
+    return list_scenarios()
+
+
+@api_router.post("/simulation/start", response_model=SimulationStatus, tags=["Simulation"])
+def start_simulation(payload: SimulationStartRequest) -> SimulationStatus:
+    """Initialize and run a scenario."""
+    status_res = simulation_engine.start_scenario(payload.scenario_id, seed=payload.seed)
+    if payload.speed is not None:
+        status_res = simulation_engine.set_speed(payload.speed)
+    return status_res
+
+
+@api_router.post("/simulation/pause", response_model=SimulationStatus, tags=["Simulation"])
+def pause_simulation() -> SimulationStatus:
+    """Pause simulation clock."""
+    return simulation_engine.pause()
+
+
+@api_router.post("/simulation/resume", response_model=SimulationStatus, tags=["Simulation"])
+def resume_simulation() -> SimulationStatus:
+    """Resume simulation clock."""
+    return simulation_engine.resume()
+
+
+@api_router.post("/simulation/speed", response_model=SimulationStatus, tags=["Simulation"])
+def set_simulation_speed(payload: SimulationSpeedRequest) -> SimulationStatus:
+    """Change simulation clock speed."""
+    return simulation_engine.set_speed(payload.speed)
+
+
+@api_router.post("/simulation/stop", response_model=SimulationStatus, tags=["Simulation"])
+def stop_simulation() -> SimulationStatus:
+    """Stop active simulation."""
+    return simulation_engine.stop()
+
+
+@api_router.post("/simulation/reset", response_model=SimulationStatus, tags=["Simulation"])
+def reset_simulation() -> SimulationStatus:
+    """Reset simulation engine state completely."""
+    return simulation_engine.reset()
+
+
+@api_router.post("/simulation/step", response_model=SimulationStatus, tags=["Simulation"])
+def step_simulation(payload: SimulationStepRequest) -> SimulationStatus:
+    """Advance simulation deterministically by exact delta_seconds."""
+    simulation_engine.step(payload.delta_seconds)
+    return simulation_engine.get_status()
+
+
+@api_router.post(
+    "/simulation/scenario/{scenario_id}/run", response_model=SimulationStatus, tags=["Simulation"]
+)
+def run_scenario_endpoint(scenario_id: str) -> SimulationStatus:
+    """Convenience endpoint to launch a specific scenario."""
+    return simulation_engine.start_scenario(scenario_id)
+
+
+# --- Safety State Machine ---
+
+
 @api_router.get("/safety/state", response_model=SafetyState, tags=["Safety"])
 def get_safety_state() -> SafetyState:
     """Retrieve current validated state and risk indicators from the safety state machine."""
@@ -74,6 +176,7 @@ def get_safety_state() -> SafetyState:
 def post_emergency_stop() -> EmergencyStopResponse:
     """Trigger immediate emergency stop across all local actuators and state machines."""
     default_safety_state_machine.trigger_emergency_stop(reason="Operator API emergency halt")
+    simulation_engine.robot_simulator.emergency_stop_triggered = True
     return EmergencyStopResponse(
         success=True,
         state=RuntimeState.EMERGENCY,
@@ -89,23 +192,27 @@ def post_safety_reset() -> SafetyState:
     return default_safety_state_machine.get_safety_state()
 
 
+# --- Real-Time Telemetry & EEG ---
+
+
 @api_router.get("/eeg/latest", response_model=EEGLatestResponse, tags=["EEG"])
 def get_eeg_latest() -> EEGLatestResponse:
     """Return latest raw/filtered EEG epoch."""
     settings = get_settings()
+    sq = simulation_engine.eeg_generator.compute_signal_quality()
     return EEGLatestResponse(
         timestamp=utc_now(),
-        channels=["C3", "Cz", "C4"],
-        sampling_rate_hz=250,
+        channels=simulation_engine.config.channels,
+        sampling_rate_hz=simulation_engine.config.sample_rate_hz,
         samples=[],
         signal_quality=SignalQuality(
-            overall_score=0.0,
-            c3_impedance_kohm=0.0,
-            c4_impedance_kohm=0.0,
-            cz_impedance_kohm=0.0,
-            is_acceptable=False,
+            overall_score=sq.overall_score,
+            c3_impedance_kohm=sq.channels.get("C3", 0.0),
+            c4_impedance_kohm=sq.channels.get("C4", 0.0),
+            cz_impedance_kohm=sq.channels.get("Cz", 0.0),
+            is_acceptable=sq.is_acceptable,
         ),
-        is_live_stream=False,
+        is_live_stream=simulation_engine.clock.is_running,
         mode=settings.neuromove_mode,
     )
 
@@ -115,26 +222,20 @@ def get_eeg_spectrum() -> EEGSpectrumResponse:
     """Return spectral analysis and ERD/ERS power metrics."""
     return EEGSpectrumResponse(
         timestamp=utc_now(),
-        frequencies_hz=[],
-        mu_band_power={"C3": 0.0, "Cz": 0.0, "C4": 0.0},
-        beta_band_power={"C3": 0.0, "Cz": 0.0, "C4": 0.0},
-        erd_ers_percent={"C3": 0.0, "C4": 0.0},
+        frequencies_hz=[8.0, 10.0, 12.0, 16.0, 20.0, 24.0],
+        mu_band_power={"C3": 12.4, "Cz": 8.1, "C4": 14.2},
+        beta_band_power={"C3": 5.1, "Cz": 4.0, "C4": 5.6},
+        erd_ers_percent={
+            "C3": -35.0 if simulation_engine.last_intent == "RIGHT" else 5.0,
+            "C4": -40.0 if simulation_engine.last_intent == "LEFT" else 5.0,
+        },
     )
 
 
 @api_router.get("/robot/state", response_model=RobotState, tags=["Robot"])
 def get_robot_state() -> RobotState:
     """Return physical or simulated mobility platform status."""
-    settings = get_settings()
-    return RobotState(
-        connection_state=ConnectionState.DISCONNECTED,
-        battery_pct=0.0,
-        linear_velocity_mps=0.0,
-        angular_velocity_radps=0.0,
-        emergency_stop_triggered=default_safety_state_machine.current_state
-        == RuntimeState.EMERGENCY,
-        mode=settings.neuromove_mode,
-    )
+    return simulation_engine.robot_simulator.get_state()
 
 
 @api_router.get("/user/profile", response_model=UserProfile, tags=["User"])
@@ -172,7 +273,7 @@ def stop_calibration() -> dict[str, str]:
 
 @api_router.post("/command/test", tags=["Robot"])
 def test_command(payload: CommandPayload) -> dict[str, Any]:
-    """Test command validation without motor execution in Phase 01."""
+    """Test command validation without motor execution."""
     if not default_safety_state_machine.is_safe_to_actuate:
         return {
             "status": "blocked",
@@ -189,14 +290,15 @@ def test_command(payload: CommandPayload) -> dict[str, Any]:
     }
 
 
-# WebSocket Route Stubs
+# --- WebSocket Stream Endpoints ---
+
 ws_router = APIRouter(prefix="/ws")
 
 
 @ws_router.websocket("/live")
 async def ws_live_endpoint(websocket: WebSocket) -> None:
     """Real-time live telemetry stream WebSocket."""
-    await websocket.accept()
+    await ws_manager.connect_live(websocket)
     try:
         await websocket.send_json(
             {
@@ -208,43 +310,45 @@ async def ws_live_endpoint(websocket: WebSocket) -> None:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
-        pass
+        ws_manager.disconnect_live(websocket)
 
 
 @ws_router.websocket("/eeg")
 async def ws_eeg_endpoint(websocket: WebSocket) -> None:
-    """Real-time high-frequency raw EEG streaming socket."""
-    await websocket.accept()
+    """Real-time high-frequency synthetic EEG streaming socket."""
+    await ws_manager.connect_eeg(websocket)
     try:
         await websocket.send_json(
             {
-                "type": "EEG_DISCONNECTED",
-                "message": "Hardware acquisition offline.",
+                "type": "CONNECTION_ESTABLISHED",
+                "message": "NeuroMove Synthetic EEG Stream connected.",
+                "sample_rate_hz": simulation_engine.config.sample_rate_hz,
+                "channels": simulation_engine.config.channels,
             }
         )
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
-        pass
+        ws_manager.disconnect_eeg(websocket)
 
 
 @ws_router.websocket("/robot")
 async def ws_robot_endpoint(websocket: WebSocket) -> None:
     """Real-time robot telemetry and odometry stream socket."""
-    await websocket.accept()
+    await ws_manager.connect_robot(websocket)
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
-        pass
+        ws_manager.disconnect_robot(websocket)
 
 
 @ws_router.websocket("/safety")
 async def ws_safety_endpoint(websocket: WebSocket) -> None:
     """Real-time safety state and alert event stream socket."""
-    await websocket.accept()
+    await ws_manager.connect_safety(websocket)
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
-        pass
+        ws_manager.disconnect_safety(websocket)
