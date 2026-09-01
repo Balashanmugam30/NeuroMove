@@ -3,4 +3,5 @@ export * from "./models";
 export * from "./events";
 export * from "./analysis";
 export * from "./dataset";
+export * from "./preprocessing";
 

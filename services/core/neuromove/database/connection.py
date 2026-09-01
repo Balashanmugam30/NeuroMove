@@ -156,6 +156,62 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 003: EEG Preprocessing & DSP Pipeline
+            cursor.execute("SELECT 1 FROM schema_migrations WHERE version = '003_preprocessing';")
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS preprocessing_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        pipeline_version TEXT NOT NULL,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS preprocessing_results (
+                        result_id TEXT PRIMARY KEY,
+                        pipeline_version TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        source_kind TEXT NOT NULL,
+                        dataset_id TEXT,
+                        recording_id TEXT,
+                        scenario_id TEXT,
+                        parent_result_id TEXT,
+                        input_sample_rate_hz REAL NOT NULL,
+                        output_sample_rate_hz REAL NOT NULL,
+                        input_channels_json TEXT NOT NULL,
+                        output_channels_json TEXT NOT NULL,
+                        duration_seconds REAL NOT NULL,
+                        event_count INTEGER NOT NULL DEFAULT 0,
+                        artifact_file_path TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        integrity_status TEXT NOT NULL,
+                        integrity_json TEXT NOT NULL,
+                        stage_audit_json TEXT NOT NULL,
+                        warnings_json TEXT NOT NULL,
+                        software_versions_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS preprocessing_lineage (
+                        child_result_id TEXT NOT NULL,
+                        parent_result_id TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        PRIMARY KEY (child_result_id, parent_result_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('003_preprocessing');"
+                )
+                conn.commit()
+
             self._is_initialized = True
             logger.info("SQLite database initialized successfully at %s", db_path)
         except Exception as exc:

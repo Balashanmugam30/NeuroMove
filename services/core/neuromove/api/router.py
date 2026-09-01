@@ -3,7 +3,7 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Response, WebSocket, status
+from fastapi import APIRouter, HTTPException, Query, Response, WebSocket, status
 from pydantic import BaseModel, Field
 
 from ..analysis.models import (
@@ -476,6 +476,108 @@ def get_dataset_quality_report(dataset_id: str) -> Any:
     from neuromove.datasets.service import get_dataset_service
 
     return get_dataset_service().get_quality_report(dataset_id)
+
+
+# --- EEG Preprocessing & DSP Endpoints ---
+
+
+def get_preprocessing_service() -> Any:
+    from neuromove.preprocessing.service import PreprocessingService
+
+    return PreprocessingService()
+
+
+@api_router.get("/eeg/preprocessing/config/default", tags=["Preprocessing"])
+def get_default_preprocessing_config() -> Any:
+    """Retrieve canonical default preprocessing configuration."""
+    from neuromove.preprocessing.models import PreprocessingConfig
+
+    return PreprocessingConfig()
+
+
+@api_router.post("/eeg/preprocessing/preview", tags=["Preprocessing"])
+def post_preprocessing_preview(payload: dict[str, Any]) -> Any:
+    """Validate configuration parameters and return preview execution graph."""
+    from neuromove.preprocessing.models import PreprocessingRequest
+
+    req = PreprocessingRequest(**payload)
+    return get_preprocessing_service().preview_pipeline(req)
+
+
+@api_router.post("/eeg/preprocessing/run", tags=["Preprocessing"])
+def post_preprocessing_run(payload: dict[str, Any]) -> Any:
+    """Execute complete preprocessing pipeline non-destructively and persist artifact."""
+    from neuromove.preprocessing.models import PreprocessingRequest
+
+    req = PreprocessingRequest(**payload)
+    return get_preprocessing_service().run_preprocessing(req)
+
+
+@api_router.get("/eeg/preprocessing/results", tags=["Preprocessing"])
+def list_preprocessing_results(limit: int = 50) -> Any:
+    """List recent preprocessing results."""
+    return get_preprocessing_service().list_results(limit=limit)
+
+
+@api_router.get("/eeg/preprocessing/results/{result_id}", tags=["Preprocessing"])
+def get_preprocessing_result(result_id: str) -> Any:
+    """Retrieve preprocessed result details and stage audit."""
+    res = get_preprocessing_service().get_result(result_id)
+    if not res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Preprocessing result '{result_id}' not found.",
+        )
+    return res
+
+
+@api_router.get("/eeg/preprocessing/results/{result_id}/signal", tags=["Preprocessing"])
+def get_preprocessing_signal(
+    result_id: str,
+    channels: str | None = Query(default=None),
+    start_sec: float = Query(default=0.0),
+    duration_sec: float = Query(default=5.0),
+) -> Any:
+    """Extract sliced time-series signal from preprocessed artifact for comparison."""
+    ch_list = [c.strip() for c in channels.split(",")] if channels else None
+    try:
+        return get_preprocessing_service().get_result_signal(
+            result_id=result_id,
+            channels=ch_list,
+            start_sec=start_sec,
+            duration_sec=duration_sec,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Preprocessing artifact '{result_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/eeg/preprocessing/results/{result_id}/manifest", tags=["Preprocessing"])
+def get_preprocessing_manifest(result_id: str) -> Any:
+    """Export complete JSON reproducibility manifest for a preprocessing result."""
+    try:
+        return get_preprocessing_service().get_manifest(result_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Preprocessing result '{result_id}' not found.",
+        ) from exc
+
+
+@api_router.post("/eeg/preprocessing/ica/fit", tags=["Preprocessing"])
+def post_fit_ica(payload: dict[str, Any]) -> Any:
+    """Fit ICA on source recording and return components for inspection."""
+    from neuromove.preprocessing.models import PreprocessingRequest
+    from neuromove.preprocessing.pipeline import fit_ica_decomposition
+
+    req = PreprocessingRequest(**payload)
+    svc = get_preprocessing_service()
+    raw, _, _ = svc._get_source_raw(req)
+    n_comp = payload.get("n_components", 15)
+    rnd_state = payload.get("random_state", 42)
+    return fit_ica_decomposition(raw, n_components=n_comp, random_state=rnd_state)
 
 
 # --- WebSocket Stream Endpoints ---

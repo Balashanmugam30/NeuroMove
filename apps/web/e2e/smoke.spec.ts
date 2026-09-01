@@ -87,6 +87,16 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     await expect(page.getByText(/participant run explorer/i).first()).toBeVisible();
     await expect(page.getByText(/strict subject boundary/i).first()).toBeVisible();
 
+    // 10. Navigate to EEG Preprocessing & DSP Workspace (Phase 09)
+    const preprocessingLink = page.getByRole("link", { name: /preprocessing & dsp/i }).first();
+    await preprocessingLink.click();
+    await expect(page).toHaveURL(/.*\/eeg\/preprocessing/);
+    await expect(
+      page.getByRole("heading", { name: /eeg preprocessing & dsp/i })
+    ).toBeVisible();
+    await expect(page.getByText(/zero-phase band-pass filter/i).first()).toBeVisible();
+    await expect(page.getByText(/pipeline execution stage audit/i).first()).toBeVisible();
+
     // Ensure zero React hydration errors occurred across all navigated pages
     const hydrationErrors = consoleErrors.filter((err) =>
       err.toLowerCase().includes("hydration")
@@ -94,3 +104,4 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     expect(hydrationErrors).toHaveLength(0);
   });
 });
+

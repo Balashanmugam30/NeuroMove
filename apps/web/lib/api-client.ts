@@ -34,6 +34,17 @@ import {
   IngestionQualityReportSchema,
   DatasetSignalResponse,
   DatasetSignalResponseSchema,
+  PreprocessingConfig,
+  PreprocessingConfigSchema,
+  PreprocessingRequest,
+  PreprocessingPreview,
+  PreprocessingPreviewSchema,
+  PreprocessingResult,
+  PreprocessingResultSchema,
+  PreprocessingManifest,
+  PreprocessingManifestSchema,
+  PreprocessingSignalResponse,
+  PreprocessingSignalResponseSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -444,5 +455,144 @@ export async function fetchDatasetQualityReport(
   const data = await res.json();
   return IngestionQualityReportSchema.parse(data);
 }
+
+// --- Preprocessing & DSP API Operations (Phase 09) ---
+
+export async function fetchDefaultPreprocessingConfig(): Promise<PreprocessingConfig> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/eeg/preprocessing/config/default`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return PreprocessingConfigSchema.parse(data);
+  } catch {
+    return {
+      pipeline_version: "EEG_PREPROCESSING_V1",
+      reference_type: "average",
+      reference_channels: [],
+      highpass_hz: 0.5,
+      lowpass_hz: 40.0,
+      notch: { enabled: false, frequencies_hz: [50.0], notch_width_hz: 2.0 },
+      resample: { enabled: false, target_hz: null, anti_aliasing: true },
+      bad_channels: [],
+      artifact_method: "NONE",
+      ica_config: {
+        enabled: false,
+        n_components: 15,
+        method: "fastica",
+        random_state: 42,
+        fit_channels: [],
+        excluded_components: [],
+      },
+    };
+  }
+}
+
+export async function previewPreprocessingPipeline(
+  request: PreprocessingRequest
+): Promise<PreprocessingPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/preprocessing/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PreprocessingPreviewSchema.parse(data);
+}
+
+export async function runPreprocessingPipeline(
+  request: PreprocessingRequest
+): Promise<PreprocessingResult> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/preprocessing/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PreprocessingResultSchema.parse(data);
+}
+
+export async function fetchPreprocessingResults(
+  limit: number = 20
+): Promise<PreprocessingResult[]> {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/eeg/preprocessing/results?limit=${limit}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return z.array(PreprocessingResultSchema).parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchPreprocessingResult(
+  resultId: string
+): Promise<PreprocessingResult> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/preprocessing/results/${resultId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PreprocessingResultSchema.parse(data);
+}
+
+export async function fetchPreprocessingSignal(
+  resultId: string,
+  channels?: string[],
+  startSec?: number,
+  durationSec?: number
+): Promise<PreprocessingSignalResponse> {
+  const params = new URLSearchParams();
+  if (channels && channels.length > 0) params.append("channels", channels.join(","));
+  if (startSec !== undefined) params.append("start_sec", startSec.toString());
+  if (durationSec !== undefined) params.append("duration_sec", durationSec.toString());
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/preprocessing/results/${resultId}/signal${query}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PreprocessingSignalResponseSchema.parse(data);
+}
+
+export async function fetchPreprocessingManifest(
+  resultId: string
+): Promise<PreprocessingManifest> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/preprocessing/results/${resultId}/manifest`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PreprocessingManifestSchema.parse(data);
+}
+
+export async function fitICA(
+  request: PreprocessingRequest,
+  nComponents: number = 15,
+  randomState: number = 42
+): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/preprocessing/ica/fit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...request,
+      n_components: nComponents,
+      random_state: randomState,
+    }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
 
 

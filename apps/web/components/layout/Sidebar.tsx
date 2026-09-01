@@ -17,6 +17,7 @@ import {
   BookOpen,
   Settings,
   Database,
+  Sliders,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ const NAV_GROUPS: NavGroup[] = [
     name: "BCI Pipeline",
     items: [
       { href: "/eeg", label: "EEG Lab", icon: Waves },
+      { href: "/eeg/preprocessing", label: "Preprocessing & DSP", icon: Sliders, badge: "Phase 09" },
       { href: "/calibration", label: "Calibration", icon: Crosshair },
       { href: "/models", label: "AI Models", icon: BrainCircuit },
     ],

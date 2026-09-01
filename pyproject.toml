@@ -42,7 +42,7 @@ packages = ["neuromove", "services/core/neuromove"]
 minversion = "8.0"
 testpaths = ["services/core/tests", "tests"]
 python_files = ["test_*.py"]
-pythonpath = [".", "services/core"]
+pythonpath = ["services/core", "."]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]

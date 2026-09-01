@@ -193,8 +193,8 @@ pnpm build
 - [x] **05 Product UI Foundation** — High-fidelity design system 2.0, light visual language, and unified application information architecture
 - [x] **06 Live Command Center** — Flagship real-time neuro-robotics control experience, 6-stage pipeline breadcrumb, dual-channel state synchronization, and emergency controls
 - [x] **07 EEG Lab** — Research-grade signal visualization, MNE Welch/Multitaper PSD, band power decomposition, Morlet wavelet TFR, 10-20 topology, and provenance exports
-- [ ] **08 Public Dataset** — Graz / BCI Competition dataset ingestion & benchmarking
-- [ ] **09 Preprocessing** — Bandpass (8–30 Hz), notch (50/60 Hz), CAR, and Laplacian filtering
+- [x] **08 Public Datasets** — PhysioNet EEGBCI (64-channel, 160 Hz, 109 subjects) ingestion, SHA-256 verified cache, participant run explorer, and replay
+- [x] **09 Preprocessing & DSP** — Configurable zero-phase FIR band-pass (0.5–40 Hz), spatial referencing (CAR), line-noise notch, polyphase resampling, FastICA decomposition, stage auditing, and dual RAW vs PROCESSED verification
 - [ ] **10 CSP + LDA** — Common Spatial Patterns spatial filter & Shrinkage Linear Discriminant Analysis
 - [ ] **11 CSP + SVM** — Non-linear Support Vector Machine classifier & kernel optimization
 - [ ] **12 Model Lab** — Model artifact inspection, ROC curves, and cross-validation matrix
