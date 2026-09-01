@@ -1,217 +1,318 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { MetricCard } from "@/components/ui/MetricCard";
-import { DataTable, Column } from "@/components/ui/DataTable";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { InsightCard } from "@/components/ui/InsightCard";
-import { Button } from "@/components/ui/Button";
-import { BrainCircuit, Cpu, Sparkles, Download, CheckCircle2 } from "lucide-react";
-import { ModelArtifact } from "@neuromove/contracts";
+import {
+  ClassificationTask,
+  DecoderPipelineConfig,
+  BenchmarkPreview,
+  ModelManifest,
+  ModelSummary,
+  EpochSummary,
+} from "@neuromove/contracts";
+import {
+  fetchClassificationTasks,
+  previewDecoderBenchmark,
+  runDecoderBenchmark,
+  fetchDecoderModels,
+  fetchDecoderModelManifest,
+  fetchEpochSets,
+} from "@/lib/api-client";
+import { TaskSelector } from "@/components/models/TaskSelector";
+import { PipelineConfigurator } from "@/components/models/PipelineConfigurator";
+import { BenchmarkRunner } from "@/components/models/BenchmarkRunner";
+import { MetricsCard } from "@/components/models/MetricsCard";
+import { ConfusionMatrixViewer } from "@/components/models/ConfusionMatrixViewer";
+import { PerSubjectBarChart } from "@/components/models/PerSubjectBarChart";
+import { CSPPatternViewer } from "@/components/models/CSPPatternViewer";
+import { ModelRegistryTable } from "@/components/models/ModelRegistryTable";
+import { ModelDetailDrawer } from "@/components/models/ModelDetailDrawer";
+import {
+  Sparkles,
+  RotateCcw,
+} from "lucide-react";
 
-export default function ModelsPage() {
+
+const DEFAULT_TASKS: ClassificationTask[] = [
+  {
+    task_id: "LEFT_VS_RIGHT_MOTOR_IMAGERY_V1",
+    task_name: "Left Hand vs Right Hand Motor Imagery",
+    description: "Binary sensorimotor rhythm decoding for contralateral motor cortex activation (C3 vs C4).",
+    class_labels: ["LEFT_IMAGERY", "RIGHT_IMAGERY"],
+    label_mapping: { LEFT_IMAGERY: 0, RIGHT_IMAGERY: 1 },
+    version: "1.0.0",
+  },
+  {
+    task_id: "FEET_VS_FISTS_V1",
+    task_name: "Feet vs Bilateral Fists Motor Imagery",
+    description: "Binary motor imagery task for sagittal (Cz) vs lateral sensorimotor rhythm modulation.",
+    class_labels: ["FEET_IMAGERY", "BOTH_FISTS_IMAGERY"],
+    label_mapping: { FEET_IMAGERY: 0, BOTH_FISTS_IMAGERY: 1 },
+    version: "1.0.0",
+  },
+];
+
+export default function ModelsClassicalPage() {
   const { operatingMode } = useMode();
 
-  const [artifacts] = useState<ModelArtifact[]>([
-    {
-      model_id: "mdl_baseline_csp_lda_v1",
-      model_type: "CSP_LDA",
-      version: "1.0.0",
-      created_at: "2026-09-01T00:00:00.000Z",
-      training_dataset: "synthetic_sim_v1",
-      feature_pipeline: "Butterworth_8_30Hz_CAR_CSP",
-      classifier: "Shrinkage_Regularized_LDA",
-      metrics_reference: {
-        accuracy: 0.88,
-        cohen_kappa: 0.76,
-        latency_ms: 12.4,
-      },
-      artifact_path: "artifacts/models/baseline_csp_lda_v1.pkl",
-      status: "ready",
-    },
-    {
-      model_id: "mdl_eegnet_smr_candidate",
-      model_type: "EEGNet_Compact",
-      version: "0.2.0",
-      created_at: "2026-08-31T00:00:00.000Z",
-      training_dataset: "synthetic_sim_v1",
-      feature_pipeline: "TemporalSpatialConv2D",
-      classifier: "SoftmaxCrossEntropy",
-      metrics_reference: {
-        accuracy: 0.91,
-        cohen_kappa: 0.82,
-        latency_ms: 18.2,
-      },
-      artifact_path: "artifacts/models/eegnet_v0.2.0.onnx",
-      status: "ready",
-    },
-  ]);
+  const [tasks, setTasks] = useState<ClassificationTask[]>(DEFAULT_TASKS);
+  const [epochSets, setEpochSets] = useState<EpochSummary[]>([]);
+  const [models, setModels] = useState<ModelSummary[]>([]);
+  const [activeManifest, setActiveManifest] = useState<ModelManifest | null>(null);
+  const [selectedDrawerManifest, setSelectedDrawerManifest] =
+    useState<ModelManifest | null>(null);
 
-  const columns: Column<ModelArtifact>[] = [
-    {
-      key: "model_id",
-      header: "Model Artifact ID",
-      render: (item) => (
-        <span className="font-mono text-2xs font-bold text-blue-700">
-          {item.model_id}
-        </span>
-      ),
+
+  const [pipelineConfig, setPipelineConfig] = useState<DecoderPipelineConfig>({
+    pipeline_version: "DECODER_PIPELINE_V1",
+    task_id: "LEFT_VS_RIGHT_MOTOR_IMAGERY_V1",
+    epoch_set_id: "",
+    channels: [],
+    csp_config: {
+      csp_version: "MNE_CSP_V1",
+      n_components: 4,
+      cov_est: "concat",
+      log: true,
+      norm_trace: false,
+      regularization: null,
+      component_order: "mutual_info",
+      transform_into: "average_power",
     },
-    {
-      key: "model_type",
-      header: "Type",
-      render: (item) => (
-        <span className="font-semibold text-slate-800">{item.model_type}</span>
-      ),
+    classifier_config: {
+      classifier_id: "lda_baseline",
+      classifier_type: "LDA",
+      solver: "svd",
+      shrinkage: null,
+      kernel: "linear",
+      c_param: 1.0,
+      gamma: "scale",
+      dummy_strategy: "prior",
+      random_state: 42,
+      version: "1.0.0",
     },
-    {
-      key: "feature_pipeline",
-      header: "DSP Feature Pipeline",
-      render: (item) => (
-        <span className="font-mono text-2xs text-slate-600">
-          {item.feature_pipeline}
-        </span>
-      ),
-    },
-    {
-      key: "classifier",
-      header: "Classifier",
-      render: (item) => (
-        <span className="text-2xs text-slate-700 font-medium">
-          {item.classifier}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (item) => <StatusBadge status={item.status} size="sm" />,
-    },
-  ];
+    evaluation_protocol: "LEAVE_ONE_SUBJECT_OUT",
+    evaluation_mode: "INTER_SUBJECT",
+    n_splits: 5,
+    scale_features: false,
+    random_state: 42,
+  });
+
+  const [preview, setPreview] = useState<BenchmarkPreview | null>(null);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Initial load of tasks, epoch sets, and models
+  const loadInitialData = useCallback(async () => {
+    try {
+      const [fetchedTasks, fetchedEpochs, fetchedModels] = await Promise.all([
+        fetchClassificationTasks().catch(() => []),
+        fetchEpochSets().catch(() => []),
+        fetchDecoderModels().catch(() => []),
+      ]);
+
+      setTasks(fetchedTasks);
+      setEpochSets(fetchedEpochs);
+      setModels(fetchedModels);
+
+      if (fetchedTasks.length > 0 && fetchedEpochs.length > 0) {
+        setPipelineConfig((prev) => ({
+          ...prev,
+          task_id: prev.task_id || fetchedTasks[0].task_id,
+          epoch_set_id: prev.epoch_set_id || fetchedEpochs[0].epoch_set_id,
+        }));
+      }
+
+      if (fetchedModels.length > 0) {
+        // Load latest manifest
+        const latest = await fetchDecoderModelManifest(fetchedModels[0].model_id).catch(() => null);
+        if (latest) setActiveManifest(latest);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to initialize classical decoding workspace.");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Update validation preview on config changes
+  useEffect(() => {
+    if (!pipelineConfig.task_id || !pipelineConfig.epoch_set_id) return;
+
+    let isMounted = true;
+    previewDecoderBenchmark(pipelineConfig)
+      .then((res) => {
+        if (isMounted) setPreview(res);
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setPreview({
+            valid: false,
+            task_id: pipelineConfig.task_id,
+            epoch_set_id: pipelineConfig.epoch_set_id,
+            total_epochs: 0,
+            eligible_epochs: 0,
+            excluded_epochs: 0,
+            class_distribution: {},
+            subjects_found: [],
+            subject_count: 0,
+            channels: [],
+            sampling_rate_hz: 0,
+            protocol: pipelineConfig.evaluation_protocol,
+            expected_folds: 0,
+            warnings: [],
+            errors: [err.message || "Preview validation failed."],
+          });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pipelineConfig]);
+
+  const handleRunBenchmark = async () => {
+    setIsRunning(true);
+    setErrorMsg(null);
+    try {
+      const manifest = await runDecoderBenchmark(pipelineConfig);
+      setActiveManifest(manifest);
+
+      // Refresh registered models
+      const updatedModels = await fetchDecoderModels().catch(() => []);
+      setModels(updatedModels);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Decoding benchmark failed.");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleSelectModel = async (modelId: string) => {
+    try {
+      const manifest = await fetchDecoderModelManifest(modelId);
+      setSelectedDrawerManifest(manifest);
+    } catch (err: any) {
+      setErrorMsg(err.message || `Failed to fetch manifest for ${modelId}.`);
+    }
+  };
 
   return (
     <div className="space-y-6 font-sans">
       <PageHeader
         category="BCI Pipeline"
-        title="AI Models & Spatial Filter Registry"
-        description="Filter Bank Common Spatial Pattern (CSP) decompositions, Regularized LDA hyperplanes, and model artifact evaluation."
+        title="CSP Spatial Filtering & Classical Decoders"
+        description="Leakage-safe supervised motor-imagery decoding with Common Spatial Patterns (CSP), Linear Discriminant Analysis (LDA), and Support Vector Machines (SVM)."
         mode={operatingMode}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Download className="w-3.5 h-3.5 text-slate-500" />}
-          >
-            Export Weights
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={loadInitialData}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Refresh Registry</span>
+            </button>
+          </div>
         }
       />
 
-      {/* Model Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Active Model"
-          value="CSP_LDA"
-          subtitle="Baseline v1.0.0 Active"
-          variant="brand"
-          icon={<BrainCircuit className="w-4 h-4 text-blue-600" />}
-        />
-        <MetricCard
-          title="Spatial Filters"
-          value="6 Components"
-          subtitle="3 Left-hand, 3 Right-hand"
-          icon={<Cpu className="w-4 h-4 text-teal-600" />}
-        />
-        <MetricCard
-          title="Inference Latency"
-          value="12.4 ms"
-          subtitle="Local single-batch inference"
-          variant="safe"
-          icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-        />
-        <MetricCard
-          title="Training Source"
-          value="Synthetic Sim"
-          subtitle="Seed 42 Calibration Set"
-          variant="accent"
-          source="MODEL REGISTRY"
-        />
-      </div>
+      {/* Global error banner if present */}
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="font-bold underline ml-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
-      {/* Model Artifacts Table */}
-      <SectionCard
-        title="Registered Model Artifacts"
-        description="Versioned classification pipelines and validated spatial projection weights"
-      >
-        <DataTable
-          columns={columns}
-          data={artifacts}
-          keyExtractor={(item) => item.model_id}
-        />
-      </SectionCard>
+      {/* Step 1: Classification Task */}
+      <TaskSelector
+        tasks={tasks}
+        selectedTaskId={pipelineConfig.task_id}
+        onSelectTask={(taskId) =>
+          setPipelineConfig((prev) => ({ ...prev, task_id: taskId }))
+        }
+        disabled={isRunning}
+      />
 
-      {/* Mathematical Pipeline Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SectionCard
-          title="Common Spatial Patterns (CSP) Matrix"
-          description="Projection filter W derived from covariance matrix eigenvalues"
-        >
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono space-y-2 text-slate-700">
-            <div className="flex justify-between pb-1.5 border-b border-slate-200 text-2xs font-bold text-slate-500">
-              <span>Channel</span>
-              <span>Filter Component 1</span>
-              <span>Filter Component 2</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-bold text-blue-700">C3</span>
-              <span>+0.7241</span>
-              <span>-0.1284</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-bold text-slate-700">Cz</span>
-              <span>-0.0892</span>
-              <span>+0.0415</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-bold text-teal-700">C4</span>
-              <span>-0.6819</span>
-              <span>+0.7932</span>
-            </div>
+      {/* Step 2: Pipeline Hyperparameters */}
+      <PipelineConfigurator
+        config={pipelineConfig}
+        onChange={setPipelineConfig}
+        availableEpochSets={epochSets.map((e) => ({
+          epoch_set_id: e.epoch_set_id,
+          total_events: e.total_events,
+          source_kind: e.source_kind,
+        }))}
+        disabled={isRunning}
+      />
+
+      {/* Step 3: Validation & Execution */}
+      <BenchmarkRunner
+        preview={preview}
+        isRunning={isRunning}
+        onRunBenchmark={handleRunBenchmark}
+        disabled={epochSets.length === 0}
+      />
+
+      {/* Results Section if an active benchmark manifest exists */}
+      {activeManifest && (
+        <div className="space-y-6 pt-2">
+          {/* Headline Metrics */}
+          <MetricsCard
+            metrics={activeManifest.metrics}
+            taskName={activeManifest.task.task_name}
+            classifierName={`${activeManifest.classifier_config.classifier_type} (${activeManifest.csp_config.n_components} CSP)`}
+          />
+
+          {/* Research Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ConfusionMatrixViewer
+              data={activeManifest.metrics.confusion_matrix}
+              title="Aggregate Cross-Validation Confusion Matrix"
+            />
+            <PerSubjectBarChart
+              data={activeManifest.metrics.per_subject_metrics}
+              chanceLevel={activeManifest.metrics.chance_level}
+            />
           </div>
-        </SectionCard>
 
-        <SectionCard
-          title="Linear Discriminant Hyperplane"
-          description="Decision boundary $w^T x + b = 0$ with Ledoit-Wolf covariance shrinkage"
-        >
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3 text-xs">
-            <div className="flex items-center justify-between text-2xs pb-1.5 border-b border-slate-200">
-              <span className="font-semibold text-slate-600">Decision Threshold:</span>
-              <span className="font-mono font-bold text-slate-900">0.0000 (Symmetric)</span>
-            </div>
-            <div className="flex items-center justify-between text-2xs pb-1.5 border-b border-slate-200">
-              <span className="font-semibold text-slate-600">Posterior Probability Gate:</span>
-              <span className="font-mono font-bold text-emerald-700">&ge; 0.85 Confidence</span>
-            </div>
-            <div className="flex items-center justify-between text-2xs">
-              <span className="font-semibold text-slate-600">Regularization Parameter:</span>
-              <span className="font-mono font-bold text-blue-700">&lambda; = 0.15 (Shrinkage)</span>
-            </div>
-          </div>
-        </SectionCard>
-      </div>
+          {/* CSP Patterns */}
+          <CSPPatternViewer patterns={activeManifest.csp_patterns || null} />
+        </div>
+      )}
 
-      {/* Scientific Guidance Callout */}
+      {/* Step 4: Model Registry Table */}
+      <ModelRegistryTable
+        models={models}
+        onSelectModel={handleSelectModel}
+        selectedModelId={activeManifest?.model_id}
+      />
+
+      {/* Provenance & Scientific Invariant Insight */}
       <InsightCard
-        title="Scientific Principle: Event-Related Desynchronization (ERD)"
+        title="Scientific Invariant: Zero Cross-Validation Data Leakage"
         variant="brand"
         icon={<Sparkles className="w-5 h-5 text-blue-600" />}
       >
-        During right-hand motor imagery, the left sensorimotor cortex exhibits μ-band power attenuation (C3 ERD), while the contralateral hemisphere remains in resting synchronization (C4 ERS). The CSP + LDA pipeline separates these spatial energy dynamics.
+        In strict adherence to BCI research standards, CSP spatial covariance matrices and spatial filters are fitted strictly on the training fold of each cross-validation partition ($train\_subjects \cap test\_subjects = \emptyset$). Test epochs remain completely unseen until inference.
       </InsightCard>
+
+      {/* Detailed Provenance Drawer */}
+      <ModelDetailDrawer
+        manifest={selectedDrawerManifest}
+        onClose={() => setSelectedDrawerManifest(null)}
+      />
     </div>
   );
 }

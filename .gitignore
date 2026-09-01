@@ -87,6 +87,10 @@ models/eegnet/*
 !models/eegnet/.gitkeep
 models/production/*
 !models/production/.gitkeep
+models/classical/*
+!models/classical/.gitkeep
+*.joblib
+
 
 # Environment files
 .env

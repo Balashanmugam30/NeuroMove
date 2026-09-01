@@ -55,11 +55,15 @@ class EpochStorage:
         """Save MNE Epochs object to FIF and write metadata sidecar."""
         fif_file = self._resolve_safe_path(epoch_set_id, "_epo.fif")
         meta_file = self._resolve_safe_path(epoch_set_id, ".meta.json")
+        fif_file.parent.mkdir(parents=True, exist_ok=True)
 
         epochs.save(str(fif_file), overwrite=True, verbose=False)
         checksum = self.compute_sha256(fif_file)
 
-        metadata["artifact_file_path"] = str(fif_file.relative_to(self.base_dir.parent.parent))
+        try:
+            metadata["artifact_file_path"] = str(fif_file.relative_to(self.base_dir.parent.parent))
+        except ValueError:
+            metadata["artifact_file_path"] = str(fif_file)
         metadata["artifact_checksum_sha256"] = checksum
 
         with open(meta_file, "w", encoding="utf-8") as f:

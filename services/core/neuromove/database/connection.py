@@ -21,6 +21,11 @@ class DatabaseManager:
         cleaned = self.db_url.replace("sqlite:///", "").replace("sqlite://", "")
         return Path(cleaned)
 
+    def get_connection(self, db_path: Path | None = None) -> sqlite3.Connection:
+        """Create a sqlite3 connection to database path."""
+        target_path = db_path or self.get_db_path()
+        return sqlite3.connect(target_path)
+
     def initialize_db(self) -> None:
         """Create database directory and initialize core schema tables."""
         db_path = self.get_db_path()
@@ -338,7 +343,132 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 005: CSP Spatial Filtering & Classical Motor-Imagery Decoding
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '005_classical_decoding';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS classification_tasks (
+                        task_id TEXT PRIMARY KEY,
+                        task_name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        class_labels_json TEXT NOT NULL,
+                        label_mapping_json TEXT NOT NULL,
+                        version TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS decoder_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        pipeline_version TEXT NOT NULL,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS decoder_runs (
+                        run_id TEXT PRIMARY KEY,
+                        model_id TEXT,
+                        task_id TEXT NOT NULL,
+                        epoch_set_id TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        finished_at TEXT,
+                        metrics_json TEXT,
+                        error_message TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS models (
+                        model_id TEXT PRIMARY KEY,
+                        run_id TEXT NOT NULL,
+                        pipeline_version TEXT NOT NULL,
+                        task_id TEXT NOT NULL,
+                        dataset_id TEXT,
+                        source_epoch_set_id TEXT NOT NULL,
+                        subjects_json TEXT NOT NULL,
+                        channels_json TEXT NOT NULL,
+                        sampling_rate_hz REAL NOT NULL,
+                        classifier_type TEXT NOT NULL,
+                        n_components INTEGER NOT NULL,
+                        evaluation_protocol TEXT NOT NULL,
+                        evaluation_mode TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'ACTIVE_RESEARCH',
+                        artifact_file_path TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        software_versions_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_metrics (
+                        model_id TEXT PRIMARY KEY,
+                        accuracy_mean REAL NOT NULL,
+                        accuracy_std REAL NOT NULL,
+                        balanced_accuracy_mean REAL NOT NULL,
+                        balanced_accuracy_std REAL NOT NULL,
+                        precision_mean REAL NOT NULL,
+                        precision_std REAL NOT NULL,
+                        recall_mean REAL NOT NULL,
+                        recall_std REAL NOT NULL,
+                        f1_mean REAL NOT NULL,
+                        f1_std REAL NOT NULL,
+                        chance_level REAL NOT NULL DEFAULT 0.5,
+                        metrics_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_lineage (
+                        model_id TEXT NOT NULL,
+                        epoch_set_id TEXT NOT NULL,
+                        preprocessing_result_id TEXT,
+                        recording_id TEXT,
+                        dataset_id TEXT,
+                        created_at TEXT NOT NULL,
+                        PRIMARY KEY (model_id, epoch_set_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS cv_folds (
+                        fold_id INTEGER NOT NULL,
+                        model_id TEXT NOT NULL,
+                        train_subjects_json TEXT NOT NULL,
+                        test_subjects_json TEXT NOT NULL,
+                        train_epochs INTEGER NOT NULL,
+                        test_epochs INTEGER NOT NULL,
+                        accuracy REAL NOT NULL,
+                        balanced_accuracy REAL NOT NULL,
+                        f1 REAL NOT NULL,
+                        confusion_matrix_json TEXT NOT NULL,
+                        PRIMARY KEY (model_id, fold_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('005_classical_decoding');"
+                )
+                conn.commit()
+
             self._is_initialized = True
+
             logger.info("SQLite database initialized successfully at %s", db_path)
         except Exception as exc:
             logger.error("Failed to initialize SQLite database: %s", exc)

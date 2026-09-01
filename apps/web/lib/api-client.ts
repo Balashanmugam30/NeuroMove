@@ -67,7 +67,22 @@ import {
   CovarianceSetSchema,
   FeatureManifest,
   FeatureManifestSchema,
+  ClassificationTask,
+  ClassificationTaskSchema,
+  DecoderPipelineConfig,
+  BenchmarkPreview,
+  BenchmarkPreviewSchema,
+  ModelManifest,
+  ModelManifestSchema,
+  ModelSummary,
+  ModelSummarySchema,
+  DecoderRun,
+  DecoderRunSchema,
+  PredictionRequest,
+  PredictionResponse,
+  PredictionResponseSchema,
 } from "@neuromove/contracts";
+
 
 
 import { z } from "zod";
@@ -668,6 +683,9 @@ export async function listEpochSets(limit: number = 50): Promise<EpochSummary[]>
   return z.array(EpochSummarySchema).parse(data);
 }
 
+export const fetchEpochSets = listEpochSets;
+
+
 export async function fetchEpochSummary(
   epochSetId: string
 ): Promise<EpochSummary> {
@@ -801,6 +819,104 @@ export async function fetchFeatureManifest(
   const data = await res.json();
   return FeatureManifestSchema.parse(data);
 }
+
+// --- Classical Decoding & Model Endpoints (Phase 11) ---
+
+export async function fetchClassificationTasks(): Promise<ClassificationTask[]> {
+  const res = await fetch(`${API_BASE_URL}/api/models/classical/tasks`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ClassificationTaskSchema).parse(data);
+}
+
+export async function previewDecoderBenchmark(
+  config: DecoderPipelineConfig
+): Promise<BenchmarkPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/models/classical/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return BenchmarkPreviewSchema.parse(data);
+}
+
+export async function runDecoderBenchmark(
+  config: DecoderPipelineConfig
+): Promise<ModelManifest> {
+  const res = await fetch(`${API_BASE_URL}/api/models/classical/train`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ModelManifestSchema.parse(data);
+}
+
+export async function fetchDecoderRuns(
+  limit: number = 50
+): Promise<DecoderRun[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/models/classical/runs?limit=${limit}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DecoderRunSchema).parse(data);
+}
+
+export async function fetchDecoderModels(
+  limit: number = 50,
+  taskId?: string
+): Promise<ModelSummary[]> {
+  const url = new URL(`${API_BASE_URL}/api/models/classical/models`);
+  url.searchParams.set("limit", limit.toString());
+  if (taskId) url.searchParams.set("task_id", taskId);
+
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ModelSummarySchema).parse(data);
+}
+
+export async function fetchDecoderModelManifest(
+  modelId: string
+): Promise<ModelManifest> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/models/classical/models/${modelId}/manifest`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ModelManifestSchema.parse(data);
+}
+
+export async function predictDecoderEpoch(
+  req: PredictionRequest
+): Promise<PredictionResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/models/classical/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return PredictionResponseSchema.parse(data);
+}
+
 
 
 

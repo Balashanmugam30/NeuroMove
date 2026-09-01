@@ -794,6 +794,115 @@ def get_feature_csv_export(feature_set_id: str) -> Any:
         ) from exc
 
 
+# --- Classical Decoding & Model Endpoints (Phase 11) ---
+
+
+@api_router.get("/models/classical/tasks", tags=["Models"])
+def list_classification_tasks() -> Any:
+    """Retrieve available motor-imagery classification tasks."""
+    from ..decoding.tasks import get_canonical_tasks
+
+    return get_canonical_tasks()
+
+
+@api_router.post("/models/classical/preview", tags=["Models"])
+def post_benchmark_preview(payload: dict[str, Any]) -> Any:
+    """Validate decoding pipeline configuration, class balance, and expected CV folds."""
+    from ..decoding.models import DecoderPipelineConfig
+    from ..decoding.service import get_classical_decoding_service
+
+    config = DecoderPipelineConfig(**payload)
+    return get_classical_decoding_service().preview_benchmark(config)
+
+
+@api_router.post("/models/classical/train", tags=["Models"])
+def post_benchmark_train(payload: dict[str, Any]) -> Any:
+    """Execute cross-validated CSP decoding benchmark and register model artifact."""
+    from ..decoding.models import DecoderPipelineConfig
+    from ..decoding.service import get_classical_decoding_service
+
+    config = DecoderPipelineConfig(**payload)
+    try:
+        return get_classical_decoding_service().run_benchmark(config)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Decoding benchmark execution failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/models/classical/runs", tags=["Models"])
+def list_decoder_runs(limit: int = 50) -> Any:
+    """List recent decoding benchmark runs."""
+    from ..decoding.service import get_classical_decoding_service
+
+    return get_classical_decoding_service().list_runs(limit=limit)
+
+
+@api_router.get("/models/classical/models", tags=["Models"])
+def list_decoder_models(limit: int = 50, task_id: str | None = None) -> Any:
+    """List registered decoder models."""
+    from ..decoding.service import get_classical_decoding_service
+
+    return get_classical_decoding_service().list_models(limit=limit, task_id=task_id)
+
+
+@api_router.get("/models/classical/models/{model_id}/manifest", tags=["Models"])
+def get_decoder_model_manifest(model_id: str) -> Any:
+    """Retrieve full provenance manifest for a trained decoder."""
+    from ..decoding.service import get_classical_decoding_service
+
+    try:
+        return get_classical_decoding_service().get_model_manifest(model_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Model '{model_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/models/classical/models/{model_id}/export/csv", tags=["Models"])
+def get_decoder_csv_export(model_id: str) -> Any:
+    """Download CSV file of model performance metrics."""
+    from fastapi.responses import FileResponse
+
+    from ..decoding.service import get_classical_decoding_service
+
+    try:
+        csv_path = get_classical_decoding_service().decoder_storage.get_csv_export_path(model_id)
+        return FileResponse(
+            path=str(csv_path),
+            media_type="text/csv",
+            filename=f"{model_id}_metrics.csv",
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"CSV export for '{model_id}' not found.",
+        ) from exc
+
+
+@api_router.post("/models/classical/predict", tags=["Models"])
+def post_decoder_predict(payload: dict[str, Any]) -> Any:
+    """Execute offline or replay prediction for a single trial."""
+    from ..decoding.models import PredictionRequest
+    from ..decoding.service import get_classical_decoding_service
+
+    req = PredictionRequest(**payload)
+    try:
+        return get_classical_decoding_service().predict_epoch(req)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Prediction failed: {exc}",
+        ) from exc
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")
