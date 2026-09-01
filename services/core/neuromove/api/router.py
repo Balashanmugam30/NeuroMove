@@ -3,9 +3,19 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, status
+from fastapi import APIRouter, Response, WebSocket, status
 from pydantic import BaseModel, Field
 
+from ..analysis.models import (
+    BandPowerRequest,
+    BandPowerResponse,
+    EEGChannelSummary,
+    PSDRequest,
+    PSDResponse,
+    TFRRequest,
+    TFRResponse,
+)
+from ..analysis.service import analysis_service
 from ..config.settings import get_settings
 from ..database.health import get_database_status
 from ..domain.enums import (
@@ -302,6 +312,61 @@ def test_command(payload: CommandPayload) -> dict[str, Any]:
 def get_transport_diagnostics() -> TransportDiagnostics:
     """Return real-time WebSocket transport metrics and connection telemetry."""
     return connection_registry.get_diagnostics()
+
+
+# --- EEG Laboratory & MNE Spectral Analysis Endpoints (Phase 07) ---
+
+
+@api_router.post("/eeg/psd", response_model=PSDResponse, tags=["EEG Laboratory"])
+def compute_eeg_psd(request: PSDRequest) -> PSDResponse:
+    """Compute Power Spectral Density using modern MNE Welch or Multitaper methods."""
+    return analysis_service.compute_psd(request)
+
+
+@api_router.post("/eeg/band-power", response_model=BandPowerResponse, tags=["EEG Laboratory"])
+def compute_eeg_band_power(request: BandPowerRequest) -> BandPowerResponse:
+    """Compute integrated frequency band powers and Mu ERD lateralization index."""
+    return analysis_service.compute_band_power(request)
+
+
+@api_router.post("/eeg/tfr", response_model=TFRResponse, tags=["EEG Laboratory"])
+def compute_eeg_tfr(request: TFRRequest) -> TFRResponse:
+    """Compute Morlet wavelet Time-Frequency Representation (spectrogram)."""
+    return analysis_service.compute_tfr(request)
+
+
+@api_router.get("/eeg/channels", response_model=list[EEGChannelSummary], tags=["EEG Laboratory"])
+def get_eeg_channels() -> list[EEGChannelSummary]:
+    """Return 10-20 standard channel topology coordinates and diagnostic status."""
+    return analysis_service.get_channels_summary()
+
+
+@api_router.post("/eeg/export/psd", tags=["EEG Laboratory"])
+def export_psd_csv(request: PSDRequest) -> Response:
+    """Export PSD results as CSV with research provenance header."""
+    csv_data = analysis_service.export_psd_csv(request)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=neuromove_psd_export.csv"},
+    )
+
+
+@api_router.post("/eeg/export/band-power", tags=["EEG Laboratory"])
+def export_band_power_csv(request: BandPowerRequest) -> Response:
+    """Export Band Power results as CSV with research provenance header."""
+    csv_data = analysis_service.export_band_power_csv(request)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=neuromove_bandpower_export.csv"},
+    )
+
+
+@api_router.get("/eeg/export/analysis", tags=["EEG Laboratory"])
+def export_analysis_json(session_id: str | None = None) -> dict[str, Any]:
+    """Export complete EEG laboratory analysis snapshot as JSON with provenance."""
+    return analysis_service.export_analysis_json(session_id=session_id)
 
 
 # --- WebSocket Stream Endpoints ---

@@ -1,34 +1,55 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Activity, Radio, Info, Zap } from "lucide-react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { Activity, Play, Pause, Sparkles } from "lucide-react";
 import { SignalQualityMetrics } from "@neuromove/contracts";
 import { EEGRingBuffer } from "@/lib/realtime/EEGRingBuffer";
+import { cn } from "@/lib/utils";
+
+const CHANNEL_COLOR_MAP: Record<string, string> = {
+  C3: "#2563EB", // Primary Blue
+  Cz: "#0D9488", // Teal
+  C4: "#7C3AED", // Violet
+};
 
 interface EEGOscilloscopeProps {
   channels?: string[];
+  selectedChannel?: string;
   sampleRateHz?: number;
   activeIntent?: string;
+  activeCue?: string;
   signalQuality?: SignalQualityMetrics | null;
   isRunning?: boolean;
   ringBuffer?: EEGRingBuffer | null;
   packetRate?: number;
   latencyMs?: number;
+  className?: string;
 }
 
 export function EEGOscilloscope({
   channels = ["C3", "Cz", "C4"],
+  selectedChannel = "ALL",
   sampleRateHz = 250,
   activeIntent = "NONE",
-  signalQuality,
+  activeCue = "REST",
   isRunning = true,
   ringBuffer,
   packetRate = 25,
   latencyMs = 1.2,
+  className,
 }: EEGOscilloscopeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [muPowerC3, setMuPowerC3] = useState(12.4);
-  const [muPowerC4, setMuPowerC4] = useState(13.1);
+  const [timeWindowSec, setTimeWindowSec] = useState<number>(4);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const [hoverData, setHoverData] = useState<{ timeMs: number; valueUv: number; channel: string } | null>(null);
+
+  // Channels to render based on selection filter
+  const visibleChannels = useMemo(() => {
+    if (selectedChannel === "ALL") return channels;
+    return channels.filter((ch) => ch === selectedChannel);
+  }, [channels, selectedChannel]);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -37,229 +58,319 @@ export function EEGOscilloscope({
     if (!ctx) return;
 
     let animationId: number;
-    let time = 0;
+    let fallbackPhase = 0;
 
     const render = () => {
       const width = canvas.width;
       const height = canvas.height;
 
-      // Clear with clean health-tech background
+      // Background
       ctx.fillStyle = "#F8FAFC";
       ctx.fillRect(0, 0, width, height);
 
-      // Grid lines
+      // Grid Lines
       ctx.strokeStyle = "#E2E8F0";
       ctx.lineWidth = 1;
 
-      // Horizontal channel baseline grids
-      const channelHeight = height / channels.length;
-      channels.forEach((_, i) => {
+      const numChannels = visibleChannels.length;
+      const channelHeight = height / Math.max(1, numChannels);
+
+      // Horizontal channel baselines
+      visibleChannels.forEach((_, i) => {
         const y = channelHeight * i + channelHeight / 2;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
         ctx.stroke();
+
+        // Amplitude bounds dashed lines (+-30 uV guide)
+        ctx.save();
+        ctx.strokeStyle = "#F1F5F9";
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, y - channelHeight * 0.35);
+        ctx.lineTo(width, y - channelHeight * 0.35);
+        ctx.moveTo(0, y + channelHeight * 0.35);
+        ctx.lineTo(width, y + channelHeight * 0.35);
+        ctx.stroke();
+        ctx.restore();
       });
 
-      // Vertical time grid (every 50px)
-      for (let x = 0; x < width; x += 50) {
+      // Vertical time grid (divisions based on time window)
+      const numDivisions = timeWindowSec;
+      const xStep = width / numDivisions;
+      for (let x = 0; x <= width; x += xStep) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();
       }
 
-      if (isRunning) {
-        time += 0.04;
+      // Draw traces
+      if (!isPaused && isRunning) {
+        fallbackPhase += 0.05;
+      }
 
-        // Dynamic SMR modulation based on active cognitive intent
-        let c3Amp = 18;
-        let c4Amp = 18;
-        if (activeIntent === "RIGHT") {
-          c3Amp = 6; // C3 contralateral desynchronization
-          c4Amp = 22;
-        } else if (activeIntent === "LEFT") {
-          c4Amp = 6; // C4 contralateral desynchronization
-          c3Amp = 22;
-        }
+      visibleChannels.forEach((ch, idx) => {
+        const centerY = channelHeight * idx + channelHeight / 2;
+        const color = CHANNEL_COLOR_MAP[ch] || "#2563EB";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
 
-        setMuPowerC3(c3Amp * 0.8);
-        setMuPowerC4(c4Amp * 0.8);
+        const samplesToDisplay = timeWindowSec * sampleRateHz;
+        const hasRingData = ringBuffer && ringBuffer.getTotalSamplesPushed() > 0;
 
-        // Draw multi-channel traces
-        const channelColors = ["#2563EB", "#0D9488", "#7C3AED"];
+        if (hasRingData) {
+          const rawBuffer = ringBuffer.getOrderedChannelData(ch);
+          const available = rawBuffer.length;
+          const slice = rawBuffer.subarray(Math.max(0, available - samplesToDisplay));
 
-        channels.forEach((ch, idx) => {
-          const centerY = channelHeight * idx + channelHeight / 2;
-          ctx.strokeStyle = channelColors[idx % channelColors.length];
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-
-          const hasBufferedData =
-            ringBuffer && ringBuffer.getTotalSamplesPushed() > 0;
-          const channelBuffer = hasBufferedData
-            ? ringBuffer.getOrderedChannelData(ch)
-            : null;
-
-          for (let x = 0; x < width; x++) {
-            let y: number;
-            if (channelBuffer && channelBuffer.length > 0) {
-              const sampleIdx = Math.floor(
-                (x / width) * Math.min(width, channelBuffer.length)
-              );
-              const val = channelBuffer[sampleIdx] || 0;
-              y = centerY - val * 2.5;
+          slice.forEach((val: number, sampleIdx: number) => {
+            const x = (sampleIdx / Math.max(1, slice.length - 1)) * width;
+            // Vertical scale: 1 uV maps to (channelHeight * 0.012) px
+            const y = centerY - val * (channelHeight * 0.012);
+            if (sampleIdx === 0) {
+              ctx.moveTo(x, y);
             } else {
-              const t = (x / width) * 4 + time;
-              const amp = ch === "C3" ? c3Amp : ch === "C4" ? c4Amp : 14;
-              const mu = amp * Math.sin(2 * Math.PI * 10.0 * (t * 0.05));
-              const beta =
-                amp * 0.4 * Math.sin(2 * Math.PI * 20.0 * (t * 0.05));
-              const noise = (Math.random() - 0.5) * 4;
-              y = centerY + mu + beta + noise;
+              ctx.lineTo(x, y);
             }
+          });
+        } else {
+          // Synthetic fallback waveform preview when waiting for socket packets
+          const totalPoints = 200;
+          for (let p = 0; p < totalPoints; p++) {
+            const t = p * (timeWindowSec / totalPoints) + fallbackPhase;
+            const x = (p / (totalPoints - 1)) * width;
+            const muAmp = activeIntent === "RIGHT" && ch === "C3" ? 6 : 18;
+            const muVal = muAmp * Math.sin(2 * Math.PI * 10.0 * t);
+            const betaVal = 6 * Math.sin(2 * Math.PI * 20.0 * t);
+            const y = centerY - (muVal + betaVal) * (channelHeight * 0.012);
 
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+            if (p === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
           }
-          ctx.stroke();
-        });
-      } else {
-        // Flatline resting state when paused / stopped
-        channels.forEach((_, idx) => {
-          const centerY = channelHeight * idx + channelHeight / 2;
-          ctx.strokeStyle = "#94A3B8";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(0, centerY);
-          ctx.lineTo(width, centerY);
-          ctx.stroke();
-        });
+        }
+        ctx.stroke();
+
+        // Channel Legend Label on left
+        ctx.fillStyle = color;
+        ctx.font = "bold 11px monospace";
+        ctx.fillText(`${ch}`, 12, centerY - 14);
+
+        ctx.fillStyle = "#64748B";
+        ctx.font = "10px monospace";
+        ctx.fillText("0 uV", 12, centerY + 12);
+      });
+
+      // Research cursor vertical tracking line
+      if (cursorPos) {
+        ctx.save();
+        ctx.strokeStyle = "#0F172A";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cursorPos.x, 0);
+        ctx.lineTo(cursorPos.x, height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cursorPos.x, cursorPos.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#2563EB";
+        ctx.fill();
+        ctx.restore();
       }
 
       animationId = requestAnimationFrame(render);
     };
 
     render();
+    return () => cancelAnimationFrame(animationId);
+  }, [
+    visibleChannels,
+    timeWindowSec,
+    isPaused,
+    isRunning,
+    ringBuffer,
+    sampleRateHz,
+    activeIntent,
+    cursorPos,
+  ]);
 
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [channels, isRunning, activeIntent, ringBuffer]);
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setCursorPos({ x, y });
+
+    // Calculate time offset in ms
+    const timeRatio = x / canvas.width;
+    const timeMs = Math.round(timeRatio * timeWindowSec * 1000);
+
+    // Identify hovered channel
+    const channelHeight = canvas.height / Math.max(1, visibleChannels.length);
+    const channelIdx = Math.min(
+      visibleChannels.length - 1,
+      Math.max(0, Math.floor(y / channelHeight))
+    );
+    const channel = visibleChannels[channelIdx] || "C3";
+
+    // Estimate microvolts from baseline
+    const centerY = channelHeight * channelIdx + channelHeight / 2;
+    const deltaY = centerY - y;
+    const valueUv = Math.round(deltaY / (channelHeight * 0.012));
+
+    setHoverData({ timeMs, valueUv, channel });
+  };
+
+  const handleMouseLeave = () => {
+    setCursorPos(null);
+    setHoverData(null);
+  };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
-            <Activity className="w-5 h-5" />
+    <div
+      data-testid="eeg-oscilloscope"
+      className={cn(
+        "p-5 rounded-xl border border-slate-200 bg-white shadow-xs font-sans",
+        className
+      )}
+    >
+      {/* Header with Title & Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-blue-50 border border-blue-200">
+            <Activity className="w-4 h-4 text-blue-600" />
           </div>
           <div>
+            <span className="text-2xs font-bold uppercase tracking-wider text-slate-400 block">
+              Continuous Electrophysiology
+            </span>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900">
                 Multi-Channel Electrophysiology Oscilloscope
               </h3>
-              <span className="px-2 py-0.5 text-2xs font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+              <span className="text-3xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                 SYNTHETIC EEG
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              Sensorimotor rhythm (μ / β band) waveform synthesis @ {sampleRateHz} Hz
-            </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-600">
-          <div className="bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-            {isRunning ? "STREAMING" : "IDLE"} | {sampleRateHz} Hz | 3 Channels
+        {/* Toolbar: Time Window Selector & Pause Button */}
+        <div className="flex items-center gap-2">
+          {/* Time Window Buttons */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-2xs font-mono">
+            {[1, 2, 4, 8, 10].map((sec) => (
+              <button
+                key={sec}
+                type="button"
+                onClick={() => setTimeWindowSec(sec)}
+                className={cn(
+                  "px-2 py-1 rounded font-bold transition-all",
+                  timeWindowSec === sec
+                    ? "bg-white text-blue-700 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-900"
+                )}
+              >
+                {sec}s
+              </button>
+            ))}
           </div>
-          {packetRate > 0 && (
-            <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-200 flex items-center gap-1 text-2xs font-semibold">
-              <Zap className="w-3 h-3" />
-              {packetRate} pkts/s ({latencyMs.toFixed(1)}ms)
-            </div>
-          )}
+
+          {/* Pause / Inspect Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsPaused(!isPaused)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border transition-colors",
+              isPaused
+                ? "bg-amber-50 text-amber-800 border-amber-300"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            {isPaused ? (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                Resume
+              </>
+            ) : (
+              <>
+                <Pause className="w-3.5 h-3.5" />
+                Inspect
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Scope Canvas Area */}
-      <div className="relative rounded-lg overflow-hidden border border-slate-200">
-        {/* Channel Labels Overlay */}
-        <div className="absolute left-2 top-0 bottom-0 flex flex-col justify-around pointer-events-none z-10">
-          {channels.map((ch) => (
-            <span
-              key={ch}
-              className="text-xs font-mono font-bold px-1.5 py-0.5 bg-white/90 backdrop-blur-xs text-slate-700 rounded shadow-2xs border border-slate-200"
-            >
-              {ch}
-            </span>
-          ))}
+      {/* Active Trial & Event Annotations Bar */}
+      <div className="mt-3 py-1.5 px-3 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-2xs text-slate-600 font-mono">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 font-semibold text-slate-900">
+            <Sparkles className="w-3 h-3 text-blue-600" />
+            Active Cue: {activeCue}
+          </span>
+          <span className="text-slate-400">|</span>
+          <span>Cognitive Intent: {activeIntent}</span>
+          <span className="hidden lg:inline text-slate-400">|</span>
+          <span className="hidden lg:inline text-3xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+            C3 (μ-Power 8-12Hz)
+          </span>
+          <span className="hidden lg:inline text-3xs text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+            C4 (μ-Power 8-12Hz)
+          </span>
         </div>
 
+        {hoverData && (
+          <div className="flex items-center gap-2 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+            <span>Cursor: {hoverData.channel}</span>
+            <span>{hoverData.timeMs} ms</span>
+            <span>{hoverData.valueUv > 0 ? `+${hoverData.valueUv}` : hoverData.valueUv} uV</span>
+          </div>
+        )}
+      </div>
+
+      {/* Canvas Oscilloscope */}
+      <div className="relative mt-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
         <canvas
           ref={canvasRef}
           width={800}
-          height={240}
-          className="w-full h-60 block"
+          height={320}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="w-full h-80 block cursor-crosshair"
         />
-      </div>
 
-      {/* SMR Spectral Power & ERD/ERS Indicator Bars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-100">
-        <div className="p-2.5 bg-slate-50 rounded-lg">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium text-slate-700">C3 (μ-Power 8-12Hz)</span>
-            <span className="font-mono font-semibold text-blue-600">
-              {muPowerC3.toFixed(1)} μV²
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-blue-600 h-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (muPowerC3 / 25) * 100)}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="p-2.5 bg-slate-50 rounded-lg">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium text-slate-700">C4 (μ-Power 8-12Hz)</span>
-            <span className="font-mono font-semibold text-teal-600">
-              {muPowerC4.toFixed(1)} μV²
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-teal-600 h-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (muPowerC4 / 25) * 100)}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="p-2.5 bg-slate-50 rounded-lg">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium text-slate-700">Signal Quality Score</span>
-            <span className="font-mono font-semibold text-emerald-600">
-              {((signalQuality?.overall_score ?? 0.94) * 100).toFixed(0)}%
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-emerald-500 h-full transition-all duration-300"
-              style={{ width: `${(signalQuality?.overall_score ?? 0.94) * 100}%` }}
-            />
-          </div>
+        {/* Vertical Axis Calibration Tag */}
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-white/90 backdrop-blur-xs border border-slate-200 text-3xs font-mono text-slate-500 shadow-2xs">
+          Vertical Scale: +-40 uV
         </div>
       </div>
 
-      {/* Scientific Disclaimer Footer */}
-      <div className="mt-3 flex items-start gap-1.5 p-2 bg-amber-50/70 border border-amber-200/60 rounded-lg text-2xs text-amber-800">
-        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-        <span>
-          <strong>Scientific Disclaimer:</strong> Synthetic EEG signals are generated via mathematical oscillators for pipeline and latency validation. They do not represent measured clinical data.
-        </span>
+      {/* Footer Metrics */}
+      <div className="mt-3 pt-2.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-2xs font-mono text-slate-500">
+        <div>
+          <span className="text-slate-400">Sampling Rate: </span>
+          <span className="font-semibold text-slate-700">{sampleRateHz} Hz</span>
+        </div>
+        <div>
+          <span className="text-slate-400">Packet Rate: </span>
+          <span className="font-semibold text-teal-700">{packetRate} pkts/s</span>
+        </div>
+        <div>
+          <span className="text-slate-400">Window: </span>
+          <span className="font-semibold text-slate-700">{timeWindowSec} seconds</span>
+        </div>
+        <div className="text-right">
+          <span className="text-slate-400">Transport: </span>
+          <span className="font-semibold text-emerald-700">{latencyMs} ms IPC</span>
+        </div>
       </div>
     </div>
   );

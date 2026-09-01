@@ -11,6 +11,17 @@ import {
   SimulationStatusSchema,
   SimulationScenario,
   SimulationScenarioSchema,
+  PSDRequest,
+  PSDResponse,
+  PSDResponseSchema,
+  BandPowerRequest,
+  BandPowerResponse,
+  BandPowerResponseSchema,
+  TFRRequest,
+  TFRResponse,
+  TFRResponseSchema,
+  EEGChannelSummary,
+  EEGChannelSummarySchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -226,3 +237,63 @@ export async function resetSimulation(): Promise<SimulationStatus> {
   const data = await res.json();
   return SimulationStatusSchema.parse(data);
 }
+
+// --- EEG Laboratory API Functions (Phase 07) ---
+
+export async function fetchPSD(request: PSDRequest): Promise<PSDResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/psd`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PSDResponseSchema.parse(data);
+}
+
+export async function fetchBandPower(
+  request: BandPowerRequest
+): Promise<BandPowerResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/band-power`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return BandPowerResponseSchema.parse(data);
+}
+
+export async function fetchTFR(request: TFRRequest): Promise<TFRResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/tfr`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return TFRResponseSchema.parse(data);
+}
+
+export async function fetchEEGChannels(): Promise<EEGChannelSummary[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/channels`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EEGChannelSummarySchema).parse(data);
+}
+
+export function getExportPsdUrl(): string {
+  return `${API_BASE_URL}/api/eeg/export/psd`;
+}
+
+export function getExportBandPowerUrl(): string {
+  return `${API_BASE_URL}/api/eeg/export/band-power`;
+}
+
+export function getExportAnalysisUrl(sessionId?: string): string {
+  const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : "";
+  return `${API_BASE_URL}/api/eeg/export/analysis${query}`;
+}
+

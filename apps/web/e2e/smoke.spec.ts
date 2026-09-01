@@ -42,8 +42,20 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     await eegLink.click();
     await expect(page).toHaveURL(/.*\/eeg/);
     await expect(
-      page.getByRole("heading", { name: /eeg lab/i })
+      page.getByRole("heading", { name: /eeg laboratory/i })
     ).toBeVisible();
+
+    // Verify Phase 07 EEG Laboratory research components
+    await expect(page.getByTestId("eeg-source-card")).toBeVisible();
+    await expect(page.getByTestId("eeg-channel-topology")).toBeVisible();
+    await expect(page.getByTestId("channel-selector")).toBeVisible();
+    await expect(page.getByTestId("eeg-oscilloscope")).toBeVisible();
+    await expect(page.getByTestId("signal-quality-panel")).toBeVisible();
+    await expect(page.getByTestId("psd-chart")).toBeVisible();
+    await expect(page.getByTestId("band-power-comparison")).toBeVisible();
+    await expect(page.getByTestId("time-frequency-heatmap")).toBeVisible();
+    await expect(page.getByTestId("preprocessing-overview")).toBeVisible();
+    await expect(page.getByTestId("analysis-provenance-footer")).toBeVisible();
 
     // 8. Navigate to System Diagnostics
     const systemLink = page.getByRole("link", { name: /system diagnostics/i }).first();

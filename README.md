@@ -192,7 +192,7 @@ pnpm build
 - [x] **04 Real-Time Streaming** — Dedicated real-time streaming core, WebSocket chunking, buffer pipelines, and synchronization
 - [x] **05 Product UI Foundation** — High-fidelity design system 2.0, light visual language, and unified application information architecture
 - [x] **06 Live Command Center** — Flagship real-time neuro-robotics control experience, 6-stage pipeline breadcrumb, dual-channel state synchronization, and emergency controls
-- [ ] **07 EEG Lab** — Time-series oscilloscope, Welch PSD, and electrode topography
+- [x] **07 EEG Lab** — Research-grade signal visualization, MNE Welch/Multitaper PSD, band power decomposition, Morlet wavelet TFR, 10-20 topology, and provenance exports
 - [ ] **08 Public Dataset** — Graz / BCI Competition dataset ingestion & benchmarking
 - [ ] **09 Preprocessing** — Bandpass (8–30 Hz), notch (50/60 Hz), CAR, and Laplacian filtering
 - [ ] **10 CSP + LDA** — Common Spatial Patterns spatial filter & Shrinkage Linear Discriminant Analysis
