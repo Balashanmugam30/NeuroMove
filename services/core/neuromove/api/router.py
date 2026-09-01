@@ -369,6 +369,115 @@ def export_analysis_json(session_id: str | None = None) -> dict[str, Any]:
     return analysis_service.export_analysis_json(session_id=session_id)
 
 
+# --- Public EEG Datasets & Research Workspace ---
+
+
+@api_router.get("/datasets", tags=["Datasets"])
+def list_datasets() -> list[Any]:
+    """List all registered public and local research datasets."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_datasets()
+
+
+@api_router.get("/datasets/{dataset_id}", tags=["Datasets"])
+def get_dataset_details(dataset_id: str) -> Any:
+    """Retrieve full metadata and local caching status for a dataset."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_dataset(dataset_id)
+
+
+@api_router.get("/datasets/{dataset_id}/subjects", tags=["Datasets"])
+def list_dataset_subjects(dataset_id: str) -> list[Any]:
+    """List all participant subjects in a dataset."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_subjects(dataset_id)
+
+
+@api_router.get("/datasets/{dataset_id}/recordings", tags=["Datasets"])
+def list_dataset_recordings(
+    dataset_id: str,
+    subject_id: str | None = None,
+    task: str | None = None,
+) -> list[Any]:
+    """List recordings with optional subject and task filtering."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_recordings(
+        dataset_id=dataset_id, subject_id=subject_id, task=task
+    )
+
+
+@api_router.get("/datasets/{dataset_id}/recordings/{recording_id}", tags=["Datasets"])
+def get_dataset_recording(dataset_id: str, recording_id: str) -> Any:
+    """Retrieve canonical metadata, channel topology, and event markers for a recording."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_recording(dataset_id, recording_id)
+
+
+@api_router.get("/datasets/{dataset_id}/recordings/{recording_id}/signal", tags=["Datasets"])
+def get_dataset_recording_signal(
+    dataset_id: str,
+    recording_id: str,
+    channels: str | None = None,
+    start_sec: float = 0.0,
+    duration_sec: float = 4.0,
+) -> Any:
+    """Extract multi-channel time-series signal snippet for interactive EEG Lab replay."""
+    from neuromove.datasets.service import get_dataset_service
+
+    ch_list = [c.strip() for c in channels.split(",")] if channels else ["C3", "Cz", "C4"]
+    return get_dataset_service().get_signal(
+        dataset_id=dataset_id,
+        recording_id=recording_id,
+        channels=ch_list,
+        start_sec=start_sec,
+        duration_sec=duration_sec,
+    )
+
+
+@api_router.post("/datasets/{dataset_id}/download", tags=["Datasets"])
+def download_dataset_recordings(
+    dataset_id: str,
+    payload: dict[str, Any] | None = None,
+) -> list[Any]:
+    """Trigger explicit download and verification of requested subjects/runs."""
+    from neuromove.datasets.service import get_dataset_service
+
+    sub_ids = payload.get("subject_ids") if payload else None
+    run_ids = payload.get("run_ids") if payload else None
+    return get_dataset_service().download_recordings(
+        dataset_id=dataset_id, subject_ids=sub_ids, run_ids=run_ids
+    )
+
+
+@api_router.post("/datasets/{dataset_id}/verify", tags=["Datasets"])
+def verify_dataset_integrity(dataset_id: str) -> dict[str, Any]:
+    """Execute SHA-256 integrity verification across cached dataset files."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().verify_dataset(dataset_id)
+
+
+@api_router.get("/datasets/{dataset_id}/manifest", tags=["Datasets"])
+def get_dataset_manifest(dataset_id: str) -> Any:
+    """Retrieve full dataset reproducibility manifest."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_manifest(dataset_id)
+
+
+@api_router.get("/datasets/{dataset_id}/quality-report", tags=["Datasets"])
+def get_dataset_quality_report(dataset_id: str) -> Any:
+    """Retrieve scientific ingestion quality report."""
+    from neuromove.datasets.service import get_dataset_service
+
+    return get_dataset_service().get_quality_report(dataset_id)
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")

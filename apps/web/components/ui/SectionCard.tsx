@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 interface SectionCardProps {
   title?: string;
   description?: string;
+  badge?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -12,6 +13,7 @@ interface SectionCardProps {
 export function SectionCard({
   title,
   description,
+  badge,
   action,
   children,
   className,
@@ -23,14 +25,17 @@ export function SectionCard({
         className,
       )}
     >
-      {(title || action) && (
+      {(title || action || badge) && (
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
           <div>
-            {title && (
-              <h3 className="text-sm font-semibold tracking-tight text-slate-900 font-sans">
-                {title}
-              </h3>
-            )}
+            <div className="flex items-center gap-2.5">
+              {title && (
+                <h3 className="text-sm font-semibold tracking-tight text-slate-900 font-sans">
+                  {title}
+                </h3>
+              )}
+              {badge && <div>{badge}</div>}
+            </div>
             {description && (
               <p className="text-xs text-slate-500 mt-0.5 font-normal">
                 {description}

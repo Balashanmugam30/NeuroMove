@@ -36,6 +36,8 @@ export type EEGAnalysisMetadata = z.infer<typeof EEGAnalysisMetadataSchema>;
 export const PSDRequestSchema = z.object({
   session_id: z.string().nullable().optional(),
   trial_id: z.string().nullable().optional(),
+  dataset_id: z.string().nullable().optional(),
+  recording_id: z.string().nullable().optional(),
   channels: z.array(z.string()).default(["C3", "Cz", "C4"]),
   method: PSDMethodEnum.default("welch"),
   fmin: z.number().min(0.5).max(120.0).default(1.0),
@@ -64,6 +66,8 @@ export type BandPowerItem = z.infer<typeof BandPowerItemSchema>;
 export const BandPowerRequestSchema = z.object({
   session_id: z.string().nullable().optional(),
   trial_id: z.string().nullable().optional(),
+  dataset_id: z.string().nullable().optional(),
+  recording_id: z.string().nullable().optional(),
   channels: z.array(z.string()).default(["C3", "Cz", "C4"]),
   method: PSDMethodEnum.default("welch"),
   window_duration_seconds: z.number().min(1.0).max(16.0).default(4.0),
@@ -81,6 +85,8 @@ export type BandPowerResponse = z.infer<typeof BandPowerResponseSchema>;
 export const TFRRequestSchema = z.object({
   session_id: z.string().nullable().optional(),
   trial_id: z.string().nullable().optional(),
+  dataset_id: z.string().nullable().optional(),
+  recording_id: z.string().nullable().optional(),
   channel: z.string().default("C3"),
   fmin: z.number().min(1.0).max(60.0).default(4.0),
   fmax: z.number().min(5.0).max(100.0).default(40.0),

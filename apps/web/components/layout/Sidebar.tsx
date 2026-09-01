@@ -16,6 +16,7 @@ import {
   BarChart3,
   BookOpen,
   Settings,
+  Database,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     name: "Research & Evidence",
     items: [
+      { href: "/research/datasets", label: "Public Datasets", icon: Database, badge: "Phase 08" },
       { href: "/sessions", label: "Sessions", icon: History },
       { href: "/research", label: "Research Lab", icon: FlaskConical },
       { href: "/results", label: "Evidence & Results", icon: BarChart3 },

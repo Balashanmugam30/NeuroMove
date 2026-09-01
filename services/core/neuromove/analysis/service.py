@@ -18,6 +18,7 @@ from neuromove.analysis.models import (
     BandPowerResponse,
     ChannelPosition,
     EEGChannelSummary,
+    EEGSourceKind,
     PSDRequest,
     PSDResponse,
     TFRRequest,
@@ -96,22 +97,49 @@ class EEGAnalysisService:
 
     def compute_psd(self, request: PSDRequest) -> PSDResponse:
         """Compute or retrieve cached Power Spectral Density."""
-        cache_key = f"psd:{request.method}:{request.channels}:{request.fmin}:{request.fmax}:{request.window_duration_seconds}"
+        cache_key = f"psd:{request.recording_id}:{request.method}:{request.channels}:{request.fmin}:{request.fmax}:{request.window_duration_seconds}"
         cached = analysis_cache.get(cache_key)
         if cached:
             return cached
 
-        data = self._get_analysis_data(request.channels, request.window_duration_seconds)
+        if request.recording_id:
+            from neuromove.datasets.service import get_dataset_service
+
+            dataset_service = get_dataset_service()
+            dataset_id = request.dataset_id or "physionet-eegbci"
+            sig_res = dataset_service.get_signal(
+                dataset_id=dataset_id,
+                recording_id=request.recording_id,
+                channels=request.channels,
+                start_sec=0.0,
+                duration_sec=request.window_duration_seconds,
+            )
+            sample_rate = sig_res.sampling_rate_hz
+            matrix = [
+                sig_res.signals.get(ch, [0.0] * len(sig_res.timestamps)) for ch in request.channels
+            ]
+            data = np.array(matrix, dtype=np.float64)
+            mode = OperatingMode.REPLAY
+            source_kind = EEGSourceKind.RECORDED
+            fmax = min(request.fmax, sample_rate / 2.0 - 0.5)
+        else:
+            data = self._get_analysis_data(request.channels, request.window_duration_seconds)
+            sample_rate = 250
+            mode = OperatingMode.SIMULATION
+            source_kind = EEGSourceKind.SYNTHETIC
+            fmax = request.fmax
+
         response = compute_psd_analysis(
             data_uv=data,
             channel_names=request.channels,
-            sample_rate_hz=250,
+            sample_rate_hz=sample_rate,
             method=request.method,
             fmin=request.fmin,
-            fmax=request.fmax,
+            fmax=fmax,
             session_id=request.session_id,
             trial_id=request.trial_id,
-            mode=OperatingMode.SIMULATION,
+            mode=mode,
+            source_kind=source_kind,
         )
 
         analysis_cache.set(cache_key, response)
@@ -119,20 +147,45 @@ class EEGAnalysisService:
 
     def compute_band_power(self, request: BandPowerRequest) -> BandPowerResponse:
         """Compute or retrieve cached frequency band powers."""
-        cache_key = f"bp:{request.method}:{request.channels}:{request.window_duration_seconds}"
+        cache_key = f"bp:{request.recording_id}:{request.method}:{request.channels}:{request.window_duration_seconds}"
         cached = analysis_cache.get(cache_key)
         if cached:
             return cached
 
-        data = self._get_analysis_data(request.channels, request.window_duration_seconds)
+        if request.recording_id:
+            from neuromove.datasets.service import get_dataset_service
+
+            dataset_service = get_dataset_service()
+            dataset_id = request.dataset_id or "physionet-eegbci"
+            sig_res = dataset_service.get_signal(
+                dataset_id=dataset_id,
+                recording_id=request.recording_id,
+                channels=request.channels,
+                start_sec=0.0,
+                duration_sec=request.window_duration_seconds,
+            )
+            sample_rate = sig_res.sampling_rate_hz
+            matrix = [
+                sig_res.signals.get(ch, [0.0] * len(sig_res.timestamps)) for ch in request.channels
+            ]
+            data = np.array(matrix, dtype=np.float64)
+            mode = OperatingMode.REPLAY
+            source_kind = EEGSourceKind.RECORDED
+        else:
+            data = self._get_analysis_data(request.channels, request.window_duration_seconds)
+            sample_rate = 250
+            mode = OperatingMode.SIMULATION
+            source_kind = EEGSourceKind.SYNTHETIC
+
         response = compute_band_power_analysis(
             data_uv=data,
             channel_names=request.channels,
-            sample_rate_hz=250,
+            sample_rate_hz=sample_rate,
             method=request.method,
             session_id=request.session_id,
             trial_id=request.trial_id,
-            mode=OperatingMode.SIMULATION,
+            mode=mode,
+            source_kind=source_kind,
         )
 
         analysis_cache.set(cache_key, response)
@@ -140,26 +193,50 @@ class EEGAnalysisService:
 
     def compute_tfr(self, request: TFRRequest) -> TFRResponse:
         """Compute or retrieve cached Morlet wavelet Time-Frequency Representation."""
-        cache_key = (
-            f"tfr:{request.channel}:{request.fmin}:{request.fmax}:{request.window_duration_seconds}"
-        )
+        cache_key = f"tfr:{request.recording_id}:{request.channel}:{request.fmin}:{request.fmax}:{request.window_duration_seconds}"
         cached = analysis_cache.get(cache_key)
         if cached:
             return cached
 
-        data = self._get_analysis_data([request.channel], request.window_duration_seconds)
-        channel_signal = data[0]
+        if request.recording_id:
+            from neuromove.datasets.service import get_dataset_service
+
+            dataset_service = get_dataset_service()
+            dataset_id = request.dataset_id or "physionet-eegbci"
+            sig_res = dataset_service.get_signal(
+                dataset_id=dataset_id,
+                recording_id=request.recording_id,
+                channels=[request.channel],
+                start_sec=0.0,
+                duration_sec=request.window_duration_seconds,
+            )
+            sample_rate = sig_res.sampling_rate_hz
+            channel_signal = np.array(
+                sig_res.signals.get(request.channel, [0.0] * len(sig_res.timestamps)),
+                dtype=np.float64,
+            )
+            mode = OperatingMode.REPLAY
+            source_kind = EEGSourceKind.RECORDED
+            fmax = min(request.fmax, sample_rate / 2.0 - 0.5)
+        else:
+            data = self._get_analysis_data([request.channel], request.window_duration_seconds)
+            channel_signal = data[0]
+            sample_rate = 250
+            mode = OperatingMode.SIMULATION
+            source_kind = EEGSourceKind.SYNTHETIC
+            fmax = request.fmax
 
         response = compute_morlet_tfr(
             data_uv=channel_signal,
             channel_name=request.channel,
-            sample_rate_hz=250,
+            sample_rate_hz=sample_rate,
             fmin=request.fmin,
-            fmax=request.fmax,
+            fmax=fmax,
             n_frequencies=20,
             session_id=request.session_id,
             trial_id=request.trial_id,
-            mode=OperatingMode.SIMULATION,
+            mode=mode,
+            source_kind=source_kind,
         )
 
         analysis_cache.set(cache_key, response)

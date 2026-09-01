@@ -28,11 +28,12 @@ def compute_morlet_tfr(
     channel_name: str = "C3",
     sample_rate_hz: int = 250,
     fmin: float = 4.0,
-    fmax: float = 40.0,
+    fmax: float = 35.0,
     n_frequencies: int = 20,
     session_id: str | None = None,
     trial_id: str | None = None,
     mode: OperatingMode = OperatingMode.SIMULATION,
+    source_kind: EEGSourceKind = EEGSourceKind.SYNTHETIC,
 ) -> TFRResponse:
     """Compute Morlet wavelet time-frequency power representation.
 
@@ -107,7 +108,7 @@ def compute_morlet_tfr(
         analysis_version="EEG_ANALYSIS_V1",
         session_id=session_id,
         trial_id=trial_id,
-        source_kind=EEGSourceKind.SYNTHETIC,
+        source_kind=source_kind,
         mode=mode,
         channels=[channel_name],
         sampling_rate_hz=sample_rate_hz,

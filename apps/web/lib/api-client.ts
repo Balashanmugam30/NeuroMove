@@ -22,6 +22,18 @@ import {
   TFRResponseSchema,
   EEGChannelSummary,
   EEGChannelSummarySchema,
+  DatasetDefinition,
+  DatasetDefinitionSchema,
+  DatasetSubject,
+  DatasetSubjectSchema,
+  DatasetRecording,
+  DatasetRecordingSchema,
+  DatasetManifest,
+  DatasetManifestSchema,
+  IngestionQualityReport,
+  IngestionQualityReportSchema,
+  DatasetSignalResponse,
+  DatasetSignalResponseSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -296,4 +308,141 @@ export function getExportAnalysisUrl(sessionId?: string): string {
   const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : "";
   return `${API_BASE_URL}/api/eeg/export/analysis${query}`;
 }
+
+// --- Public EEG Dataset Endpoints ---
+
+export async function fetchDatasets(): Promise<DatasetDefinition[]> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DatasetDefinitionSchema).parse(data);
+}
+
+export async function fetchDatasetDetails(
+  datasetId: string
+): Promise<DatasetDefinition> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets/${datasetId}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DatasetDefinitionSchema.parse(data);
+}
+
+export async function fetchDatasetSubjects(
+  datasetId: string
+): Promise<DatasetSubject[]> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets/${datasetId}/subjects`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DatasetSubjectSchema).parse(data);
+}
+
+export async function fetchDatasetRecordings(
+  datasetId: string,
+  subjectId?: string,
+  task?: string
+): Promise<DatasetRecording[]> {
+  const params = new URLSearchParams();
+  if (subjectId) params.append("subject_id", subjectId);
+  if (task) params.append("task", task);
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/datasets/${datasetId}/recordings${query}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DatasetRecordingSchema).parse(data);
+}
+
+export async function fetchDatasetRecording(
+  datasetId: string,
+  recordingId: string
+): Promise<DatasetRecording> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/datasets/${datasetId}/recordings/${recordingId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DatasetRecordingSchema.parse(data);
+}
+
+export async function fetchDatasetSignal(
+  datasetId: string,
+  recordingId: string,
+  channels?: string[],
+  startSec?: number,
+  durationSec?: number
+): Promise<DatasetSignalResponse> {
+  const params = new URLSearchParams();
+  if (channels && channels.length > 0) params.append("channels", channels.join(","));
+  if (startSec !== undefined) params.append("start_sec", startSec.toString());
+  if (durationSec !== undefined) params.append("duration_sec", durationSec.toString());
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/datasets/${datasetId}/recordings/${recordingId}/signal${query}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DatasetSignalResponseSchema.parse(data);
+}
+
+export async function downloadDatasetRun(
+  datasetId: string,
+  subjectId: string,
+  runId: string
+): Promise<DatasetRecording[]> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets/${datasetId}/download`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subject_ids: [subjectId],
+      run_ids: [runId],
+    }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DatasetRecordingSchema).parse(data);
+}
+
+export async function verifyDataset(datasetId: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets/${datasetId}/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset_id: datasetId }),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchDatasetManifest(
+  datasetId: string
+): Promise<DatasetManifest> {
+  const res = await fetch(`${API_BASE_URL}/api/datasets/${datasetId}/manifest`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DatasetManifestSchema.parse(data);
+}
+
+export async function fetchDatasetQualityReport(
+  datasetId: string
+): Promise<IngestionQualityReport> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/datasets/${datasetId}/quality-report`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return IngestionQualityReportSchema.parse(data);
+}
+
 

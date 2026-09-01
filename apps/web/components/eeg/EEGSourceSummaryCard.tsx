@@ -10,6 +10,8 @@ interface EEGSourceSummaryCardProps {
   channels?: string[];
   sampleRateHz?: number;
   connectionState?: string;
+  datasetName?: string;
+  recordingId?: string;
   className?: string;
 }
 
@@ -19,6 +21,8 @@ export function EEGSourceSummaryCard({
   channels = ["C3", "Cz", "C4"],
   sampleRateHz = 250,
   connectionState = "CONNECTED",
+  datasetName,
+  recordingId,
   className,
 }: EEGSourceSummaryCardProps) {
   const isConnected = connectionState === "CONNECTED" || connectionState === "STREAMING";
@@ -43,7 +47,7 @@ export function EEGSourceSummaryCard({
             </span>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-900 font-mono">
-                {sourceKind === "SYNTHETIC" ? "SYNTHETIC EEG" : sourceKind}
+                {sourceKind === "SYNTHETIC" ? "SYNTHETIC EEG" : "RECORDED EEG"}
               </h3>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-3xs font-bold tracking-wider uppercase bg-blue-100 text-blue-800 border border-blue-200">
                 {mode}
@@ -70,10 +74,10 @@ export function EEGSourceSummaryCard({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
           <span className="text-2xs font-medium text-slate-500 block">
-            Adapter
+            Source Adapter
           </span>
-          <span className="text-xs font-bold text-slate-900 font-mono mt-0.5 block">
-            Deterministic Sim
+          <span className="text-xs font-bold text-slate-900 font-mono mt-0.5 block truncate" title={datasetName || "Deterministic Sim"}>
+            {sourceKind === "RECORDED" ? (datasetName || "PhysioNet EEGBCI") : "Deterministic Sim"}
           </span>
         </div>
 
@@ -81,8 +85,8 @@ export function EEGSourceSummaryCard({
           <span className="text-2xs font-medium text-slate-500 block">
             Topology
           </span>
-          <span className="text-xs font-bold text-slate-900 font-mono mt-0.5 block">
-            {channels.join(" / ")}
+          <span className="text-xs font-bold text-slate-900 font-mono mt-0.5 block truncate" title={channels.join(" / ")}>
+            {channels.length > 5 ? `${channels.length} Channels (10-10)` : channels.join(" / ")}
           </span>
         </div>
 
@@ -110,8 +114,17 @@ export function EEGSourceSummaryCard({
         <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold text-slate-700">Scientific Attribution: </span>
-          Signal is produced by mathematical simulation with SMR modulation (Seed 42) for
-          pipeline verification. Does NOT represent human participant recording or clinical electrophysiology.
+          {sourceKind === "RECORDED" ? (
+            <span>
+              Public recorded EEG from <strong>{datasetName || "PhysioNet EEG Motor Movement/Imagery"}</strong>.
+              Recorded across experimental run <code>{recordingId || "S001R04"}</code>. Does NOT represent live user telemetry or clinical diagnostic data.
+            </span>
+          ) : (
+            <span>
+              Signal is produced by mathematical simulation with SMR modulation (Seed 42) for
+              pipeline verification. Does NOT represent human participant recording or clinical electrophysiology.
+            </span>
+          )}
         </div>
       </div>
     </div>

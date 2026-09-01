@@ -77,7 +77,17 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     await expect(page.getByText(/last heartbeat:/i).first()).toBeVisible();
     await expect(page.getByText(/local loopback/i).first()).toBeVisible();
 
-    // Ensure zero React hydration errors occurred
+    // 9. Navigate to Public Datasets Workspace (Phase 08)
+    const datasetsLink = page.getByRole("link", { name: /public datasets/i }).first();
+    await datasetsLink.click();
+    await expect(page).toHaveURL(/.*\/research\/datasets/);
+    await expect(
+      page.getByRole("heading", { name: /public eeg datasets/i })
+    ).toBeVisible();
+    await expect(page.getByText(/participant run explorer/i).first()).toBeVisible();
+    await expect(page.getByText(/strict subject boundary/i).first()).toBeVisible();
+
+    // Ensure zero React hydration errors occurred across all navigated pages
     const hydrationErrors = consoleErrors.filter((err) =>
       err.toLowerCase().includes("hydration")
     );

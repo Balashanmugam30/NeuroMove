@@ -57,6 +57,103 @@ class DatabaseManager:
                 cursor.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('001_initial_platform');"
                 )
+
+                # Migration 002: Public EEG Datasets and Recordings
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS datasets (
+                        dataset_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        version TEXT NOT NULL,
+                        provider TEXT NOT NULL,
+                        source_reference TEXT NOT NULL,
+                        official_reference TEXT NOT NULL,
+                        license TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        modality TEXT NOT NULL,
+                        tasks_json TEXT NOT NULL,
+                        default_loader TEXT NOT NULL,
+                        supported INTEGER NOT NULL DEFAULT 1,
+                        schema_version TEXT NOT NULL,
+                        cache_status TEXT NOT NULL,
+                        subjects_count INTEGER NOT NULL DEFAULT 0,
+                        recordings_count INTEGER NOT NULL DEFAULT 0,
+                        total_size_bytes INTEGER NOT NULL DEFAULT 0,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS dataset_subjects (
+                        dataset_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        source_subject_id TEXT NOT NULL,
+                        recording_count INTEGER NOT NULL DEFAULT 0,
+                        runs_json TEXT NOT NULL,
+                        available_tasks_json TEXT NOT NULL,
+                        PRIMARY KEY (dataset_id, subject_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS dataset_recordings (
+                        recording_id TEXT PRIMARY KEY,
+                        dataset_id TEXT NOT NULL,
+                        dataset_version TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        source_subject_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        run_id TEXT NOT NULL,
+                        file_reference TEXT NOT NULL,
+                        checksum_sha256 TEXT NOT NULL,
+                        sample_rate_hz INTEGER NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        channel_names_json TEXT NOT NULL,
+                        duration_seconds REAL NOT NULL,
+                        task TEXT NOT NULL,
+                        normalized_task_label TEXT NOT NULL,
+                        event_count INTEGER NOT NULL DEFAULT 0,
+                        source_kind TEXT NOT NULL DEFAULT 'RECORDED',
+                        ingestion_version TEXT NOT NULL,
+                        loader_version TEXT NOT NULL,
+                        cache_status TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS dataset_events (
+                        event_id TEXT PRIMARY KEY,
+                        recording_id TEXT NOT NULL,
+                        source_event_code TEXT NOT NULL,
+                        source_label TEXT NOT NULL,
+                        neuromove_event_type TEXT NOT NULL,
+                        onset_samples INTEGER NOT NULL,
+                        onset_seconds REAL NOT NULL,
+                        duration_seconds REAL NOT NULL,
+                        description TEXT NOT NULL,
+                        mapping_status TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS dataset_files (
+                        relative_path TEXT PRIMARY KEY,
+                        dataset_id TEXT NOT NULL,
+                        size_bytes INTEGER NOT NULL,
+                        sha256 TEXT NOT NULL,
+                        verification_status TEXT NOT NULL,
+                        retrieved_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('002_public_datasets');"
+                )
                 conn.commit()
 
             self._is_initialized = True

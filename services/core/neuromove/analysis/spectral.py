@@ -60,32 +60,9 @@ def compute_psd_analysis(
     session_id: str | None = None,
     trial_id: str | None = None,
     mode: OperatingMode = OperatingMode.SIMULATION,
+    source_kind: EEGSourceKind = EEGSourceKind.SYNTHETIC,
 ) -> PSDResponse:
-    """Compute Power Spectral Density using MNE modern compute_psd API.
-
-    Parameters:
-    -----------
-    data_uv: np.ndarray
-        2D array of shape (n_channels, n_samples) with amplitudes in microvolts (uV).
-    channel_names: list[str]
-        List of channel identifiers (e.g. ["C3", "Cz", "C4"]).
-    sample_rate_hz: int
-        Sampling frequency in Hertz (default 250 Hz).
-    method: PSDMethod or str
-        Spectral estimation method: "welch" or "multitaper".
-    fmin: float
-        Lower frequency bound in Hz.
-    fmax: float
-        Upper frequency bound in Hz (must be strictly less than Nyquist).
-    session_id, trial_id: str | None
-        Provenance identifiers.
-    mode: OperatingMode
-        Operational environment.
-
-    Returns:
-    --------
-    PSDResponse: Typed response containing frequencies, PSD per channel, and provenance.
-    """
+    """Compute Power Spectral Density using MNE modern compute_psd API."""
     nyquist = sample_rate_hz / 2.0
     if fmax >= nyquist:
         raise ValueError(
@@ -134,7 +111,7 @@ def compute_psd_analysis(
         analysis_version="EEG_ANALYSIS_V1",
         session_id=session_id,
         trial_id=trial_id,
-        source_kind=EEGSourceKind.SYNTHETIC,
+        source_kind=source_kind,
         mode=mode,
         channels=channel_names,
         sampling_rate_hz=sample_rate_hz,
@@ -162,23 +139,22 @@ def compute_band_power_analysis(
     session_id: str | None = None,
     trial_id: str | None = None,
     mode: OperatingMode = OperatingMode.SIMULATION,
+    source_kind: EEGSourceKind = EEGSourceKind.SYNTHETIC,
 ) -> BandPowerResponse:
-    """Compute integrated absolute and relative frequency band powers per channel.
-
-    Calculates Delta, Theta, Mu, Beta, and Gamma power, as well as the
-    Mu-band ERD/ERS lateralization index between C3 and C4.
-    """
-    # 1. Compute PSD from 1.0 to 45.0 Hz to encompass all standard bands
+    """Compute integrated absolute and relative frequency band powers per channel."""
+    # 1. Compute PSD from 1.0 to 45.0 Hz to encompass all standard bands (bounded by Nyquist)
+    fmax = min(45.0, sample_rate_hz / 2.0 - 0.5)
     psd_res = compute_psd_analysis(
         data_uv=data_uv,
         channel_names=channel_names,
         sample_rate_hz=sample_rate_hz,
         method=method,
         fmin=1.0,
-        fmax=45.0,
+        fmax=fmax,
         session_id=session_id,
         trial_id=trial_id,
         mode=mode,
+        source_kind=source_kind,
     )
 
     freqs = np.array(psd_res.frequencies)
@@ -224,12 +200,12 @@ def compute_band_power_analysis(
         analysis_version="EEG_ANALYSIS_V1",
         session_id=session_id,
         trial_id=trial_id,
-        source_kind=EEGSourceKind.SYNTHETIC,
+        source_kind=source_kind,
         mode=mode,
         channels=channel_names,
         sampling_rate_hz=sample_rate_hz,
         method=str(method).lower(),
-        frequency_range_hz=(1.0, 45.0),
+        frequency_range_hz=(1.0, fmax),
         window_seconds=(0.0, round(duration_sec, 3)),
         engine=f"MNE-Python {mne.__version__}",
         created_at=datetime.now(UTC),

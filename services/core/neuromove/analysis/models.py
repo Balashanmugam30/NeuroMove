@@ -62,6 +62,8 @@ class PSDRequest(BaseModel):
 
     session_id: str | None = None
     trial_id: str | None = None
+    dataset_id: str | None = None
+    recording_id: str | None = None
     channels: list[str] = Field(default_factory=lambda: ["C3", "Cz", "C4"])
     method: PSDMethod = PSDMethod.WELCH
     fmin: float = Field(default=1.0, ge=0.5, le=120.0)
@@ -93,6 +95,8 @@ class BandPowerRequest(BaseModel):
 
     session_id: str | None = None
     trial_id: str | None = None
+    dataset_id: str | None = None
+    recording_id: str | None = None
     channels: list[str] = Field(default_factory=lambda: ["C3", "Cz", "C4"])
     method: PSDMethod = PSDMethod.WELCH
     window_duration_seconds: float = Field(default=4.0, ge=1.0, le=16.0)
@@ -112,6 +116,8 @@ class TFRRequest(BaseModel):
 
     session_id: str | None = None
     trial_id: str | None = None
+    dataset_id: str | None = None
+    recording_id: str | None = None
     channel: str = "C3"
     fmin: float = Field(default=4.0, ge=1.0, le=60.0)
     fmax: float = Field(default=40.0, ge=5.0, le=100.0)

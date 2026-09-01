@@ -55,6 +55,22 @@ data/processed/*
 !data/processed/.gitkeep
 data/exports/*
 !data/exports/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+data/downloads/*
+!data/downloads/.gitkeep
+
+# Large Scientific Data Recordings (never commit raw datasets)
+*.edf
+*.bdf
+*.fif
+*.fif.gz
+*.vhdr
+*.vmrk
+!data/fixtures/*.edf
+!data/fixtures/*.fif
+!data/fixtures/*.json
+
 
 # Trained Model Binaries
 models/baseline/*
