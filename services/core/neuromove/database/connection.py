@@ -212,6 +212,132 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 004: Motor-Imagery Epoching, Event Segmentation & Feature Foundation
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '004_epoching_and_features';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS event_mappings (
+                        mapping_id TEXT PRIMARY KEY,
+                        mapping_version TEXT NOT NULL,
+                        dataset_id TEXT,
+                        rules_json TEXT NOT NULL,
+                        default_label TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS epoching_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        epoching_version TEXT NOT NULL,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS epoch_sets (
+                        epoch_set_id TEXT PRIMARY KEY,
+                        epoching_version TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        source_kind TEXT NOT NULL,
+                        dataset_id TEXT,
+                        recording_id TEXT,
+                        scenario_id TEXT,
+                        preprocessing_result_id TEXT,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        run_id TEXT,
+                        sampling_rate_hz REAL NOT NULL,
+                        channels_json TEXT NOT NULL,
+                        tmin REAL NOT NULL,
+                        tmax REAL NOT NULL,
+                        total_events INTEGER NOT NULL,
+                        mapped_events INTEGER NOT NULL,
+                        valid_epochs INTEGER NOT NULL,
+                        rejected_epochs INTEGER NOT NULL,
+                        rejection_counts_json TEXT NOT NULL,
+                        label_distribution_json TEXT NOT NULL,
+                        artifact_file_path TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS epoch_records (
+                        epoch_id TEXT PRIMARY KEY,
+                        epoch_set_id TEXT NOT NULL,
+                        trial_id TEXT NOT NULL,
+                        event_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        session_id TEXT,
+                        run_id TEXT,
+                        label TEXT NOT NULL,
+                        onset_seconds REAL NOT NULL,
+                        qc_status TEXT NOT NULL,
+                        rejection_reason TEXT,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS feature_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        feature_version TEXT NOT NULL,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS feature_sets (
+                        feature_set_id TEXT PRIMARY KEY,
+                        feature_version TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        source_epoch_set_id TEXT NOT NULL,
+                        subject_ids_json TEXT NOT NULL,
+                        session_ids_json TEXT NOT NULL,
+                        run_ids_json TEXT NOT NULL,
+                        trial_ids_json TEXT NOT NULL,
+                        labels_json TEXT NOT NULL,
+                        feature_names_json TEXT NOT NULL,
+                        row_count INTEGER NOT NULL,
+                        feature_count INTEGER NOT NULL,
+                        label_distribution_json TEXT NOT NULL,
+                        artifact_file_path TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        software_versions_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS feature_lineage (
+                        feature_set_id TEXT NOT NULL,
+                        epoch_set_id TEXT NOT NULL,
+                        preprocessing_result_id TEXT,
+                        recording_id TEXT,
+                        dataset_id TEXT,
+                        created_at TEXT NOT NULL,
+                        PRIMARY KEY (feature_set_id, epoch_set_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('004_epoching_and_features');"
+                )
+                conn.commit()
+
             self._is_initialized = True
             logger.info("SQLite database initialized successfully at %s", db_path)
         except Exception as exc:

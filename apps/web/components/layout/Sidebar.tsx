@@ -46,6 +46,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/eeg", label: "EEG Lab", icon: Waves },
       { href: "/eeg/preprocessing", label: "Preprocessing & DSP", icon: Sliders, badge: "Phase 09" },
+      { href: "/eeg/features", label: "Epochs & Features", icon: BrainCircuit, badge: "Phase 10" },
       { href: "/calibration", label: "Calibration", icon: Crosshair },
       { href: "/models", label: "AI Models", icon: BrainCircuit },
     ],

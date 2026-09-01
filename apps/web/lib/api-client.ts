@@ -45,7 +45,31 @@ import {
   PreprocessingManifestSchema,
   PreprocessingSignalResponse,
   PreprocessingSignalResponseSchema,
+  NormalizedEvent,
+  NormalizedEventSchema,
+  EpochingRequest,
+  EpochingPreview,
+  EpochingPreviewSchema,
+  EpochSummary,
+  EpochSummarySchema,
+  EpochRecord,
+  EpochRecordSchema,
+  EpochSignalResponse,
+  EpochSignalResponseSchema,
+  EpochManifest,
+  EpochManifestSchema,
+  FeatureExtractionRequest,
+  FeaturePreview,
+  FeaturePreviewSchema,
+  FeatureSet,
+  FeatureSetSchema,
+  CovarianceSet,
+  CovarianceSetSchema,
+  FeatureManifest,
+  FeatureManifestSchema,
 } from "@neuromove/contracts";
+
+
 import { z } from "zod";
 
 const API_BASE_URL =
@@ -593,6 +617,191 @@ export async function fitICA(
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return res.json();
 }
+
+// --- Motor-Imagery Epoching & Feature API Functions (Phase 10) ---
+
+export async function normalizeEvents(
+  request: EpochingRequest
+): Promise<NormalizedEvent[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/events/normalize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(NormalizedEventSchema).parse(data);
+}
+
+export async function previewEpoching(
+  request: EpochingRequest
+): Promise<EpochingPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/epochs/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EpochingPreviewSchema.parse(data);
+}
+
+export async function runEpoching(
+  request: EpochingRequest
+): Promise<EpochSummary> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/epochs/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EpochSummarySchema.parse(data);
+}
+
+export async function listEpochSets(limit: number = 50): Promise<EpochSummary[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/epochs?limit=${limit}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EpochSummarySchema).parse(data);
+}
+
+export async function fetchEpochSummary(
+  epochSetId: string
+): Promise<EpochSummary> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/epochs/${epochSetId}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EpochSummarySchema.parse(data);
+}
+
+export async function fetchEpochRecords(
+  epochSetId: string,
+  limit: number = 100
+): Promise<EpochRecord[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/epochs/${epochSetId}/records?limit=${limit}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EpochRecordSchema).parse(data);
+}
+
+export async function fetchEpochSignal(
+  epochSetId: string,
+  epochId: string
+): Promise<EpochSignalResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/epochs/${epochSetId}/records/${epochId}/signal`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EpochSignalResponseSchema.parse(data);
+}
+
+export async function fetchEpochManifest(
+  epochSetId: string
+): Promise<EpochManifest> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/epochs/${epochSetId}/manifest`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EpochManifestSchema.parse(data);
+}
+
+export async function previewFeatures(
+  request: FeatureExtractionRequest
+): Promise<FeaturePreview> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/features/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return FeaturePreviewSchema.parse(data);
+}
+
+export async function extractFeatures(
+  request: FeatureExtractionRequest
+): Promise<FeatureSet> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/features/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return FeatureSetSchema.parse(data);
+}
+
+export async function listFeatureSets(
+  limit: number = 50
+): Promise<FeatureSet[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/features?limit=${limit}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(FeatureSetSchema).parse(data);
+}
+
+export async function fetchFeatureSet(
+  featureSetId: string
+): Promise<FeatureSet> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/features/${featureSetId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return FeatureSetSchema.parse(data);
+}
+
+export async function fetchFeatureData(
+  featureSetId: string,
+  limit: number = 100
+): Promise<Record<string, any>[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/features/${featureSetId}/data?limit=${limit}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchCovarianceSet(
+  featureSetId: string
+): Promise<CovarianceSet> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/features/${featureSetId}/covariance`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return CovarianceSetSchema.parse(data);
+}
+
+export async function fetchFeatureManifest(
+  featureSetId: string
+): Promise<FeatureManifest> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/eeg/features/${featureSetId}/manifest`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return FeatureManifestSchema.parse(data);
+}
+
 
 
 

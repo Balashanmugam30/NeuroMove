@@ -580,6 +580,220 @@ def post_fit_ica(payload: dict[str, Any]) -> Any:
     return fit_ica_decomposition(raw, n_components=n_comp, random_state=rnd_state)
 
 
+# --- Motor-Imagery Epoching & Feature Endpoints (Phase 10) ---
+
+
+@api_router.post("/eeg/events/normalize", tags=["Epoching"])
+def post_normalize_events(payload: dict[str, Any]) -> Any:
+    """Discover, map, and validate events from source recording."""
+    from neuromove.epoching.events import normalize_events
+    from neuromove.epoching.models import EpochingRequest
+    from neuromove.features.service import get_epoching_feature_service
+
+    req = EpochingRequest(**payload)
+    svc = get_epoching_feature_service()
+    raw, _, _, session_id, _ = svc._get_source_raw(req)
+    mapping = req.mapping_config
+    return normalize_events(raw, mapping_config=mapping, session_id=session_id)
+
+
+@api_router.post("/eeg/epochs/preview", tags=["Epoching"])
+def post_epochs_preview(payload: dict[str, Any]) -> Any:
+    """Preview motor-imagery epoching segmentation parameters and trial counts."""
+    from neuromove.epoching.models import EpochingRequest
+    from neuromove.features.service import get_epoching_feature_service
+
+    req = EpochingRequest(**payload)
+    return get_epoching_feature_service().preview_epoching(req)
+
+
+@api_router.post("/eeg/epochs/run", tags=["Epoching"])
+def post_epochs_run(payload: dict[str, Any]) -> Any:
+    """Execute motor-imagery trial epoching and save MNE Epochs artifact."""
+    from neuromove.epoching.models import EpochingRequest
+    from neuromove.features.service import get_epoching_feature_service
+
+    req = EpochingRequest(**payload)
+    return get_epoching_feature_service().run_epoching(req)
+
+
+@api_router.get("/eeg/epochs", tags=["Epoching"])
+def list_epoch_sets(limit: int = 50) -> Any:
+    """List recent epoch sets."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    return get_epoching_feature_service().list_epoch_sets(limit=limit)
+
+
+@api_router.get("/eeg/epochs/{epoch_set_id}", tags=["Epoching"])
+def get_epoch_set(epoch_set_id: str) -> Any:
+    """Retrieve summary and QC distribution for an epoch set."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    summary = get_epoching_feature_service().get_epoch_summary(epoch_set_id)
+    if not summary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Epoch set '{epoch_set_id}' not found.",
+        )
+    return summary
+
+
+@api_router.get("/eeg/epochs/{epoch_set_id}/records", tags=["Epoching"])
+def get_epoch_records(epoch_set_id: str, limit: int = 100) -> Any:
+    """Retrieve individual epoch records."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    return get_epoching_feature_service().list_epoch_records(epoch_set_id, limit=limit)
+
+
+@api_router.get("/eeg/epochs/{epoch_set_id}/records/{epoch_id}/signal", tags=["Epoching"])
+def get_epoch_record_signal(epoch_set_id: str, epoch_id: str) -> Any:
+    """Retrieve time-series slice for an epoch waveform visualizer."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        return get_epoching_feature_service().get_epoch_signal(epoch_set_id, epoch_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Epoch '{epoch_id}' not found in set '{epoch_set_id}'.",
+        ) from exc
+
+
+@api_router.get("/eeg/epochs/{epoch_set_id}/manifest", tags=["Epoching"])
+def get_epoch_manifest(epoch_set_id: str) -> Any:
+    """Export complete JSON reproducibility manifest for an epoch set."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        return get_epoching_feature_service().get_epoch_manifest(epoch_set_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Epoch set '{epoch_set_id}' manifest not found.",
+        ) from exc
+
+
+@api_router.post("/eeg/features/preview", tags=["Features"])
+def post_features_preview(payload: dict[str, Any]) -> Any:
+    """Validate feature configuration against epoch set."""
+    from neuromove.features.models import FeatureExtractionRequest
+    from neuromove.features.service import get_epoching_feature_service
+
+    req = FeatureExtractionRequest(**payload)
+    try:
+        return get_epoching_feature_service().preview_features(req)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Epoch set '{req.epoch_set_id}' not found.",
+        ) from exc
+
+
+@api_router.post("/eeg/features/run", tags=["Features"])
+def post_features_run(payload: dict[str, Any]) -> Any:
+    """Extract multi-band spectral features and covariance matrices."""
+    from neuromove.features.models import FeatureExtractionRequest
+    from neuromove.features.service import get_epoching_feature_service
+
+    req = FeatureExtractionRequest(**payload)
+    try:
+        return get_epoching_feature_service().extract_features(req)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Epoch set '{req.epoch_set_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/eeg/features", tags=["Features"])
+def list_feature_sets(limit: int = 50) -> Any:
+    """List recent feature sets."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    return get_epoching_feature_service().list_feature_sets(limit=limit)
+
+
+@api_router.get("/eeg/features/{feature_set_id}", tags=["Features"])
+def get_feature_set_record(feature_set_id: str) -> Any:
+    """Retrieve summary metadata for a feature set."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    feat_set = get_epoching_feature_service().get_feature_set(feature_set_id)
+    if not feat_set:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Feature set '{feature_set_id}' not found.",
+        )
+    return feat_set
+
+
+@api_router.get("/eeg/features/{feature_set_id}/data", tags=["Features"])
+def get_feature_matrix_data(feature_set_id: str, limit: int = 100) -> Any:
+    """Retrieve row data from feature set."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        return get_epoching_feature_service().get_feature_data(feature_set_id, limit=limit)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Feature artifact '{feature_set_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/eeg/features/{feature_set_id}/covariance", tags=["Features"])
+def get_feature_covariance_data(feature_set_id: str) -> Any:
+    """Retrieve spatial covariance matrices for CSP."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        return get_epoching_feature_service().get_covariance_set(feature_set_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Feature covariance '{feature_set_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/eeg/features/{feature_set_id}/manifest", tags=["Features"])
+def get_feature_manifest(feature_set_id: str) -> Any:
+    """Export complete JSON manifest for a feature set."""
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        return get_epoching_feature_service().get_feature_manifest(feature_set_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Feature set '{feature_set_id}' not found.",
+        ) from exc
+
+
+@api_router.get("/eeg/features/{feature_set_id}/export/csv", tags=["Features"])
+def get_feature_csv_export(feature_set_id: str) -> Any:
+    """Download CSV file of extracted features."""
+    from fastapi.responses import FileResponse
+
+    from neuromove.features.service import get_epoching_feature_service
+
+    try:
+        csv_path = get_epoching_feature_service().feature_storage.get_csv_export_path(
+            feature_set_id
+        )
+        return FileResponse(
+            path=str(csv_path),
+            media_type="text/csv",
+            filename=f"{feature_set_id}.csv",
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"CSV export for '{feature_set_id}' not found.",
+        ) from exc
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")

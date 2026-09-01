@@ -4,4 +4,6 @@ export * from "./events";
 export * from "./analysis";
 export * from "./dataset";
 export * from "./preprocessing";
+export * from "./epoching";
+export * from "./features";
 

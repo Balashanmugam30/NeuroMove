@@ -195,8 +195,9 @@ pnpm build
 - [x] **07 EEG Lab** — Research-grade signal visualization, MNE Welch/Multitaper PSD, band power decomposition, Morlet wavelet TFR, 10-20 topology, and provenance exports
 - [x] **08 Public Datasets** — PhysioNet EEGBCI (64-channel, 160 Hz, 109 subjects) ingestion, SHA-256 verified cache, participant run explorer, and replay
 - [x] **09 Preprocessing & DSP** — Configurable zero-phase FIR band-pass (0.5–40 Hz), spatial referencing (CAR), line-noise notch, polyphase resampling, FastICA decomposition, stage auditing, and dual RAW vs PROCESSED verification
-- [ ] **10 CSP + LDA** — Common Spatial Patterns spatial filter & Shrinkage Linear Discriminant Analysis
-- [ ] **11 CSP + SVM** — Non-linear Support Vector Machine classifier & kernel optimization
+- [x] **10 Epoching & Features** — Motor-imagery trial segmentation, event normalization (`EVENT_MAPPING_V1`), baseline correction, multi-band spectral features (Mu/Beta absolute/relative/log), sensorimotor lateralization ($C_3-C_4$), trace-normalized spatial covariance matrices, and reproducibility manifests
+- [ ] **11 CSP + LDA** — Common Spatial Patterns spatial filter & Shrinkage Linear Discriminant Analysis
+- [ ] **12 CSP + SVM** — Non-linear Support Vector Machine classifier & kernel optimization
 - [ ] **12 Model Lab** — Model artifact inspection, ROC curves, and cross-validation matrix
 - [ ] **13 Calibration** — Standardized Graz visual cue presentation engine & protocol
 - [ ] **14 User Adaptation** — Subject-specific adaptation & online covariance shifting

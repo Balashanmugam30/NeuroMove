@@ -59,6 +59,10 @@ data/cache/*
 !data/cache/.gitkeep
 data/downloads/*
 !data/downloads/.gitkeep
+data/epochs/*
+!data/epochs/.gitkeep
+data/features/*
+!data/features/.gitkeep
 
 # Large Scientific Data Recordings (never commit raw datasets)
 *.edf
