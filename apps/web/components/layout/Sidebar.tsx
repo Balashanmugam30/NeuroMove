@@ -49,7 +49,9 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/eeg/features", label: "Epochs & Features", icon: BrainCircuit, badge: "Phase 10" },
       { href: "/calibration", label: "Calibration", icon: Crosshair },
       { href: "/models", label: "CSP & Models", icon: BrainCircuit, badge: "Phase 11" },
+      { href: "/models/lab", label: "AI Model Lab", icon: FlaskConical, badge: "Phase 12" },
     ],
+
 
   },
   {

@@ -467,6 +467,162 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 006: AI Model Laboratory & Rigorous Model Evaluation
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '006_ai_model_laboratory';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        config_hash TEXT NOT NULL,
+                        dataset_id TEXT NOT NULL,
+                        epoch_set_id TEXT NOT NULL,
+                        task_id TEXT NOT NULL,
+                        model_family TEXT NOT NULL,
+                        representation TEXT NOT NULL,
+                        evaluation_protocol TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'COMPLETED',
+                        has_search INTEGER NOT NULL DEFAULT 0,
+                        model_id TEXT,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        experiment_version TEXT NOT NULL,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_runs (
+                        run_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        stage TEXT NOT NULL,
+                        progress REAL NOT NULL,
+                        status TEXT NOT NULL,
+                        error_message TEXT,
+                        started_at TEXT NOT NULL,
+                        completed_at TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_folds (
+                        experiment_id TEXT NOT NULL,
+                        fold_id INTEGER NOT NULL,
+                        train_subjects_json TEXT NOT NULL,
+                        test_subjects_json TEXT NOT NULL,
+                        train_epoch_count INTEGER NOT NULL,
+                        test_epoch_count INTEGER NOT NULL,
+                        train_class_counts_json TEXT NOT NULL,
+                        test_class_counts_json TEXT NOT NULL,
+                        fold_hash TEXT NOT NULL,
+                        search_results_json TEXT,
+                        PRIMARY KEY (experiment_id, fold_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_metrics (
+                        experiment_id TEXT PRIMARY KEY,
+                        accuracy_mean REAL NOT NULL,
+                        accuracy_std REAL NOT NULL,
+                        balanced_accuracy_mean REAL NOT NULL,
+                        balanced_accuracy_std REAL NOT NULL,
+                        precision_mean REAL NOT NULL,
+                        precision_std REAL NOT NULL,
+                        recall_mean REAL NOT NULL,
+                        recall_std REAL NOT NULL,
+                        f1_mean REAL NOT NULL,
+                        f1_std REAL NOT NULL,
+                        chance_level REAL NOT NULL DEFAULT 0.5,
+                        metrics_json TEXT NOT NULL,
+                        per_session_metrics_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_predictions (
+                        prediction_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        fold_id INTEGER NOT NULL,
+                        epoch_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        run_id TEXT NOT NULL,
+                        true_label TEXT NOT NULL,
+                        predicted_label TEXT NOT NULL,
+                        is_correct INTEGER NOT NULL,
+                        decision_score REAL,
+                        probabilities_json TEXT,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_search_candidates (
+                        candidate_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        fold_id INTEGER NOT NULL,
+                        parameters_json TEXT NOT NULL,
+                        mean_inner_score REAL NOT NULL,
+                        std_inner_score REAL NOT NULL,
+                        rank INTEGER NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS experiment_ablations (
+                        ablation_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        ablation_variable TEXT NOT NULL,
+                        baseline_experiment_id TEXT NOT NULL,
+                        results_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_cards (
+                        model_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        card_json TEXT NOT NULL,
+                        markdown_content TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_comparisons (
+                        comparison_id TEXT PRIMARY KEY,
+                        comparison_name TEXT NOT NULL,
+                        results_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('006_ai_model_laboratory');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

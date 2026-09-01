@@ -1,13 +1,13 @@
 """NeuroMove Motor-Imagery Feature Foundation & Covariance Representation (Phase 10)."""
 
-from neuromove.features.extractor import (
+from .extractor import (
     compute_covariance_representation,
     extract_epoch_feature_vector,
     extract_feature_set,
     generate_feature_preview,
     validate_covariance_matrix,
 )
-from neuromove.features.models import (
+from .models import (
     CovarianceMatrixRecord,
     CovarianceMethod,
     CovarianceSet,
@@ -20,8 +20,8 @@ from neuromove.features.models import (
     FeatureSet,
     FeatureVector,
 )
-from neuromove.features.service import EpochingFeatureService
-from neuromove.features.storage import FeatureStorage
+from .service import EpochingFeatureService
+from .storage import FeatureStorage
 
 __all__ = [
     "FeaturePowerType",

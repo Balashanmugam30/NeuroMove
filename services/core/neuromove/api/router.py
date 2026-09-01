@@ -903,6 +903,137 @@ def post_decoder_predict(payload: dict[str, Any]) -> Any:
         ) from exc
 
 
+# --- Phase 12: AI Model Laboratory Endpoints ---
+
+_ai_model_lab_service = None
+
+
+def get_ai_model_lab_service():
+    global _ai_model_lab_service
+    if _ai_model_lab_service is None:
+        from ..experiments.service import AIModelLabService
+
+        _ai_model_lab_service = AIModelLabService()
+    return _ai_model_lab_service
+
+
+@api_router.get("/ai/experiments", tags=["AI Model Laboratory"])
+def get_ai_experiments() -> list[Any]:
+    """List summary of all registered experiments."""
+    return get_ai_model_lab_service().list_experiments()
+
+
+@api_router.post("/ai/experiments/preview", tags=["AI Model Laboratory"])
+def post_ai_experiment_preview(payload: dict[str, Any]) -> Any:
+    """Pre-flight check for dataset compatibility, fold calculation, and search size."""
+    from ..experiments.models import ExperimentConfig
+
+    cfg = ExperimentConfig(**payload)
+    return get_ai_model_lab_service().preview_experiment(cfg)
+
+
+@api_router.post("/ai/experiments/run", tags=["AI Model Laboratory"])
+def post_ai_experiment_run(payload: dict[str, Any]) -> Any:
+    """Execute full group-aware / nested cross-validation experiment."""
+    from ..experiments.models import ExperimentConfig
+
+    cfg = ExperimentConfig(**payload)
+    try:
+        return get_ai_model_lab_service().run_experiment(cfg)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Experiment execution failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/ai/experiments/{experiment_id}", tags=["AI Model Laboratory"])
+def get_ai_experiment_detail(experiment_id: str) -> Any:
+    """Retrieve full experiment detail and metrics."""
+    try:
+        return get_ai_model_lab_service().get_experiment(experiment_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@api_router.get("/ai/experiments/{experiment_id}/predictions", tags=["AI Model Laboratory"])
+def get_ai_experiment_predictions(experiment_id: str) -> Any:
+    """Fetch out-of-fold sample-level prediction records."""
+    return get_ai_model_lab_service().get_experiment_predictions(experiment_id)
+
+
+@api_router.get("/ai/experiments/{experiment_id}/errors", tags=["AI Model Laboratory"])
+def get_ai_experiment_errors(experiment_id: str) -> Any:
+    """Fetch out-of-fold error analysis (confused pairs, difficult subjects/sessions)."""
+    return get_ai_model_lab_service().get_experiment_errors(experiment_id)
+
+
+@api_router.post("/ai/ablations/run", tags=["AI Model Laboratory"])
+def post_ai_ablation_run(payload: dict[str, Any]) -> Any:
+    """Execute a controlled single-variable ablation study."""
+    from ..experiments.models import ExperimentConfig
+
+    baseline_payload = payload.get("baseline_experiment_config", {})
+    ablation_var = payload.get("ablation_variable", "CSP_COMPONENTS")
+    baseline_cfg = ExperimentConfig(**baseline_payload)
+    try:
+        return get_ai_model_lab_service().run_ablation_study(
+            baseline_config=baseline_cfg, ablation_variable=ablation_var
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Ablation execution failed: {exc}",
+        ) from exc
+
+
+@api_router.post("/ai/compare", tags=["AI Model Laboratory"])
+def post_ai_compare_models(payload: dict[str, Any]) -> Any:
+    """Compare multiple experiments under identical task and fold conditions."""
+    cmp_name = payload.get("comparison_name", "Model Comparison")
+    exp_ids = payload.get("experiment_ids", [])
+    try:
+        return get_ai_model_lab_service().compare_experiments(
+            comparison_name=cmp_name, experiment_ids=exp_ids
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Comparison failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/ai/models/{model_id}/card", tags=["AI Model Laboratory"])
+def get_ai_model_card(model_id: str) -> Any:
+    """Retrieve structured JSON and Markdown Model Card."""
+    try:
+        return get_ai_model_lab_service().get_model_card(model_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@api_router.post("/ai/batch-predict", tags=["AI Model Laboratory"])
+def post_ai_batch_predict(payload: dict[str, Any]) -> Any:
+    """Execute batch inference across an epoch set for offline replay evaluation."""
+    model_id = payload.get("model_id", "")
+    epoch_set_id = payload.get("epoch_set_id", "")
+    try:
+        return get_ai_model_lab_service().predict_batch(
+            model_id=model_id, epoch_set_id=epoch_set_id
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Batch prediction failed: {exc}",
+        ) from exc
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")

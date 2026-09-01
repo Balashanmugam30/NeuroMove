@@ -7,5 +7,7 @@ export * from "./preprocessing";
 export * from "./epoching";
 export * from "./features";
 export * from "./decoding";
+export * from "./experiments";
+
 
 

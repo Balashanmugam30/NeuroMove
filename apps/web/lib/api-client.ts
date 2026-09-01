@@ -81,7 +81,25 @@ import {
   PredictionRequest,
   PredictionResponse,
   PredictionResponseSchema,
+  ExperimentConfig,
+  ExperimentSummary,
+  ExperimentSummarySchema,
+  ExperimentPreview,
+  ExperimentPreviewSchema,
+  ExperimentDetail,
+  ExperimentDetailSchema,
+  OutOfFoldPredictionSet,
+  OutOfFoldPredictionSetSchema,
+  ErrorAnalysisResult,
+  ErrorAnalysisResultSchema,
+  AblationStudyResult,
+  AblationStudyResultSchema,
+  ModelComparisonResult,
+  ModelComparisonResultSchema,
+  ModelCard,
+  ModelCardSchema,
 } from "@neuromove/contracts";
+
 
 
 
@@ -916,6 +934,157 @@ export async function predictDecoderEpoch(
   const data = await res.json();
   return PredictionResponseSchema.parse(data);
 }
+
+// --- Phase 12: AI Model Laboratory API Functions ---
+
+export async function fetchAiExperiments(): Promise<ExperimentSummary[]> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/experiments`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ExperimentSummarySchema).parse(data);
+}
+
+export async function previewAiExperiment(
+  config: ExperimentConfig
+): Promise<ExperimentPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/experiments/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ExperimentPreviewSchema.parse(data);
+}
+
+export async function runAiExperiment(
+  config: ExperimentConfig
+): Promise<ExperimentDetail> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/experiments/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ExperimentDetailSchema.parse(data);
+}
+
+export async function fetchAiExperimentDetail(
+  experimentId: string
+): Promise<ExperimentDetail> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/ai/experiments/${experimentId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ExperimentDetailSchema.parse(data);
+}
+
+export async function fetchAiExperimentPredictions(
+  experimentId: string
+): Promise<OutOfFoldPredictionSet> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/ai/experiments/${experimentId}/predictions`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return OutOfFoldPredictionSetSchema.parse(data);
+}
+
+export async function fetchAiExperimentErrors(
+  experimentId: string
+): Promise<ErrorAnalysisResult> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/ai/experiments/${experimentId}/errors`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ErrorAnalysisResultSchema.parse(data);
+}
+
+export async function runAiAblationStudy(payload: {
+  baseline_experiment_config: ExperimentConfig;
+  ablation_variable: string;
+}): Promise<AblationStudyResult> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/ablations/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return AblationStudyResultSchema.parse(data);
+}
+
+export async function compareAiModels(payload: {
+  comparison_name: string;
+  experiment_ids: string[];
+}): Promise<ModelComparisonResult> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/compare`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ModelComparisonResultSchema.parse(data);
+}
+
+export async function fetchAiModelCard(modelId: string): Promise<ModelCard> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/models/${modelId}/card`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ModelCardSchema.parse(data);
+}
+
+export async function batchPredictAiModel(payload: {
+  model_id: string;
+  epoch_set_id: string;
+}): Promise<{
+  model_id: string;
+  epoch_set_id: string;
+  total_epochs: number;
+  predictions: number[];
+  probabilities?: number[][];
+  timestamp: string;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/ai/batch-predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+
 
 
 

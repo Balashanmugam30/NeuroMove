@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "pnpm --filter @neuromove/web dev",
-    "dev:core": "uv run uvicorn services.core.neuromove.api.app:app --reload --port 8000 --host 127.0.0.1",
+    "dev:core": "uv run uvicorn neuromove.api.app:app --app-dir services/core --reload --port 8000 --host 127.0.0.1",
     "build": "turbo run build",
+
     "lint": "turbo run lint",
     "lint:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" && turbo run lint",
     "typecheck": "turbo run typecheck",

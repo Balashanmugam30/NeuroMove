@@ -89,7 +89,10 @@ models/production/*
 !models/production/.gitkeep
 models/classical/*
 !models/classical/.gitkeep
+experiments/*
+!experiments/.gitkeep
 *.joblib
+
 
 
 # Environment files

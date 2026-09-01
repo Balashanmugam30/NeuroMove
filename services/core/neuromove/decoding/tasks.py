@@ -40,6 +40,14 @@ def get_canonical_tasks() -> list[ClassificationTask]:
     return list(CANONICAL_TASKS.values())
 
 
+def get_canonical_task(task_id: str) -> ClassificationTask:
+    """Find a task specification by unique task ID or raise ValueError."""
+    task = CANONICAL_TASKS.get(task_id)
+    if not task:
+        raise ValueError(f"Unknown task ID: '{task_id}'. Available: {list(CANONICAL_TASKS.keys())}")
+    return task
+
+
 def get_task_by_id(task_id: str) -> ClassificationTask | None:
     """Find a task specification by unique task ID."""
     return CANONICAL_TASKS.get(task_id)
