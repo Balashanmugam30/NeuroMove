@@ -80,7 +80,7 @@ export default function LiveControlPage() {
     left_motor_pwm: 0,
     right_motor_pwm: 0,
     emergency_stop_triggered: false,
-    last_heartbeat: new Date().toISOString(),
+    last_heartbeat: "2026-09-01T00:00:00.000Z",
   });
 
   const [obstacleData, setObstacleData] = useState<ObstacleData>({
@@ -118,7 +118,7 @@ export default function LiveControlPage() {
   const [events, setEvents] = useState<LiveTimelineEvent[]>([
     {
       id: "evt_01",
-      timestamp: new Date().toISOString(),
+      timestamp: "2026-09-01T00:00:00.000Z",
       type: "SYSTEM_INITIALIZED",
       summary: "Local Control Station initialized in SIMULATION mode.",
       status: "READY",
@@ -130,7 +130,7 @@ export default function LiveControlPage() {
     },
     {
       id: "evt_02",
-      timestamp: new Date().toISOString(),
+      timestamp: "2026-09-01T00:00:00.000Z",
       type: "SAFETY_ARMED",
       summary: "Fail-closed safety arbitration engine armed.",
       status: "SAFE",

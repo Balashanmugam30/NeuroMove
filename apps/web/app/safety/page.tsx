@@ -25,7 +25,7 @@ export default function SafetyEnginePage() {
     fault_code: null,
     reason_code: "SYS_IDLE",
     reason: "Safe default idle state active.",
-    updated_at: new Date().toISOString(),
+    updated_at: "2026-09-01T00:00:00.000Z",
   });
 
   // Absorb snapshot

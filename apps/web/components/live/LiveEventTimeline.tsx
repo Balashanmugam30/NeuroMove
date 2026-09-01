@@ -9,7 +9,7 @@ import {
   Bot,
   Brain,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatTimestamp } from "@/lib/utils";
 
 export interface LiveTimelineEvent {
   id: string;
@@ -169,7 +169,7 @@ export function LiveEventTimeline({
                           )}
                         </div>
                         <span className="text-3xs font-mono text-slate-400 shrink-0">
-                          {new Date(evt.timestamp).toLocaleTimeString()}
+                          {formatTimestamp(evt.timestamp)}
                         </span>
                       </div>
                       <p className="text-slate-600 text-2xs mt-0.5 truncate">

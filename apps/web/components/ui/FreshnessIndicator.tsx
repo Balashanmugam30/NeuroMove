@@ -72,7 +72,7 @@ export function FreshnessIndicator({
         badgeStyles[freshness],
         className
       )}
-      title={lastUpdated ? `Last packet: ${new Date(lastUpdated).toLocaleTimeString()}` : "No telemetry received"}
+      title={lastUpdated ? `Last packet: ${typeof lastUpdated === "string" ? lastUpdated : lastUpdated.toISOString()}` : "No telemetry received"}
     >
       {icons[freshness]}
       <span>{freshness}</span>

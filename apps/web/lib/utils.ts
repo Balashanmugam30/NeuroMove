@@ -6,9 +6,11 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 export function formatTimestamp(isoString: string): string {
+  if (!isoString) return "--:--:--";
   try {
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    if (isNaN(date.getTime())) return isoString;
+    return date.toISOString().substring(11, 19);
   } catch {
     return isoString;
   }

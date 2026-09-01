@@ -58,11 +58,29 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     await expect(page.getByTestId("analysis-provenance-footer")).toBeVisible();
 
     // 8. Navigate to System Diagnostics
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error" && !msg.text().includes("Failed to fetch") && !msg.text().includes(":8000")) {
+        consoleErrors.push(msg.text());
+      }
+    });
+
     const systemLink = page.getByRole("link", { name: /system diagnostics/i }).first();
     await systemLink.click();
     await expect(page).toHaveURL(/.*\/system/);
     await expect(
       page.getByRole("heading", { name: /system diagnostics/i })
     ).toBeVisible();
+
+    // Verify System Diagnostics elements & heartbeat
+    await expect(page.getByText(/service:/i).first()).toBeVisible();
+    await expect(page.getByText(/last heartbeat:/i).first()).toBeVisible();
+    await expect(page.getByText(/local loopback/i).first()).toBeVisible();
+
+    // Ensure zero React hydration errors occurred
+    const hydrationErrors = consoleErrors.filter((err) =>
+      err.toLowerCase().includes("hydration")
+    );
+    expect(hydrationErrors).toHaveLength(0);
   });
 });

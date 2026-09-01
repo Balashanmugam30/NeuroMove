@@ -244,7 +244,7 @@ export default function SystemDiagnosticsPage() {
               <strong className="text-slate-900 font-sans">Service:</strong> {status?.service || "neuromove-core"} | <strong className="text-slate-900 font-sans">Version:</strong> {status?.version || "0.1.0"} | <strong className="text-slate-900 font-sans">Mode:</strong> {status?.mode || "SIMULATION"}
             </div>
             <div>
-              <strong className="text-slate-900 font-sans">Last Heartbeat:</strong> {status?.timestamp || new Date().toISOString()}
+              <strong className="text-slate-900 font-sans">Last Heartbeat:</strong> {status?.timestamp ?? "Awaiting heartbeat"}
             </div>
           </div>
         </div>
