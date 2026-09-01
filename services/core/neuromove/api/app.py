@@ -1,8 +1,8 @@
-"""FastAPI Application Factory for NeuroMove Core Control Station."""
-
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +20,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application startup and shutdown lifecycle management."""
     setup_logging()
     settings = get_settings()
+
+    core_dir = str(Path(__file__).resolve().parents[2])
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+
     logger.info(
         "Initializing NeuroMove Core Control Station in %s mode...", settings.neuromove_mode.value
     )
@@ -39,6 +44,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application instance."""
+    core_dir = str(Path(__file__).resolve().parents[2])
+    if core_dir not in sys.path:
+        sys.path.insert(0, core_dir)
+
     settings = get_settings()
 
     app = FastAPI(

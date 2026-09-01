@@ -105,6 +105,8 @@ Thumbs.db
 
 # Test Reports
 test-results/
+scratch/
+
 playwright-report/
 blob-report/
 playwright/.cache/
