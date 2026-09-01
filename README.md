@@ -189,11 +189,9 @@ pnpm build
 
 - [x] **01 Foundation** — Monorepo, CI, and local core scaffolds
 - [x] **02 Domain/Event Contracts** — Canonical domain model, event envelope, cross-language Zod/Pydantic parity, and light visual foundation
-- [x] **03 Simulation Engine** — Deterministic simulation engine, synthetic SMR EEG generator (C3, Cz, C4), 9 scenarios, 2D digital twin, and scenario protocol
-- [ ] **04 Real-Time Streaming** — Dedicated real-time streaming core, WebSocket chunking, buffer pipelines, and synchronization
-
-- [ ] **05 Product UI Foundation** — High-fidelity design components and user workflows
-- [ ] **06 Live Command Center** — Real-time telemetry, state observation, and emergency controls
+- [x] **04 Real-Time Streaming** — Dedicated real-time streaming core, WebSocket chunking, buffer pipelines, and synchronization
+- [x] **05 Product UI Foundation** — High-fidelity design system 2.0, light visual language, and unified application information architecture
+- [x] **06 Live Command Center** — Flagship real-time neuro-robotics control experience, 6-stage pipeline breadcrumb, dual-channel state synchronization, and emergency controls
 - [ ] **07 EEG Lab** — Time-series oscilloscope, Welch PSD, and electrode topography
 - [ ] **08 Public Dataset** — Graz / BCI Competition dataset ingestion & benchmarking
 - [ ] **09 Preprocessing** — Bandpass (8–30 Hz), notch (50/60 Hz), CAR, and Laplacian filtering

@@ -28,7 +28,16 @@ test.describe("NeuroMove Browser Smoke Test", () => {
     await expect(modeBadge).toBeVisible();
     await expect(modeBadge).toHaveText(/simulation/i);
 
-    // 6. Navigate to EEG Lab
+    // 6. Verify Phase 06 flagship cards are present
+    await expect(page.getByTestId("intent-confidence-card")).toBeVisible();
+    await expect(page.getByTestId("safety-decision-card")).toBeVisible();
+    await expect(page.getByTestId("runtime-state-card")).toBeVisible();
+    await expect(page.getByTestId("signal-quality-card")).toBeVisible();
+    await expect(page.getByTestId("environment-card")).toBeVisible();
+    await expect(page.getByTestId("transport-diagnostics-card")).toBeVisible();
+    await expect(page.getByTestId("live-event-timeline")).toBeVisible();
+
+    // 7. Navigate to EEG Lab
     const eegLink = page.getByRole("link", { name: /eeg lab/i }).first();
     await eegLink.click();
     await expect(page).toHaveURL(/.*\/eeg/);
@@ -36,7 +45,7 @@ test.describe("NeuroMove Browser Smoke Test", () => {
       page.getByRole("heading", { name: /eeg lab/i })
     ).toBeVisible();
 
-    // 7. Navigate to System Diagnostics
+    // 8. Navigate to System Diagnostics
     const systemLink = page.getByRole("link", { name: /system diagnostics/i }).first();
     await systemLink.click();
     await expect(page).toHaveURL(/.*\/system/);

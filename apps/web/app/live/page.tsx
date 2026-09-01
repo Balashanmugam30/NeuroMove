@@ -3,40 +3,54 @@
 import React, { useState, useEffect } from "react";
 import { useMode } from "@/components/providers/ModeProvider";
 import { useRealtime } from "@/components/providers/RealtimeProvider";
-import { useRealtimeStream, useRealtimeEvents } from "@/lib/realtime/useRealtimeStream";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { MetricCard } from "@/components/ui/MetricCard";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { DecisionCard } from "@/components/ui/DecisionCard";
-import { ConnectionIndicator } from "@/components/ui/ConnectionIndicator";
-import { Button } from "@/components/ui/Button";
 import {
-  EventTimeline,
-  TimelineEventItem,
-} from "@/components/ui/EventTimeline";
+  useRealtimeStream,
+  useRealtimeEvents,
+} from "@/lib/realtime/useRealtimeStream";
+
+// Live Command Center Modular Components
+import { LiveHeader } from "@/components/live/LiveHeader";
+import { PipelineFlowStrip } from "@/components/live/PipelineFlowStrip";
+import { IntentConfidenceCard } from "@/components/live/IntentConfidenceCard";
+import { SafetyDecisionCard } from "@/components/live/SafetyDecisionCard";
+import { RuntimeStateCard } from "@/components/live/RuntimeStateCard";
+import { SignalQualityCard } from "@/components/live/SignalQualityCard";
+import { EnvironmentCard } from "@/components/live/EnvironmentCard";
+import { TransportDiagnosticsCard } from "@/components/live/TransportDiagnosticsCard";
+import {
+  LiveEventTimeline,
+  LiveTimelineEvent,
+} from "@/components/live/LiveEventTimeline";
+
+// Simulation & Twin Components
 import { SimulationControls } from "@/components/simulation/SimulationControls";
 import { DigitalTwin } from "@/components/simulation/DigitalTwin";
+
+// API Clients & Contracts
 import {
   fetchSystemStatus,
   fetchSimulationStatus,
   fetchSimulationScenarios,
   triggerEmergencyStop,
 } from "@/lib/api-client";
-import { SimulationScenario, SimulationStatus } from "@neuromove/contracts";
 import {
-  Activity,
-  Shield,
-  Bot,
-  Zap,
-  Power,
-  RefreshCw,
-} from "lucide-react";
+  SimulationScenario,
+  SimulationStatus,
+  RuntimeState,
+  RiskLevel,
+  RobotState,
+  ObstacleData,
+  SignalQualityMetrics,
+} from "@neuromove/contracts";
 
 export default function LiveControlPage() {
-  const { operatingMode } = useMode();
-  const { connectionState, latestSnapshot } = useRealtime();
+  const { operatingMode, uiIdentity } = useMode();
+  const { connectionState, latencyMs, freshness, latestSnapshot } = useRealtime();
+
   const [loading, setLoading] = useState(false);
   const [scenarios, setScenarios] = useState<SimulationScenario[]>([]);
+
+  // Authoritative simulation state
   const [simStatus, setSimStatus] = useState<SimulationStatus>({
     is_running: false,
     is_paused: false,
@@ -54,29 +68,81 @@ export default function LiveControlPage() {
     active_faults: [],
   });
 
-  const [systemStatus, setSystemStatus] = useState<any>(null);
-  const [events, setEvents] = useState<TimelineEventItem[]>([
+  // Telemetry sub-states
+  const [robotState, setRobotState] = useState<RobotState>({
+    mode: "SIMULATION",
+    connection_state: "CONNECTED",
+    motion_state: "STOPPED",
+    heading_deg: 0,
+    battery_pct: 98,
+    linear_velocity_mps: 0,
+    angular_velocity_radps: 0,
+    left_motor_pwm: 0,
+    right_motor_pwm: 0,
+    emergency_stop_triggered: false,
+    last_heartbeat: new Date().toISOString(),
+  });
+
+  const [obstacleData, setObstacleData] = useState<ObstacleData>({
+    front_cm: 200,
+    left_cm: 200,
+    right_cm: 200,
+    obstacle_present: false,
+    direction: "NONE",
+    distance_cm: 200,
+    confidence: 0.98,
+  });
+
+  const [signalQuality, setSignalQuality] = useState<SignalQualityMetrics>({
+    overall_score: 0.94,
+    channels: { C3: 18.4, Cz: 19.1, C4: 17.6 },
+    dropped_samples: 0,
+    artifact_flags: [],
+    sampling_rate_hz: 250,
+    is_acceptable: true,
+  });
+
+  const [neuralConfidence, setNeuralConfidence] = useState<number>(0.0);
+  const [probabilities, setProbabilities] = useState<Record<string, number>>({
+    RIGHT: 0.04,
+    LEFT: 0.04,
+    NONE: 0.92,
+  });
+
+  const [safetyRisk, setSafetyRisk] = useState<RiskLevel>("SAFE");
+  const [safetyRationale, setSafetyRationale] = useState<string>(
+    "Safe resting state confirmed by deterministic safety kernel."
+  );
+
+  // Canonical Event Stream
+  const [events, setEvents] = useState<LiveTimelineEvent[]>([
     {
       id: "evt_01",
       timestamp: new Date().toISOString(),
-      type: "SYSTEM_STATUS",
+      type: "SYSTEM_INITIALIZED",
       summary: "Local Control Station initialized in SIMULATION mode.",
       status: "READY",
       sequence: 1,
       source: "neuromove.core",
+      schemaVersion: "1.0.0",
+      correlationId: "cor_init_001",
+      payload: { mode: "SIMULATION", status: "OK" },
     },
     {
       id: "evt_02",
       timestamp: new Date().toISOString(),
-      type: "SAFETY_APPROVED",
+      type: "SAFETY_ARMED",
       summary: "Fail-closed safety arbitration engine armed.",
       status: "SAFE",
       sequence: 2,
       source: "safety.arbiter",
+      schemaVersion: "1.0.0",
+      correlationId: "cor_safety_001",
+      payload: { arbiter: "FAIL_CLOSED_KERNEL_V1", state: "READY" },
     },
   ]);
 
-  // Absorb snapshot when available
+  // Absorb initial or updated snapshot from RealtimeProvider
   useEffect(() => {
     if (latestSnapshot) {
       if (latestSnapshot.simulation_status) {
@@ -86,89 +152,147 @@ export default function LiveControlPage() {
         }));
       }
       if (latestSnapshot.robot_state) {
-        setSimStatus((prev) => ({
+        setRobotState((prev) => ({
           ...prev,
-          robot_state: latestSnapshot.robot_state,
+          ...latestSnapshot.robot_state,
         }));
       }
       if (latestSnapshot.safety_state) {
         setSimStatus((prev) => ({
           ...prev,
-          runtime_state: latestSnapshot.safety_state?.runtime_state || prev.runtime_state,
-          safety_decision: latestSnapshot.safety_state?.last_decision || prev.safety_decision,
+          runtime_state:
+            latestSnapshot.safety_state?.runtime_state || prev.runtime_state,
+          safety_decision:
+            latestSnapshot.safety_state?.last_decision || prev.safety_decision,
         }));
+        if (latestSnapshot.safety_state?.risk_level) {
+          setSafetyRisk(latestSnapshot.safety_state.risk_level);
+        }
       }
     }
   }, [latestSnapshot]);
 
   // Subscribe to real-time canonical events
   useRealtimeEvents((evt) => {
+    const payload = (evt.payload as any) || {};
+
+    // Ingest event to chronological audit timeline (capped at 50)
     setEvents((prev) => [
       {
         id: evt.event_id || `evt_${Date.now()}`,
         timestamp: evt.occurred_at || new Date().toISOString(),
         type: evt.event_type,
         summary:
-          (evt.payload as any)?.reason ||
-          (evt.payload as any)?.message ||
+          payload.reason ||
+          payload.message ||
           `Canonical event ${evt.event_type} received`,
-        status: (evt.payload as any)?.decision || evt.mode || "SIMULATION",
+        status: payload.decision || evt.mode || "SIMULATION",
         sequence: evt.sequence,
         source: evt.source,
+        schemaVersion: evt.schema_version,
+        correlationId: evt.correlation_id,
+        payload: evt.payload,
       },
       ...prev.slice(0, 49),
     ]);
 
-    const evtTypeVal = evt.event_type.toString();
+    const evtType = evt.event_type.toString();
 
-    if (evtTypeVal === "ROBOT_STATE" && evt.payload) {
+    if (evtType === "PREDICTION") {
       setSimStatus((prev) => ({
         ...prev,
-        robot_state: {
-          ...prev.robot_state,
-          ...(evt.payload as any),
-        },
+        current_intent: payload.intent || prev.current_intent,
       }));
-    } else if (evtTypeVal === "PREDICTION" && evt.payload) {
-      const pred = evt.payload as any;
+      if (payload.neural_confidence !== undefined) {
+        setNeuralConfidence(payload.neural_confidence);
+      }
+      if (payload.class_probabilities) {
+        setProbabilities(payload.class_probabilities);
+      }
+    } else if (evtType === "SAFETY_APPROVED" || evtType === "SAFETY_BLOCKED") {
+      const isApproved = evtType === "SAFETY_APPROVED";
       setSimStatus((prev) => ({
         ...prev,
-        current_intent: pred.intent || prev.current_intent,
+        safety_decision: isApproved ? "APPROVED" : "BLOCKED",
       }));
-    } else if (evtTypeVal === "SAFETY_APPROVED" || evtTypeVal === "SAFETY_BLOCKED" || evtTypeVal === "EMERGENCY_STOP") {
-      const dec = evt.payload as any;
+      if (payload.risk_level) {
+        setSafetyRisk(payload.risk_level);
+      }
+      if (payload.reason) {
+        setSafetyRationale(payload.reason);
+      }
+    } else if (evtType === "EMERGENCY_STOP") {
       setSimStatus((prev) => ({
         ...prev,
-        safety_decision: dec.decision || (evtTypeVal === "SAFETY_APPROVED" ? "APPROVED" : "STOP"),
-        runtime_state: evtTypeVal === "EMERGENCY_STOP" ? "EMERGENCY" : prev.runtime_state,
+        runtime_state: "EMERGENCY",
+        safety_decision: "STOP",
+      }));
+      setSafetyRisk("CRITICAL");
+      setSafetyRationale("Emergency stop triggered. Actuation blocked.");
+    } else if (evtType === "STATE_TRANSITION") {
+      if (payload.to_state) {
+        setSimStatus((prev) => ({
+          ...prev,
+          runtime_state: payload.to_state as RuntimeState,
+        }));
+      }
+    } else if (evtType === "ROBOT_STATE") {
+      setRobotState((prev) => ({
+        ...prev,
+        ...payload,
+      }));
+    } else if (evtType === "SIGNAL_QUALITY") {
+      setSignalQuality((prev) => ({
+        ...prev,
+        overall_score: payload.overall_score ?? payload.quality_score ?? prev.overall_score,
+        dropped_samples: payload.dropped_samples ?? prev.dropped_samples,
       }));
     }
   });
 
-  // Subscribe to robot stream
+  // Subscribe to Robot Stream
   useRealtimeStream("robot", (msg) => {
     if (msg.event?.payload) {
-      setSimStatus((prev) => ({
+      setRobotState((prev) => ({
         ...prev,
-        robot_state: {
-          ...prev.robot_state,
-          ...(msg.event?.payload as any),
-        },
+        ...(msg.event?.payload as any),
       }));
     }
   });
 
+  // Subscribe to Safety Stream
+  useRealtimeStream("safety", (msg) => {
+    if (msg.event?.payload) {
+      const payload = msg.event.payload as any;
+      if (payload.decision) {
+        setSimStatus((prev) => ({
+          ...prev,
+          safety_decision: payload.decision,
+        }));
+      }
+      if (payload.risk_level) {
+        setSafetyRisk(payload.risk_level);
+      }
+      if (payload.reason) {
+        setSafetyRationale(payload.reason);
+      }
+    }
+  });
+
+  // Refresh HTTP Telemetry
   const refreshTelemetry = async () => {
     setLoading(true);
     try {
-      const [sys, sim, scs] = await Promise.all([
+      const [, sim, scs] = await Promise.all([
         fetchSystemStatus(),
         fetchSimulationStatus(),
         fetchSimulationScenarios(),
       ]);
-      setSystemStatus(sys);
       setSimStatus((prev) => ({ ...prev, ...sim }));
       if (scs && scs.length > 0) setScenarios(scs);
+      if (sim.robot_state) setRobotState(sim.robot_state);
+      if (sim.obstacle_data) setObstacleData(sim.obstacle_data);
+      if (sim.signal_quality) setSignalQuality(sim.signal_quality);
     } catch {
       // Safe fallback
     } finally {
@@ -180,6 +304,7 @@ export default function LiveControlPage() {
     refreshTelemetry();
   }, []);
 
+  // Emergency Stop Handler
   const handleEStop = async () => {
     try {
       await triggerEmergencyStop();
@@ -188,153 +313,146 @@ export default function LiveControlPage() {
         runtime_state: "EMERGENCY",
         safety_decision: "STOP",
       }));
+      setSafetyRisk("CRITICAL");
+      setSafetyRationale("Emergency stop triggered by operator.");
       setEvents((prev) => [
         {
           id: `evt_${Date.now()}`,
           timestamp: new Date().toISOString(),
           type: "EMERGENCY_STOP",
-          summary: "Emergency stop triggered by operator.",
+          summary: "Emergency stop triggered by operator via command center.",
           status: "EMERGENCY",
           sequence: prev.length + 1,
           source: "control.station.ui",
+          schemaVersion: "1.0.0",
+          correlationId: `cor_estop_${Date.now()}`,
+          payload: { trigger: "OPERATOR_ESTOP_BUTTON", action: "HALT_ALL_DRIVE" },
         },
         ...prev,
       ]);
     } catch (e) {
-      console.error(e);
+      console.error("Emergency stop failed", e);
     }
   };
 
+  // Synchronize obstacle & simulation state
+  useEffect(() => {
+    if (simStatus.obstacle_data) {
+      setObstacleData(simStatus.obstacle_data);
+    }
+    if (simStatus.robot_state) {
+      setRobotState(simStatus.robot_state);
+    }
+    if (simStatus.signal_quality) {
+      setSignalQuality(simStatus.signal_quality);
+    }
+    // Update confidence based on current intent
+    if (simStatus.current_intent === "RIGHT") {
+      setNeuralConfidence(0.92);
+      setProbabilities({ RIGHT: 0.92, LEFT: 0.04, NONE: 0.04 });
+    } else if (simStatus.current_intent === "LEFT") {
+      setNeuralConfidence(0.91);
+      setProbabilities({ RIGHT: 0.04, LEFT: 0.91, NONE: 0.05 });
+    } else if (simStatus.current_intent === "FORWARD") {
+      setNeuralConfidence(0.89);
+      setProbabilities({ RIGHT: 0.05, LEFT: 0.05, NONE: 0.02 });
+    } else if (simStatus.current_intent === "UNCERTAIN") {
+      setNeuralConfidence(0.48);
+      setProbabilities({ RIGHT: 0.35, LEFT: 0.33, NONE: 0.32 });
+    } else {
+      setNeuralConfidence(0.0);
+      setProbabilities({ RIGHT: 0.04, LEFT: 0.04, NONE: 0.92 });
+    }
+  }, [simStatus]);
+
   return (
-    <div className="space-y-6 font-sans">
-      {/* Page Header */}
-      <PageHeader
-        category="Control Station"
-        title="Live Command Center"
-        description="Real-time neural decoding, safety arbitration, and virtual mobility dispatch monitor (Phase 06 Preparation)."
+    <div className="space-y-6 max-w-7xl font-sans">
+      {/* 1. Flagship Live Command Center Header */}
+      <LiveHeader
         mode={operatingMode}
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshTelemetry}
-              loading={loading}
-              icon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
-            >
-              Sync Status
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleEStop}
-              icon={<Power className="w-3.5 h-3.5" />}
-            >
-              Emergency Stop
-            </Button>
-          </>
-        }
+        connectionState={connectionState}
+        freshness={freshness}
+        latencyMs={latencyMs}
+        sessionId={simStatus.active_session_id || "ses_sim_001"}
+        trialId={simStatus.active_trial_id || "trl_001"}
+        scenarioName={simStatus.scenario_name || "2. Right Turn Motor Imagery"}
+        onSync={refreshTelemetry}
+        onEStop={handleEStop}
+        isLoading={loading}
       />
 
-      {/* Subsystem Health Ribbon */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs text-xs">
-        <ConnectionIndicator
-          label="API Shell"
-          state={systemStatus?.components?.api || "healthy"}
+      {/* 2. Pipeline Flow Strip: End-to-End Decision Architecture */}
+      <PipelineFlowStrip
+        intent={simStatus.current_intent}
+        confidence={neuralConfidence}
+        runtimeState={simStatus.runtime_state}
+        obstaclePresent={obstacleData.obstacle_present}
+        decision={simStatus.safety_decision}
+        robotMotion={robotState.motion_state}
+      />
+
+      {/* 3. Level 1: Core State & Decisions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <IntentConfidenceCard
+          intent={simStatus.current_intent}
+          confidence={neuralConfidence}
+          cue={simStatus.current_cue}
+          probabilities={probabilities}
+          uiIdentity={uiIdentity}
         />
-        <ConnectionIndicator
-          label="Realtime Transport"
-          state={connectionState === "STREAMING" || connectionState === "CONNECTED" ? "CONNECTED" : "DISCONNECTED"}
+
+        <SafetyDecisionCard
+          decision={simStatus.safety_decision}
+          riskLevel={safetyRisk}
+          rationale={safetyRationale}
         />
-        <ConnectionIndicator
-          label="Simulation EEG"
-          state={simStatus.is_running ? "CONNECTED" : "not_connected"}
-        />
-        <ConnectionIndicator
-          label="Virtual Robot"
-          state={simStatus.robot_state?.connection_state || "CONNECTED"}
-        />
-        <ConnectionIndicator
-          label="Safety Engine"
-          state={simStatus.runtime_state === "EMERGENCY" ? "DEGRADED" : "ready"}
+
+        <RuntimeStateCard
+          state={simStatus.runtime_state}
+          elapsedSeconds={simStatus.elapsed_seconds}
+          activeFaults={simStatus.active_faults}
         />
       </div>
 
-      {/* Simulation Engine Operator Controls */}
-      <SimulationControls
-        status={simStatus}
-        scenarios={scenarios}
-        onStatusChange={(updated) => setSimStatus(updated)}
-      />
+      {/* 4. Level 2: Electrophysiology, Perception & Diagnostics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <SignalQualityCard
+          metrics={signalQuality}
+          sampleRateHz={250}
+          isConnected={!simStatus.active_faults?.includes("EEG_DISCONNECT")}
+        />
 
-      {/* Primary Status Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Runtime State"
-          value={simStatus.runtime_state}
-          subtitle="Safety state container"
-          variant={simStatus.runtime_state === "EMERGENCY" ? "danger" : "default"}
-          icon={<Shield className="w-4 h-4 text-blue-600" />}
-        />
-        <MetricCard
-          title="User Intent"
-          value={simStatus.current_intent}
-          subtitle={simStatus.current_cue ? `Cue: ${simStatus.current_cue}` : "Motor imagery candidate"}
-          icon={<Activity className="w-4 h-4 text-teal-600" />}
-        />
-        <MetricCard
-          title="Neural Confidence"
-          value={
-            simStatus.current_intent !== "NONE" && simStatus.current_intent !== "UNCERTAIN"
-              ? "0.92 (HIGH)"
-              : "0.45 (IDLE)"
-          }
-          subtitle="Bayesian posterior gate"
-          icon={<Zap className="w-4 h-4 text-amber-600" />}
-        />
-        <MetricCard
-          title="Mobility Decision"
-          value={simStatus.safety_decision}
-          subtitle="Fail-closed safe hold"
-          variant={simStatus.safety_decision === "APPROVED" ? "safe" : "danger"}
-          icon={<Bot className="w-4 h-4 text-emerald-600" />}
+        <EnvironmentCard obstacleData={obstacleData} />
+
+        <TransportDiagnosticsCard
+          connectionState={connectionState}
+          latencyMs={latencyMs}
+          freshness={freshness}
+          streams={["live", "eeg", "robot", "safety"]}
         />
       </div>
 
-      {/* Main Grid: Digital Twin & Arbitration Card vs Event Stream */}
+      {/* 5. Level 3 & Level 4: Digital Twin, Controls & Canonical Event Timeline */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Digital Twin & Controls */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Active Arbitration Card */}
-          <DecisionCard
-            intent={simStatus.current_intent}
-            confidence={simStatus.current_intent !== "NONE" ? 0.92 : 0.0}
-            decision={simStatus.safety_decision}
-            risk={simStatus.safety_decision === "APPROVED" ? "SAFE" : "WARNING"}
-            runtimeState={simStatus.runtime_state}
-            rationale={
-              simStatus.safety_decision === "APPROVED"
-                ? "Trajectory clear. Safe virtual execution approved."
-                : simStatus.safety_decision === "BLOCKED"
-                ? "Obstacle hazard detected on perimeter. Command blocked."
-                : "System in safe resting IDLE state."
-            }
+          {/* Simulation Controls Toolbar */}
+          <SimulationControls
+            status={simStatus}
+            scenarios={scenarios}
+            onStatusChange={(updated) => setSimStatus(updated)}
           />
 
-          {/* 2D Digital Twin */}
+          {/* 2D Virtual Digital Twin */}
           <DigitalTwin
-            robotState={simStatus.robot_state}
-            obstacleData={simStatus.obstacle_data}
+            robotState={robotState}
+            obstacleData={obstacleData}
           />
         </div>
 
-        {/* Right Column: Canonical Event Stream Log */}
+        {/* Right Column: Canonical Event Stream */}
         <div className="lg:col-span-5 space-y-6">
-          <SectionCard
-            title="Canonical Event Stream"
-            description="Monotonically sequenced event envelope audit log"
-          >
-            <EventTimeline events={events} showFilters={true} />
-          </SectionCard>
+          <LiveEventTimeline events={events} maxEvents={50} />
         </div>
       </div>
     </div>
