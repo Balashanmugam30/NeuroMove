@@ -1668,6 +1668,211 @@ class DatabaseManager:
                 cursor.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('014_hardware_hil');"
                 )
+
+                # ====================================================================
+                # Migration 015: Real EEG / BioAmp Acquisition Subsystem (Phase 21)
+                # ====================================================================
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_acquisition_devices (
+                        device_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        vendor TEXT,
+                        model TEXT,
+                        firmware_version TEXT,
+                        protocol TEXT NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        supported_sampling_rates_json TEXT NOT NULL,
+                        default_sampling_rate INTEGER NOT NULL,
+                        adc_resolution_bits INTEGER NOT NULL,
+                        is_available INTEGER NOT NULL,
+                        is_connected INTEGER NOT NULL,
+                        connection_path TEXT,
+                        last_seen TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_acquisition_sessions (
+                        session_id TEXT PRIMARY KEY,
+                        subject_id TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        device_id TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        sampling_rate INTEGER NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        channel_names_json TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        stopped_at TEXT,
+                        config_hash TEXT NOT NULL,
+                        provenance_hash TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_acquisition_configs (
+                        config_hash TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        device_id TEXT NOT NULL,
+                        sampling_rate INTEGER NOT NULL,
+                        channels_json TEXT NOT NULL,
+                        chunk_size_samples INTEGER NOT NULL,
+                        buffer_duration_sec REAL NOT NULL,
+                        normalization_enabled INTEGER NOT NULL,
+                        qc_enabled INTEGER NOT NULL,
+                        recording_enabled INTEGER NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_channel_health_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        channel_name TEXT NOT NULL,
+                        qc_status TEXT NOT NULL,
+                        mean_amp_uv REAL NOT NULL,
+                        std_amp_uv REAL NOT NULL,
+                        min_amp_uv REAL NOT NULL,
+                        max_amp_uv REAL NOT NULL,
+                        variance REAL NOT NULL,
+                        packet_loss_rate REAL NOT NULL,
+                        is_healthy INTEGER NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_stream_health_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        sample_rate INTEGER NOT NULL,
+                        samples_received INTEGER NOT NULL,
+                        samples_dropped INTEGER NOT NULL,
+                        buffer_fill_pct REAL NOT NULL,
+                        packet_loss_pct REAL NOT NULL,
+                        mean_latency_ms REAL NOT NULL,
+                        clock_drift_ms REAL NOT NULL,
+                        degraded_channel_count INTEGER NOT NULL,
+                        is_nominal INTEGER NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_acquisition_diagnostics (
+                        diag_id TEXT PRIMARY KEY,
+                        session_id TEXT,
+                        category TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        code TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details_json TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_recordings (
+                        recording_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        device_id TEXT NOT NULL,
+                        total_samples INTEGER NOT NULL,
+                        duration_sec REAL NOT NULL,
+                        sampling_rate INTEGER NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        channel_names_json TEXT NOT NULL,
+                        storage_path TEXT NOT NULL,
+                        checksum TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_replay_fixtures (
+                        fixture_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        total_samples INTEGER NOT NULL,
+                        sampling_rate INTEGER NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        channel_names_json TEXT NOT NULL,
+                        fixture_hash TEXT NOT NULL,
+                        file_path TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_clock_sync_snapshots (
+                        sync_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        host_timestamp TEXT NOT NULL,
+                        device_timestamp TEXT,
+                        normalized_timestamp TEXT NOT NULL,
+                        clock_offset_ms REAL NOT NULL,
+                        clock_drift_ppm REAL NOT NULL,
+                        discontinuity_count INTEGER NOT NULL,
+                        monotonicity_verified INTEGER NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_e2e_experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        scenario_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        passed INTEGER NOT NULL,
+                        verdict TEXT NOT NULL,
+                        lineage_chain_json TEXT NOT NULL,
+                        manifest_hash TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        completed_at TEXT NOT NULL,
+                        details_json TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS eeg_e2e_results (
+                        result_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        scenario_id TEXT NOT NULL,
+                        stage_results_json TEXT NOT NULL,
+                        predicted_intent TEXT NOT NULL,
+                        confidence_score REAL NOT NULL,
+                        safety_decision TEXT NOT NULL,
+                        hil_status TEXT NOT NULL,
+                        latency_breakdown_json TEXT NOT NULL,
+                        passed INTEGER NOT NULL,
+                        failure_reason TEXT,
+                        timestamp TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES eeg_e2e_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('015_eeg_acquisition');"
+                )
                 conn.commit()
 
             self._is_initialized = True

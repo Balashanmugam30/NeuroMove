@@ -241,6 +241,26 @@ import {
   HardwareDiagnosticSchema,
   HILExperiment,
   HILExperimentSchema,
+
+  // Phase 21
+  EegAcquisitionSource,
+  EegAcquisitionState,
+  EegDeviceDescriptor,
+  EegDeviceDescriptorSchema,
+  EegChannelHealthSnapshot,
+  EegChannelHealthSnapshotSchema,
+  EegStreamHealthSnapshot,
+  EegStreamHealthSnapshotSchema,
+  EegCalibrationSnapshot,
+  EegCalibrationSnapshotSchema,
+  EegAcquisitionDiagnostic,
+  EegAcquisitionDiagnosticSchema,
+  EegLiveInferenceSummary,
+  EegLiveInferenceSummarySchema,
+  EegE2EExperiment,
+  EegE2EExperimentSchema,
+  EegE2EResult,
+  EegE2EResultSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -2731,6 +2751,221 @@ export async function resetHardwareLab(): Promise<HardwareStatus> {
   const data = await res.json();
   return HardwareStatusSchema.parse(data);
 }
+
+// ============================================================================
+// Phase 21: Real EEG / BioAmp Acquisition API Client Methods
+// ============================================================================
+
+export async function fetchEegAcquisitionStatus(): Promise<{
+  active_source: EegAcquisitionSource;
+  active_device_id: string;
+  session_id: string;
+  health: EegStreamHealthSnapshot;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return {
+    active_source: data.active_source,
+    active_device_id: data.active_device_id,
+    session_id: data.session_id,
+    health: EegStreamHealthSnapshotSchema.parse(data.health),
+  };
+}
+
+export async function fetchEegAcquisitionDevices(): Promise<EegDeviceDescriptor[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/devices`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EegDeviceDescriptorSchema).parse(data);
+}
+
+export async function fetchEegAcquisitionChannels(): Promise<EegChannelHealthSnapshot[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/channels`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EegChannelHealthSnapshotSchema).parse(data);
+}
+
+export async function fetchEegAcquisitionHealth(): Promise<EegStreamHealthSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/health`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EegStreamHealthSnapshotSchema.parse(data);
+}
+
+export async function fetchEegAcquisitionDiagnostics(limit: number = 50): Promise<EegAcquisitionDiagnostic[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/diagnostics?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EegAcquisitionDiagnosticSchema).parse(data);
+}
+
+export async function fetchEegAcquisitionWaveforms(windowSamples: number = 500): Promise<{
+  channels: string[];
+  sample_count: number;
+  sampling_rate: number;
+  data: number[][];
+  timestamp: string;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/waveforms?window_samples=${windowSamples}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchEegAcquisitionCalibration(): Promise<EegCalibrationSnapshot | null> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/calibration`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return data ? EegCalibrationSnapshotSchema.parse(data) : null;
+}
+
+export async function fetchEegAcquisitionExperiments(limit: number = 50): Promise<EegE2EExperiment[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/experiments?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EegE2EExperimentSchema).parse(data);
+}
+
+export async function discoverEegAcquisitionDevices(): Promise<EegDeviceDescriptor[]> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/discover`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(EegDeviceDescriptorSchema).parse(data);
+}
+
+export async function setEegAcquisitionSource(sourceType: EegAcquisitionSource, deviceId?: string): Promise<{ success: boolean; active_source: EegAcquisitionSource }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/source`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_type: sourceType, device_id: deviceId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function connectEegAcquisitionDevice(deviceId?: string): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/connect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device_id: deviceId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function disconnectEegAcquisitionDevice(): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/disconnect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function startEegAcquisitionStream(): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function pauseEegAcquisitionStream(): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/pause`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resumeEegAcquisitionStream(): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function stopEegAcquisitionStream(): Promise<{ success: boolean; state: EegAcquisitionState }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/stop`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function runEegAcquisitionCalibration(): Promise<EegCalibrationSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/calibrate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EegCalibrationSnapshotSchema.parse(data);
+}
+
+export async function runEegAcquisitionInference(overrideIntent?: string): Promise<EegLiveInferenceSummary> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/inference`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ override_intent: overrideIntent }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EegLiveInferenceSummarySchema.parse(data);
+}
+
+export async function runEegAcquisitionScenario(scenarioId: string): Promise<EegE2EResult> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/scenario/${scenarioId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EegE2EResultSchema.parse(data);
+}
+
+export async function injectEegAcquisitionFault(faultType: string, params?: Record<string, any>): Promise<{ success: boolean; fault_type: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/fault-injection`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fault_type: faultType, params: params || {} }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resetEegAcquisitionLab(): Promise<EegStreamHealthSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/eeg/acquisition/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return EegStreamHealthSnapshotSchema.parse(data);
+}
+
 
 
 

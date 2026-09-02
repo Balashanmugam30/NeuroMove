@@ -16,3 +16,4 @@ export * from "./safety";
 export * from "./resilience";
 export * from "./transport";
 export * from "./hardware";
+export * from "./eeg_acquisition";

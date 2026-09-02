@@ -53,6 +53,7 @@ class TransportStream(StrEnum):
     RESILIENCE = "resilience"
     TRANSPORT = "transport"
     HARDWARE = "hardware"
+    EEG_ACQUISITION = "eeg_acquisition"
     ALL = "all"
 
 

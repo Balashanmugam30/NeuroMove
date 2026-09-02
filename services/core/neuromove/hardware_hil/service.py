@@ -109,6 +109,7 @@ class HardwareHilService:
             is_hil_only=True,
         )
         self.storage.record_device(self.device_info)
+        self.sequence_tracker.reset()
         self.state_machine.transition_to(HardwareConnectionState.CONNECTING, "Initial bootstrap")
         self.state_machine.transition_to(
             HardwareConnectionState.NEGOTIATING, "Negotiating bootstrap session"

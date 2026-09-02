@@ -2656,6 +2656,202 @@ def post_hardware_hil_reset() -> Any:
     return default_hardware_service.get_status().model_dump()
 
 
+# ============================================================================
+# Real EEG / BioAmp Acquisition Endpoints (Phase 21)
+# ============================================================================
+
+
+@api_router.get("/eeg/acquisition/status", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_status() -> Any:
+    """Return active EEG acquisition status and stream health."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return {
+        "active_source": default_eeg_acquisition_service.active_source,
+        "active_device_id": default_eeg_acquisition_service.active_device_id,
+        "session_id": default_eeg_acquisition_service.active_session_id,
+        "health": default_eeg_acquisition_service.get_stream_health().model_dump(),
+    }
+
+
+@api_router.get("/eeg/acquisition/devices", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_devices() -> Any:
+    """List all discovered physical, synthetic, and recorded acquisition devices."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return [d.model_dump() for d in default_eeg_acquisition_service.discover_devices()]
+
+
+@api_router.get("/eeg/acquisition/channels", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_channels() -> Any:
+    """Return per-channel signal quality diagnostics on recent sample window."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return [ch.model_dump() for ch in default_eeg_acquisition_service.get_channel_health()]
+
+
+@api_router.get("/eeg/acquisition/health", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_health() -> Any:
+    """Return aggregate acquisition stream health snapshot."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return default_eeg_acquisition_service.get_stream_health().model_dump()
+
+
+@api_router.get("/eeg/acquisition/diagnostics", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_diagnostics(limit: int = 50) -> Any:
+    """Retrieve recent acquisition diagnostics."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return [d.model_dump() for d in default_eeg_acquisition_service.storage.get_diagnostics(limit)]
+
+
+@api_router.get("/eeg/acquisition/waveforms", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_waveforms(window_samples: int = 500) -> Any:
+    """Extract downsampled multi-channel waveform window for oscilloscope visualization."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return default_eeg_acquisition_service.get_waveform_window(window_samples)
+
+
+@api_router.get("/eeg/acquisition/calibration", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_calibration() -> Any:
+    """Return latest calibration and baseline snapshot."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    snap = default_eeg_acquisition_service.calibration_workflow.get_latest_snapshot()
+    return snap.model_dump() if snap else None
+
+
+@api_router.get("/eeg/acquisition/experiments", tags=["Real EEG & BioAmp Acquisition"])
+def get_eeg_acquisition_experiments(limit: int = 50) -> Any:
+    """Retrieve historical E2E acquisition scenario experiments."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return [e.model_dump() for e in default_eeg_acquisition_service.storage.get_experiments(limit)]
+
+
+@api_router.post("/eeg/acquisition/discover", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_discover() -> Any:
+    """Trigger safe discovery of EEG acquisition endpoints."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return [d.model_dump() for d in default_eeg_acquisition_service.discover_devices()]
+
+
+@api_router.post("/eeg/acquisition/source", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_source(payload: dict[str, Any]) -> Any:
+    """Switch active acquisition mode (PHYSICAL, SIMULATOR, RECORDED)."""
+    from ..eeg_acquisition.models import EegAcquisitionSource
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    src_str = payload.get("source_type", "SIMULATOR")
+    src = EegAcquisitionSource(src_str)
+    dev_id = payload.get("device_id")
+    success = default_eeg_acquisition_service.set_source_mode(src, dev_id)
+    return {"success": success, "active_source": default_eeg_acquisition_service.active_source}
+
+
+@api_router.post("/eeg/acquisition/connect", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_connect(payload: dict[str, Any] | None = None) -> Any:
+    """Connect to target EEG acquisition device."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    dev_id = payload.get("device_id") if payload else None
+    success = default_eeg_acquisition_service.adapter.connect(dev_id)
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/disconnect", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_disconnect() -> Any:
+    """Disconnect active EEG acquisition device."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    success = default_eeg_acquisition_service.adapter.disconnect()
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/start", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_start() -> Any:
+    """Start streaming EEG sample chunks."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    success = default_eeg_acquisition_service.adapter.start_stream()
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/pause", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_pause() -> Any:
+    """Pause active EEG stream."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    success = default_eeg_acquisition_service.adapter.pause()
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/resume", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_resume() -> Any:
+    """Resume paused EEG stream."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    success = default_eeg_acquisition_service.adapter.resume()
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/stop", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_stop() -> Any:
+    """Stop active EEG stream."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    success = default_eeg_acquisition_service.adapter.stop_stream()
+    return {"success": success, "state": default_eeg_acquisition_service.adapter.get_status()}
+
+
+@api_router.post("/eeg/acquisition/calibrate", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_calibrate() -> Any:
+    """Execute baseline calibration on buffered EEG window."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return default_eeg_acquisition_service.run_calibration().model_dump()
+
+
+@api_router.post("/eeg/acquisition/inference", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_inference(payload: dict[str, Any] | None = None) -> Any:
+    """Execute full live pipeline inference from buffered EEG window."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    override = payload.get("override_intent") if payload else None
+    return default_eeg_acquisition_service.run_live_inference(override_intent=override).model_dump()
+
+
+@api_router.post("/eeg/acquisition/scenario/{scenario_id}", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_scenario(scenario_id: str) -> Any:
+    """Run one of the 10 Golden E2E Verification Scenarios (SCENARIO_A to SCENARIO_J)."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    return default_eeg_acquisition_service.run_scenario(scenario_id).model_dump()
+
+
+@api_router.post("/eeg/acquisition/fault-injection", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_fault_injection(payload: dict[str, Any]) -> Any:
+    """Inject a simulated hardware/stream fault for resilience testing."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    fault_type = payload.get("fault_type", "FLATLINE_CHANNEL")
+    params = payload.get("params", {})
+    success = default_eeg_acquisition_service.inject_fault(fault_type, params)
+    return {"success": success, "fault_type": fault_type}
+
+
+@api_router.post("/eeg/acquisition/reset", tags=["Real EEG & BioAmp Acquisition"])
+def post_eeg_acquisition_reset() -> Any:
+    """Reset the EEG acquisition subsystem."""
+    from ..eeg_acquisition.service import default_eeg_acquisition_service
+
+    default_eeg_acquisition_service._initialize_default_state()
+    return default_eeg_acquisition_service.get_stream_health().model_dump()
+
+
 # --- WebSocket Stream Endpoints ---
 
 
@@ -2702,6 +2898,12 @@ async def ws_transport_endpoint(websocket: WebSocket) -> None:
 async def ws_hardware_endpoint(websocket: WebSocket) -> None:
     """Real-time Hardware-in-the-Loop and ESP32 telemetry socket."""
     await ws_manager.connect_hardware(websocket)
+
+
+@ws_router.websocket("/eeg/acquisition")
+async def ws_eeg_acquisition_endpoint(websocket: WebSocket) -> None:
+    """Real-time Real EEG / BioAmp Acquisition stream socket."""
+    await ws_manager.connect_eeg_acquisition(websocket)
 
 
 @ws_router.websocket("/stream")
