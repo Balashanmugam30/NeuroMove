@@ -12,7 +12,7 @@ export function CovarianceViewer({ covarianceSet }: CovarianceViewerProps) {
 
   if (!covarianceSet || covarianceSet.matrices.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-slate-500 dark:text-slate-400">
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500 font-sans shadow-2xs">
         No covariance matrices generated yet. Run feature extraction to compute spatial covariance.
       </div>
     );
@@ -36,34 +36,34 @@ export function CovarianceViewer({ covarianceSet }: CovarianceViewerProps) {
   const getColor = (val: number) => {
     const range = maxVal - minVal || 1.0;
     const norm = (val - minVal) / range;
-    // Blue to Indigo to Cyan gradient
-    const r = Math.round(79 + (6 - 79) * norm);
-    const g = Math.round(70 + (182 - 70) * norm);
-    const b = Math.round(229 + (212 - 229) * norm);
-    return `rgba(${r}, ${g}, ${b}, ${0.2 + 0.75 * norm})`;
+    // Blue to Indigo gradient on light backdrop
+    const r = Math.round(37 + (13 - 37) * norm);
+    const g = Math.round(99 + (148 - 99) * norm);
+    const b = Math.round(235 + (136 - 235) * norm);
+    return `rgba(${r}, ${g}, ${b}, ${0.15 + 0.8 * norm})`;
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-4 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="text-base font-bold text-slate-900">
             Spatial Covariance Representation (CSP-Ready)
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Trace-normalized sample covariance matrix $C = \frac{"{"}X X^T{"}"}{"{"}\text{"{"}trace{"}"}(X X^T){"}"}$ across sensorimotor channels
+          <p className="text-xs text-slate-500">
+            Trace-normalized sample covariance matrix C = XX<sup>T</sup> / trace(XX<sup>T</sup>) across sensorimotor channels
           </p>
         </div>
 
         {/* Matrix Selector */}
         <div className="flex items-center space-x-2">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+          <label className="text-xs font-bold text-slate-500 font-mono uppercase text-2xs">
             Trial Epoch:
           </label>
           <select
             value={selectedIdx}
             onChange={(e) => setSelectedIdx(parseInt(e.target.value, 10))}
-            className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-mono"
+            className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-mono"
           >
             {matrices.map((m, idx) => (
               <option key={idx} value={idx}>
@@ -75,28 +75,28 @@ export function CovarianceViewer({ covarianceSet }: CovarianceViewerProps) {
       </div>
 
       {/* Covariance Matrix Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 rounded-lg text-xs border border-slate-200">
         <div className="flex items-center space-x-4">
           <div>
             <span className="text-slate-500">Class:</span>{" "}
-            <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+            <span className="font-bold text-blue-700 font-mono">
               {currentRecord.label}
             </span>
           </div>
           <div>
             <span className="text-slate-500">Method:</span>{" "}
-            <span className="font-mono">{covarianceSet.regularization}</span>
+            <span className="font-mono text-slate-800">{covarianceSet.regularization}</span>
           </div>
           <div>
             <span className="text-slate-500">Trace:</span>{" "}
-            <span className="font-mono">{currentRecord.trace.toFixed(4)}</span>
+            <span className="font-mono text-slate-800">{currentRecord.trace.toFixed(4)}</span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+          <span className="px-2 py-0.5 rounded text-2xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
             Symmetric: {currentRecord.is_symmetric ? "YES" : "NO"}
           </span>
-          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300">
+          <span className="px-2 py-0.5 rounded text-2xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
             PSD: {currentRecord.is_positive_semi_definite ? "YES" : "NO"}
           </span>
         </div>
@@ -104,11 +104,11 @@ export function CovarianceViewer({ covarianceSet }: CovarianceViewerProps) {
 
       {/* Covariance Heatmap Grid */}
       <div className="flex justify-center p-4">
-        <div className="inline-block border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden p-2 bg-slate-900">
+        <div className="inline-block border border-slate-200 rounded-xl overflow-hidden p-3 bg-slate-50">
           <div
-            className="grid gap-1"
+            className="grid gap-1.5"
             style={{
-              gridTemplateColumns: `repeat(${channels.length}, minmax(48px, 1fr))`,
+              gridTemplateColumns: `repeat(${channels.length}, minmax(52px, 1fr))`,
             }}
           >
             {matrix.map((row, rIdx) =>
@@ -116,11 +116,11 @@ export function CovarianceViewer({ covarianceSet }: CovarianceViewerProps) {
                 <div
                   key={`${rIdx}-${cIdx}`}
                   style={{ backgroundColor: getColor(val) }}
-                  className="h-12 flex flex-col items-center justify-center rounded text-[10px] font-mono text-white transition hover:scale-105"
+                  className="h-12 flex flex-col items-center justify-center rounded-md text-2xs font-mono text-slate-900 border border-slate-200/60 transition hover:scale-105"
                   title={`${channels[rIdx]} x ${channels[cIdx]}: ${val.toFixed(6)}`}
                 >
                   <span className="font-bold">{val.toFixed(3)}</span>
-                  <span className="text-[8px] opacity-75">
+                  <span className="text-3xs opacity-75 font-mono">
                     {channels[rIdx]}-{channels[cIdx]}
                   </span>
                 </div>

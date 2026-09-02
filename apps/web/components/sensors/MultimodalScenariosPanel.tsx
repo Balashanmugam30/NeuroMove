@@ -39,17 +39,17 @@ export const MultimodalScenariosPanel: React.FC<MultimodalScenariosPanelProps> =
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-6 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-semibold text-slate-100">12 Golden Verification Scenarios</h2>
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <ShieldCheck className="w-5 h-5 text-teal-600" />
+            <h2 className="text-lg font-bold text-slate-900">12 Golden Verification Scenarios</h2>
+            <span className="text-2xs font-mono font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">
               Audit Suite
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Automated compliance & verification harness validating single-modality, desync, contradiction holds, and non-actuation invariants.
           </p>
         </div>
@@ -57,7 +57,7 @@ export const MultimodalScenariosPanel: React.FC<MultimodalScenariosPanelProps> =
         <button
           onClick={handleRunAll}
           disabled={isLoading || runningScenario !== null}
-          className="py-1.5 px-3 text-xs font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="py-1.5 px-3 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center gap-1.5 transition-colors shadow-2xs disabled:opacity-50"
         >
           <Play className="w-3.5 h-3.5" /> Run All 12 Scenarios
         </button>
@@ -73,46 +73,46 @@ export const MultimodalScenariosPanel: React.FC<MultimodalScenariosPanelProps> =
           return (
             <div
               key={sc.id}
-              className={`border rounded-lg p-3.5 flex flex-col justify-between space-y-3 bg-slate-950/60 ${
+              className={`border rounded-xl p-3.5 flex flex-col justify-between space-y-3 bg-white transition-all shadow-2xs ${
                 hasRun
                   ? passed
-                    ? "border-emerald-500/40"
-                    : "border-rose-500/40"
-                  : "border-slate-800"
+                    ? "border-emerald-300 ring-1 ring-emerald-100"
+                    : "border-rose-300 ring-1 ring-rose-100"
+                  : "border-slate-200"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-cyan-400">{sc.id}</span>
+                  <span className="text-2xs font-mono font-bold text-teal-700">{sc.id}</span>
                   {hasRun && (
                     <span
-                      className={`flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                      className={`flex items-center gap-1 text-2xs font-mono font-bold px-2 py-0.5 rounded border ${
                         passed
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-rose-50 text-rose-700 border-rose-200"
                       }`}
                     >
-                      {passed ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                      {passed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <XCircle className="w-3 h-3 text-rose-600" />}
                       {passed ? "PASSED" : "FAILED"}
                     </span>
                   )}
                 </div>
-                <h3 className="text-xs font-semibold text-slate-200 mt-1.5 leading-snug">
+                <h3 className="text-xs font-bold text-slate-900 mt-1.5 leading-snug">
                   {sc.name}
                 </h3>
               </div>
 
-              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <button
                   onClick={() => handleRun(sc.id)}
                   disabled={isLoading || isRunning}
-                  className="py-1 px-2.5 text-xs font-mono font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="py-1 px-2.5 text-xs font-mono font-bold rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
                 >
-                  <Play className="w-3 h-3" /> {isRunning ? "Running..." : "Run Test"}
+                  <Play className="w-3 h-3 text-teal-600" /> {isRunning ? "Running..." : "Run Test"}
                 </button>
                 {hasRun && result?.data?.safety_verdict && (
-                  <span className="text-[10px] font-mono text-slate-400">
-                    Verdict: <span className="text-slate-200">{result.data.safety_verdict}</span>
+                  <span className="text-3xs font-mono text-slate-500">
+                    Verdict: <span className="text-slate-900 font-bold">{result.data.safety_verdict}</span>
                   </span>
                 )}
               </div>

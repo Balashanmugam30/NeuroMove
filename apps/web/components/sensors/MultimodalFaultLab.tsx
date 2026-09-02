@@ -23,7 +23,8 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
       title: "IMU Motion Burst",
       description: "Injects sudden violent head/chassis acceleration (> 20 m/s^2) during intent.",
       icon: Move,
-      color: "border-amber-500/30 text-amber-400 bg-amber-950/20 hover:bg-amber-950/40",
+      color: "border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100",
+      btnColor: "bg-white border-amber-300 text-amber-900 hover:bg-amber-50",
     },
     {
       id: "BLINK",
@@ -31,7 +32,8 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
       title: "EOG Blink Pulse",
       description: "Injects ocular artifact spike concurrent with EEG intent decoding window.",
       icon: Eye,
-      color: "border-pink-500/30 text-pink-400 bg-pink-950/20 hover:bg-pink-950/40",
+      color: "border-pink-200 text-pink-800 bg-pink-50 hover:bg-pink-100",
+      btnColor: "bg-white border-pink-300 text-pink-900 hover:bg-pink-50",
     },
     {
       id: "DROPOUT",
@@ -39,7 +41,8 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
       title: "EEG Channel Dropout",
       description: "Forces zero-amplitude signal loss triggering QC channel degradation.",
       icon: XCircle,
-      color: "border-rose-500/30 text-rose-400 bg-rose-950/20 hover:bg-rose-950/40",
+      color: "border-rose-200 text-rose-800 bg-rose-50 hover:bg-rose-100",
+      btnColor: "bg-white border-rose-300 text-rose-900 hover:bg-rose-50",
     },
     {
       id: "FLATLINE",
@@ -47,7 +50,8 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
       title: "Sensor Flatline",
       description: "Injects zero-variance constant signal violating physiological bounds.",
       icon: AlertTriangle,
-      color: "border-orange-500/30 text-orange-400 bg-orange-950/20 hover:bg-orange-950/40",
+      color: "border-orange-200 text-orange-800 bg-orange-50 hover:bg-orange-100",
+      btnColor: "bg-white border-orange-300 text-orange-900 hover:bg-orange-50",
     },
     {
       id: "DISCONNECT",
@@ -55,7 +59,8 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
       title: "IMU Hardware Disconnect",
       description: "Simulates sudden cable unplug or RF packet loss during streaming.",
       icon: ShieldAlert,
-      color: "border-purple-500/30 text-purple-400 bg-purple-950/20 hover:bg-purple-950/40",
+      color: "border-purple-200 text-purple-800 bg-purple-50 hover:bg-purple-100",
+      btnColor: "bg-white border-purple-300 text-purple-900 hover:bg-purple-50",
     },
   ];
 
@@ -69,14 +74,14 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-6 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-semibold text-slate-100">Resilience Fault Laboratory</h2>
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <h2 className="text-lg font-bold text-slate-900">Resilience Fault Laboratory</h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Inject physiological and hardware anomalies to test contradiction gating, degradation handling, and fail-safe recovery.
           </p>
         </div>
@@ -84,7 +89,7 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
         <button
           onClick={onClearFaults}
           disabled={isLoading}
-          className="py-1.5 px-3 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="py-1.5 px-3 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Clear All Faults
         </button>
@@ -98,14 +103,14 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
           return (
             <div
               key={f.id}
-              className={`border rounded-lg p-3.5 flex flex-col justify-between space-y-3 transition-colors ${f.color}`}
+              className={`border rounded-xl p-3.5 flex flex-col justify-between space-y-3 transition-colors shadow-2xs ${f.color}`}
             >
               <div>
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4" />
-                  <div className="text-xs font-bold text-slate-200">{f.title}</div>
+                  <div className="text-xs font-bold text-slate-900">{f.title}</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                <p className="text-2xs text-slate-600 mt-1 leading-relaxed">
                   {f.description}
                 </p>
               </div>
@@ -113,7 +118,7 @@ export const MultimodalFaultLab: React.FC<MultimodalFaultLabProps> = ({
               <button
                 onClick={() => handleInject(f.sensorId, f.id)}
                 disabled={isLoading || isBusy}
-                className="w-full py-1.5 px-2 text-xs font-mono font-medium rounded bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-colors disabled:opacity-50"
+                className={`w-full py-1.5 px-2 text-xs font-mono font-bold rounded-lg border transition-colors disabled:opacity-50 shadow-2xs ${f.btnColor}`}
               >
                 {isBusy ? "Injecting..." : "Inject Fault"}
               </button>

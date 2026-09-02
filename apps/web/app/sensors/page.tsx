@@ -166,24 +166,24 @@ export default function MultimodalSensorsPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 font-sans">
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-100 text-teal-600">
               <Layers className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-100">
+                <h1 className="text-2xl font-bold text-slate-900">
                   Multimodal Sensors & Fusion Engine
                 </h1>
-                <span className="px-2.5 py-0.5 text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full">
+                <span className="px-2.5 py-0.5 text-2xs font-mono font-bold bg-teal-50 text-teal-700 border border-teal-200 rounded-full">
                   Phase 23
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Advanced acquisition across EEG, IMU, EMG, EOG, PPG & Pressure with deterministic clock synchronization and non-actuating context verification.
               </p>
             </div>
@@ -195,14 +195,14 @@ export default function MultimodalSensorsPage() {
           {isStreaming ? (
             <button
               onClick={handleStopStream}
-              className="py-2 px-4 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+              className="py-2 px-4 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg flex items-center gap-2 shadow-2xs transition-colors"
             >
               <Square className="w-4 h-4" /> Stop Live Stream
             </button>
           ) : (
             <button
               onClick={handleStartStream}
-              className="py-2 px-4 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+              className="py-2 px-4 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center gap-2 shadow-2xs transition-colors"
             >
               <Play className="w-4 h-4" /> Start Multimodal Stream
             </button>
@@ -211,14 +211,14 @@ export default function MultimodalSensorsPage() {
           <button
             onClick={loadInitialData}
             disabled={isLoading}
-            className="py-2 px-3 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="py-2 px-3 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1.5 transition-colors shadow-2xs disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-teal-600" : ""}`} /> Refresh
           </button>
 
           <button
             onClick={handleReset}
-            className="py-2 px-3 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 rounded-lg transition-colors"
+            className="py-2 px-3 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg transition-colors shadow-2xs"
           >
             Reset Service
           </button>
@@ -226,8 +226,8 @@ export default function MultimodalSensorsPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-xl flex items-center gap-3 text-rose-300 text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-800 text-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}

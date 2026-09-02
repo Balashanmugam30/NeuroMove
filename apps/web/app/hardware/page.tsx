@@ -203,20 +203,20 @@ export default function HardwarePage() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div className="space-y-1">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-indigo-600 text-white shadow-sm">
+            <div className="p-2 rounded-lg bg-blue-600 text-white shadow-2xs">
               <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <span>Hardware-in-the-Loop (HIL) Laboratory</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   Phase 20
                 </span>
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500">
                 ESP32 protocol validation, deterministic simulation, and hardware abstraction boundary
               </p>
             </div>
@@ -225,10 +225,10 @@ export default function HardwarePage() {
 
         <div className="flex items-center space-x-2 self-start sm:self-auto">
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold border ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-mono font-bold border ${
               wsConnected
-                ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "bg-slate-100 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-slate-100 text-slate-600 border-slate-300"
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${wsConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
@@ -238,9 +238,9 @@ export default function HardwarePage() {
           <button
             onClick={loadInitialData}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition shadow-2xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-indigo-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-600" : ""}`} />
             Refresh
           </button>
         </div>

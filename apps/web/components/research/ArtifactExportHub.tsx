@@ -82,16 +82,16 @@ export function ArtifactExportHub({ experimentId, onExport }: ArtifactExportHubP
   ];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
-      <div className="flex items-center space-x-3 border-b border-slate-800 pb-3">
-        <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
+    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4 font-sans">
+      <div className="flex items-center space-x-3 border-b border-slate-100 pb-3">
+        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
           <Download className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-white">
+          <h3 className="text-sm font-bold text-slate-900">
             Scientific Artifact Exports & Reports
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Export checksummed audit artifacts in JSON, CSV, and Markdown formats
           </p>
         </div>
@@ -106,21 +106,21 @@ export function ArtifactExportHub({ experimentId, onExport }: ArtifactExportHubP
           return (
             <div
               key={item.type}
-              className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 flex flex-col justify-between space-y-3"
+              className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex flex-col justify-between space-y-3"
             >
               <div className="flex items-start gap-2.5">
-                <div className="p-2 bg-slate-900 text-indigo-400 rounded border border-slate-800">
+                <div className="p-2 bg-white text-blue-600 rounded border border-slate-200 shadow-2xs">
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-white">{item.name}</h4>
-                  <p className="text-3xs text-slate-400 mt-0.5">{item.desc}</p>
+                  <h4 className="text-xs font-bold text-slate-800">{item.name}</h4>
+                  <p className="text-3xs text-slate-500 mt-0.5">{item.desc}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-slate-900">
+              <div className="flex items-center justify-between pt-1 border-t border-slate-200">
                 {art ? (
-                  <span className="text-3xs font-mono text-emerald-400 truncate max-w-[120px]" title={art.checksum}>
+                  <span className="text-3xs font-mono font-bold text-emerald-700 truncate max-w-[120px]" title={art.checksum}>
                     #{art.checksum.slice(0, 8)}
                   </span>
                 ) : (
@@ -131,7 +131,7 @@ export function ArtifactExportHub({ experimentId, onExport }: ArtifactExportHubP
                   type="button"
                   onClick={() => handleDownload(item.type, `${experimentId}_export${item.ext}`)}
                   disabled={isCurrent}
-                  className="flex items-center gap-1 px-2.5 py-1 text-3xs font-bold text-white bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition shadow-sm disabled:opacity-50"
+                  className="flex items-center gap-1 px-2.5 py-1 text-3xs font-bold text-slate-700 bg-white hover:bg-slate-100 rounded border border-slate-300 transition shadow-2xs disabled:opacity-50"
                 >
                   <Download className={`w-3 h-3 ${isCurrent ? "animate-bounce" : ""}`} />
                   {isCurrent ? "Exporting..." : "Download"}

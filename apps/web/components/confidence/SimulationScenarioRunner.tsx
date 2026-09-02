@@ -164,22 +164,22 @@ export function SimulationScenarioRunner({
 
       {/* Execution Results Viewer */}
       {scenarioOutput && (
-        <div className="p-4 rounded-lg bg-slate-900 text-slate-100 space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-teal-400" />
-              <span className="text-xs font-semibold text-slate-100">
+              <Sparkles className="w-4 h-4 text-teal-600" />
+              <span className="text-xs font-bold text-slate-900">
                 Execution Output: {scenarioOutput.scenario_id}
               </span>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">
+            <span className="text-2xs font-mono text-slate-500">
               {new Date(scenarioOutput.executed_at).toLocaleTimeString()}
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto border border-slate-200 rounded-lg bg-white">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="text-[11px] text-slate-400 border-b border-slate-800 uppercase">
+              <thead className="text-2xs text-slate-500 border-b border-slate-200 uppercase bg-slate-50">
                 <tr>
                   <th className="py-1.5 px-2">Step</th>
                   <th className="py-1.5 px-2">Prediction</th>
@@ -189,25 +189,25 @@ export function SimulationScenarioRunner({
                   <th className="py-1.5 px-2">Reason / Note</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-[11px]">
+              <tbody className="divide-y divide-slate-100 text-2xs">
                 {scenarioOutput.results?.map((r: any, idx: number) => (
-                  <tr key={idx} className="hover:bg-slate-800/30">
-                    <td className="py-1.5 px-2 text-slate-400">#{r.step}</td>
-                    <td className="py-1.5 px-2 font-semibold text-slate-200">{r.prediction || "—"}</td>
-                    <td className="py-1.5 px-2 text-blue-400">
+                  <tr key={idx} className="hover:bg-slate-50">
+                    <td className="py-1.5 px-2 text-slate-500 font-bold">#{r.step}</td>
+                    <td className="py-1.5 px-2 font-bold text-slate-900">{r.prediction || "—"}</td>
+                    <td className="py-1.5 px-2 text-blue-700 font-semibold">
                       {r.confidence !== undefined ? `${(r.confidence * 100).toFixed(1)}%` : r.raw_score ? `Raw: ${(r.raw_score * 100).toFixed(0)}%` : "—"}
                     </td>
-                    <td className="py-1.5 px-2 text-teal-400">{r.temporal_status}</td>
+                    <td className="py-1.5 px-2 text-teal-700 font-semibold">{r.temporal_status}</td>
                     <td className="py-1.5 px-2">
                       {r.confirmed ? (
-                        <span className="text-emerald-400 font-bold flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> TRUE
+                        <span className="text-emerald-700 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> TRUE
                         </span>
                       ) : (
-                        <span className="text-slate-500">FALSE</span>
+                        <span className="text-slate-400">FALSE</span>
                       )}
                     </td>
-                    <td className="py-1.5 px-2 text-slate-400 truncate max-w-xs">{r.reason || "Compliant step"}</td>
+                    <td className="py-1.5 px-2 text-slate-600 truncate max-w-xs">{r.reason || "Compliant step"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -218,3 +218,4 @@ export function SimulationScenarioRunner({
     </div>
   );
 }
+

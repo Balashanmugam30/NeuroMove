@@ -149,47 +149,47 @@ export function ProtocolTraceViewer({ traces, isLoading: _isLoading = false }: P
         </div>
 
         {/* Frame Inspector Drawer */}
-        <div className="lg:col-span-4 bg-slate-900 rounded-xl border border-slate-800 shadow-sm p-4 text-slate-200 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs p-4 text-slate-800 flex flex-col justify-between">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300 pb-2 border-b border-slate-800">
-              <FileCode2 className="w-4 h-4 text-teal-400" />
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-800 pb-2 border-b border-slate-200">
+              <FileCode2 className="w-4 h-4 text-teal-600" />
               Frame Deep Inspector
             </div>
 
             {selectedTrace ? (
               <div className="space-y-3 text-xs">
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="grid grid-cols-2 gap-2 text-2xs font-mono">
                   <div>
                     <span className="text-slate-500 block">Direction:</span>
-                    <span className="font-bold text-teal-400">{selectedTrace.direction}</span>
+                    <span className="font-bold text-teal-700">{selectedTrace.direction}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Sequence #:</span>
-                    <span className="font-bold text-slate-200">{selectedTrace.sequence_number}</span>
+                    <span className="font-bold text-slate-900">{selectedTrace.sequence_number}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Message ID:</span>
-                    <span className="text-slate-300 truncate block">{selectedTrace.message_id}</span>
+                    <span className="text-slate-700 truncate block font-bold">{selectedTrace.message_id}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Command ID:</span>
-                    <span className="text-slate-300 truncate block">{selectedTrace.command_id}</span>
+                    <span className="text-slate-700 truncate block font-bold">{selectedTrace.command_id}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Payload Length:</span>
-                    <span className="text-slate-300">{selectedTrace.length_bytes} Bytes</span>
+                    <span className="text-slate-700 font-bold">{selectedTrace.length_bytes} Bytes</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block">CRC-32 Checksum:</span>
-                    <span className="text-emerald-400 font-bold">{selectedTrace.checksum}</span>
+                    <span className="text-emerald-700 font-bold">{selectedTrace.checksum}</span>
                   </div>
                 </div>
 
-                <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 space-y-1">
+                <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono text-2xs text-slate-300 space-y-1 shadow-inner">
                   <div className="text-slate-500">{/* Header Framing */}</div>
                   <div className="text-teal-400">START: 0xAA55 &bull; TRAILER: 0x55AA</div>
                   {selectedTrace.ack_status && (
-                    <div className="text-emerald-400">
+                    <div className="text-emerald-400 font-bold">
                       ACK Status: {selectedTrace.ack_status}
                     </div>
                   )}
@@ -201,14 +201,14 @@ export function ProtocolTraceViewer({ traces, isLoading: _isLoading = false }: P
                 </div>
               </div>
             ) : (
-              <div className="py-16 text-center text-xs text-slate-500 font-sans">
+              <div className="py-16 text-center text-xs text-slate-400 font-sans">
                 Select a frame row from the packet capture table to inspect raw bytes and framing metadata.
               </div>
             )}
           </div>
 
-          <div className="text-[10px] text-slate-500 pt-3 border-t border-slate-800 font-mono">
-            NeuroMove Wireshark Protocol Sniffer v1.0
+          <div className="text-3xs text-slate-400 pt-3 border-t border-slate-200 font-mono">
+            CRC-32 IEEE 802.3 Verification &bull; Invariant 3 Validated
           </div>
         </div>
       </div>

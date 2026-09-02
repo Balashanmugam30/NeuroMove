@@ -51,34 +51,34 @@ export const DeviceMatrixPanel: React.FC<DeviceMatrixPanelProps> = ({
   const getModalityColor = (mod: string) => {
     switch (mod) {
       case "EEG":
-        return "bg-cyan-500/10 text-cyan-400 border-cyan-500/30";
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "IMU":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+        return "bg-amber-50 text-amber-700 border-amber-200";
       case "EMG":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case "EOG":
-        return "bg-purple-500/10 text-purple-400 border-purple-500/30";
+        return "bg-purple-50 text-purple-700 border-purple-200";
       case "PPG":
-        return "bg-rose-500/10 text-rose-400 border-rose-500/30";
+        return "bg-rose-50 text-rose-700 border-rose-200";
       case "PRESSURE":
-        return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+        return "bg-teal-50 text-teal-700 border-teal-200";
       default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/30";
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-6 font-sans">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-semibold text-slate-100">Multimodal Sensor Matrix</h2>
-            <span className="px-2 py-0.5 text-xs font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded">
+            <Layers className="w-5 h-5 text-teal-600" />
+            <h2 className="text-lg font-bold text-slate-900">Multimodal Sensor Matrix</h2>
+            <span className="px-2 py-0.5 text-2xs font-mono font-bold bg-teal-50 text-teal-700 border border-teal-200 rounded">
               Phase 23 Engine
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Deterministic sensor discovery, physical vs simulated device binding & calibration.
           </p>
         </div>
@@ -89,10 +89,10 @@ export const DeviceMatrixPanel: React.FC<DeviceMatrixPanelProps> = ({
             <button
               key={mod}
               onClick={() => setSelectedModality(mod)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors ${
                 selectedModality === mod
-                  ? "bg-cyan-600 text-white shadow-sm"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                  ? "bg-teal-600 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
               }`}
             >
               {mod}
@@ -109,76 +109,76 @@ export const DeviceMatrixPanel: React.FC<DeviceMatrixPanelProps> = ({
           return (
             <div
               key={dev.device_id}
-              className={`border rounded-lg p-4 bg-slate-950/60 transition-all ${
+              className={`border rounded-xl p-4 bg-white transition-all shadow-2xs ${
                 dev.is_connected
-                  ? "border-cyan-500/40 shadow-sm shadow-cyan-950/30"
-                  : "border-slate-800 opacity-80"
+                  ? "border-teal-400 ring-1 ring-teal-100"
+                  : "border-slate-200 opacity-90"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 text-xs font-mono font-semibold rounded border ${getModalityColor(dev.modality)}`}>
+                    <span className={`px-2 py-0.5 text-2xs font-mono font-bold rounded border ${getModalityColor(dev.modality)}`}>
                       {dev.modality}
                     </span>
-                    <span className="text-xs font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded">
+                    <span className="text-2xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                       {dev.source}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-200 mt-1.5">{dev.name}</h3>
-                  <div className="text-xs font-mono text-slate-500">{dev.device_id}</div>
+                  <h3 className="text-sm font-bold text-slate-900 mt-1.5">{dev.name}</h3>
+                  <div className="text-2xs font-mono text-slate-400">{dev.device_id}</div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   {dev.is_connected ? (
-                    <span className="flex items-center gap-1 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                    <span className="flex items-center gap-1 text-2xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Connected
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs font-mono text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded border border-slate-700">
-                      <XCircle className="w-3.5 h-3.5" /> Disconnected
+                    <span className="flex items-center gap-1 text-2xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                      <XCircle className="w-3.5 h-3.5 text-slate-400" /> Disconnected
                     </span>
                   )}
                 </div>
               </div>
 
               {/* Hardware / Stream Specs */}
-              <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-slate-900/80 p-2.5 rounded border border-slate-800/80 mb-3">
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-200 mb-3">
                 <div>
                   <span className="text-slate-500">Channels:</span>{" "}
-                  <span className="text-slate-200">{dev.channel_count} ({dev.channel_names?.slice(0, 3).join(", ")}{dev.channel_count > 3 ? "..." : ""})</span>
+                  <span className="text-slate-800 font-semibold">{dev.channel_count} ({dev.channel_names?.slice(0, 3).join(", ")}{dev.channel_count > 3 ? "..." : ""})</span>
                 </div>
                 <div>
                   <span className="text-slate-500">Rate:</span>{" "}
-                  <span className="text-cyan-400">{dev.default_sampling_rate} Hz</span>
+                  <span className="text-teal-700 font-bold">{dev.default_sampling_rate} Hz</span>
                 </div>
                 <div>
                   <span className="text-slate-500">Protocol:</span>{" "}
-                  <span className="text-slate-300">{dev.protocol}</span>
+                  <span className="text-slate-800">{dev.protocol}</span>
                 </div>
                 <div>
                   <span className="text-slate-500">Avail:</span>{" "}
-                  <span className={dev.is_available ? "text-emerald-400" : "text-rose-400"}>
+                  <span className={dev.is_available ? "text-emerald-700 font-bold" : "text-rose-700 font-bold"}>
                     {dev.is_available ? "Ready" : "Unavailable"}
                   </span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-1 border-t border-slate-800/60">
+              <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                 {dev.is_connected ? (
                   <>
                     <button
                       onClick={() => handleAction(dev.device_id, "disconnect")}
                       disabled={isBusy || isLoading}
-                      className="flex-1 py-1.5 px-2.5 text-xs font-medium bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                      className="flex-1 py-1.5 px-2.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
                     >
                       <Power className="w-3.5 h-3.5" /> Disconnect
                     </button>
                     <button
                       onClick={() => handleAction(dev.device_id, "calibrate")}
                       disabled={isBusy || isLoading}
-                      className="py-1.5 px-3 text-xs font-medium bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                      className="py-1.5 px-3 text-xs font-bold bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" /> Calibrate
                     </button>
@@ -187,7 +187,7 @@ export const DeviceMatrixPanel: React.FC<DeviceMatrixPanelProps> = ({
                   <button
                     onClick={() => handleAction(dev.device_id, "connect")}
                     disabled={isBusy || isLoading || !dev.is_available}
-                    className="w-full py-1.5 px-2.5 text-xs font-medium bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                    className="w-full py-1.5 px-2.5 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 shadow-2xs"
                   >
                     <Power className="w-3.5 h-3.5" /> Connect Sensor
                   </button>

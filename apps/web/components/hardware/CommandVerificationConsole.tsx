@@ -103,27 +103,27 @@ export function CommandVerificationConsole({
   const isPreFlightAuthorized = decision === "AUTHORIZED" && !isExpired;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-sans">
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-2xs font-sans">
+      <div className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+          <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
             <Terminal className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-base font-bold text-slate-900 dark:text-slate-100">
+            <div className="text-base font-bold text-slate-900">
               HIL Command Pipeline & Authorization Gate
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               End-to-end command construction, Phase 17 safety verification & serial transmission
             </p>
           </div>
         </div>
 
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold border ${
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-2xs font-mono font-bold border ${
             isPreFlightAuthorized
-              ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400"
-              : "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-400"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-rose-50 text-rose-700 border-rose-200"
           }`}
         >
           {isPreFlightAuthorized ? "GATE: AUTHORIZED" : "GATE: BLOCKED"}
@@ -134,13 +134,13 @@ export function CommandVerificationConsole({
         {/* Command Configuration */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label className="text-xs font-bold text-slate-700 font-mono uppercase text-2xs">
               Canonical Intent Class
             </label>
             <select
               value={intentClass}
               onChange={(e) => setIntentClass(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+              className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             >
               {["MOVE_FORWARD", "MOVE_BACKWARD", "TURN_LEFT", "TURN_RIGHT", "STOP", "ROTATE_CCW", "CANCEL_INTENT"].map((it) => (
                 <option key={it} value={it}>
@@ -151,13 +151,13 @@ export function CommandVerificationConsole({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label className="text-xs font-bold text-slate-700 font-mono uppercase text-2xs">
               Phase 17 Safety Decision
             </label>
             <select
               value={decision}
               onChange={(e) => setDecision(e.target.value as any)}
-              className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+              className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             >
               {["AUTHORIZED", "DENIED", "HELD", "EMERGENCY_STOP"].map((d) => (
                 <option key={d} value={d}>
@@ -168,24 +168,24 @@ export function CommandVerificationConsole({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label className="text-xs font-bold text-slate-700 font-mono uppercase text-2xs">
               Subject Identifier
             </label>
             <input
               type="text"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+              className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             />
           </div>
 
           <div className="space-y-1.5 flex flex-col justify-end">
-            <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer pt-4">
+            <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer pt-4">
               <input
                 type="checkbox"
                 checked={isExpired}
                 onChange={(e) => setIsExpired(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
               <span>Simulate Expired Token</span>
             </label>
@@ -193,14 +193,14 @@ export function CommandVerificationConsole({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center space-x-2 pt-2 border-t border-slate-100">
           <button
             type="button"
             onClick={handleValidate}
             disabled={actionLoading || isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs"
           >
-            <FileCheck2 className="w-3.5 h-3.5 text-indigo-600" />
+            <FileCheck2 className="w-3.5 h-3.5 text-blue-600" />
             Pre-Flight Safety Validation
           </button>
 
@@ -208,7 +208,7 @@ export function CommandVerificationConsole({
             type="button"
             onClick={handleRunCommand}
             disabled={actionLoading || isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition-colors"
           >
             {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             Transmit HIL Command
@@ -218,21 +218,21 @@ export function CommandVerificationConsole({
         {/* Live Validation & Execution Inspector */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           {/* Pre-flight Result */}
-          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs space-y-1.5">
-            <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs space-y-1.5">
+            <div className="font-bold text-slate-800 flex items-center justify-between">
               <span>Pre-Flight Gate Result</span>
               {validationResult ? (
                 validationResult.valid ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">VALID</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-emerald-600 text-white">VALID</span>
                 ) : (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white">REJECTED</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-rose-600 text-white">REJECTED</span>
                 )
               ) : (
                 <span className="text-slate-400 font-normal">Pending test</span>
               )}
             </div>
             {validationResult ? (
-              <div className="font-mono text-[11px] space-y-0.5 text-slate-600 dark:text-slate-400">
+              <div className="font-mono text-2xs space-y-0.5 text-slate-700">
                 <div>Reason: <span className="font-bold">{validationResult.reason_code}</span></div>
                 <div>Will Transmit: {validationResult.will_transmit ? "YES" : "NO (0 TX)"}</div>
                 <div>Message: {validationResult.message}</div>
@@ -243,23 +243,23 @@ export function CommandVerificationConsole({
           </div>
 
           {/* Execution Result */}
-          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs space-y-1.5">
-            <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs space-y-1.5">
+            <div className="font-bold text-slate-800 flex items-center justify-between">
               <span>HIL Pipeline Response</span>
               {executionResult ? (
                 executionResult.status === "COMMAND_ACCEPTED" ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">ACCEPTED</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-emerald-600 text-white">ACCEPTED</span>
                 ) : executionResult.status === "COMMAND_REJECTED" ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white">REJECTED</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-amber-600 text-white">REJECTED</span>
                 ) : (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white">NACK</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-rose-600 text-white">NACK</span>
                 )
               ) : (
                 <span className="text-slate-400 font-normal">No command sent</span>
               )}
             </div>
             {executionResult ? (
-              <div className="font-mono text-[11px] space-y-0.5 text-slate-600 dark:text-slate-400">
+              <div className="font-mono text-2xs space-y-0.5 text-slate-700">
                 <div>Status: <span className="font-bold">{executionResult.status}</span></div>
                 <div>Transmissions: {executionResult.transmission_count}</div>
                 <div>Command ID: {executionResult.command_id || "None (Blocked)"}</div>

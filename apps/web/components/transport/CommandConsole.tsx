@@ -201,18 +201,18 @@ export function CommandConsole({
         </div>
 
         {/* Right Col: Frame Encapsulation Preview & Last Response */}
-        <div className="lg:col-span-6 bg-slate-900 rounded-xl border border-slate-800 shadow-sm p-5 space-y-3 text-slate-200">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300">
-              <Code2 className="w-4 h-4 text-teal-400" />
+        <div className="lg:col-span-6 bg-slate-50 rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-800">
+              <Code2 className="w-4 h-4 text-teal-600" />
               Wire Frame Wire-Format Inspection
             </div>
-            <span className="text-[10px] font-mono text-teal-400 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-800/40">
+            <span className="text-3xs font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-bold">
               DELIMITERS: 0xAA55 ... 0x55AA
             </span>
           </div>
 
-          <div className="bg-slate-950 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-x-auto space-y-1.5 border border-slate-800/60">
+          <div className="bg-slate-950 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto space-y-1.5 border border-slate-800 shadow-inner">
             <div className="text-slate-500">{/* Header: [START: 2B] [LEN: 4B] [CRC32: 8B] */}</div>
             <div className="text-teal-300">
               0xAA55 &bull; LEN=248B &bull; CRC32=[AUTO-COMPUTED]
@@ -240,30 +240,30 @@ export function CommandConsole({
             <div
               className={`p-3 rounded-lg border text-xs space-y-1 ${
                 transmissionResult.status === "ACKED"
-                  ? "bg-emerald-950/60 border-emerald-800/60 text-emerald-200"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                   : transmissionResult.status === "DUPLICATE"
-                  ? "bg-blue-950/60 border-blue-800/60 text-blue-200"
-                  : "bg-red-950/60 border-red-800/60 text-red-200"
+                  ? "bg-blue-50 border-blue-200 text-blue-800"
+                  : "bg-rose-50 border-rose-200 text-rose-800"
               }`}
             >
               <div className="flex items-center justify-between font-bold">
                 <span className="flex items-center gap-1.5">
                   {transmissionResult.status === "ACKED" ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   ) : (
-                    <AlertOctagon className="w-4 h-4 text-red-400" />
+                    <AlertOctagon className="w-4 h-4 text-rose-600" />
                   )}
                   Transmission Result: {transmissionResult.status}
                 </span>
-                <span className="font-mono text-[10px]">
+                <span className="font-mono text-3xs font-bold">
                   {transmissionResult.rtt_ms ? `${transmissionResult.rtt_ms}ms` : ""}
                 </span>
               </div>
-              <p className="text-[11px] opacity-90">
+              <p className="text-2xs">
                 {transmissionResult.reason || transmissionResult.message || transmissionResult.error || "Completed"}
               </p>
               {transmissionResult.command_id && (
-                <div className="text-[10px] font-mono opacity-70">
+                <div className="text-3xs font-mono text-slate-500">
                   Command ID: {transmissionResult.command_id} &bull; Sequence: {transmissionResult.sequence_number}
                 </div>
               )}

@@ -89,22 +89,22 @@ export function HILExperimentLab({
   const totalRan = Object.keys(scenarioResults).length;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm font-sans">
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-2xs font-sans">
+      <div className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+          <div className="p-2 rounded-lg bg-purple-50 text-purple-600 border border-purple-100">
             <FlaskConical className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <div className="text-base font-bold text-slate-900 flex items-center gap-2">
               <span>HIL Canonical Verification Matrix (A–T)</span>
               {totalRan > 0 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
                   {totalPassed}/{totalRan} PASSED
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Deterministic scenario suite validating protocol invariants & fault handling
             </p>
           </div>
@@ -113,7 +113,7 @@ export function HILExperimentLab({
         <button
           onClick={handleRunAll}
           disabled={isLoading || isRunningAll || runningScenario !== null}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white shadow-2xs transition-colors"
         >
           {isRunningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
           Run All 20 Scenarios
@@ -129,10 +129,10 @@ export function HILExperimentLab({
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
+              className={`px-2.5 py-1 text-xs rounded-full font-bold transition-colors ${
                 selectedCategory === cat
-                  ? "bg-purple-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  ? "bg-purple-600 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
               {cat}
@@ -141,8 +141,8 @@ export function HILExperimentLab({
         </div>
 
         {/* Scenarios Table */}
-        <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
             {filteredScenarios.map((sc) => {
               const res = scenarioResults[sc.id];
               const isRunning = runningScenario === sc.id;
@@ -150,20 +150,20 @@ export function HILExperimentLab({
               return (
                 <div
                   key={sc.id}
-                  className="p-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 flex items-center justify-between gap-3 transition-colors"
+                  className="p-3 hover:bg-slate-50/70 flex items-center justify-between gap-3 transition-colors"
                 >
                   <div className="flex items-start space-x-3 min-w-0">
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0 mt-0.5">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-mono font-bold border border-slate-200 bg-slate-50 text-slate-700 shrink-0 mt-0.5">
                       {sc.id}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
                         <span>{sc.name}</span>
-                        <span className="text-[10px] font-normal text-slate-400 uppercase tracking-wider">
+                        <span className="text-3xs font-bold text-slate-400 font-mono uppercase tracking-wider">
                           [{sc.category}]
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      <div className="text-3xs text-slate-500 mt-0.5 truncate">
                         {sc.desc}
                       </div>
                     </div>
@@ -173,17 +173,17 @@ export function HILExperimentLab({
                     {res ? (
                       <div className="flex items-center space-x-2 text-xs font-mono">
                         {res.passed ? (
-                          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             PASS
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
-                            <XCircle className="w-3.5 h-3.5" />
+                          <span className="flex items-center gap-1 text-rose-700 font-bold">
+                            <XCircle className="w-3.5 h-3.5 text-rose-600" />
                             FAIL
                           </span>
                         )}
-                        <span className="text-slate-400 text-[11px]">
+                        <span className="text-slate-400 text-3xs">
                           {res.latency_ms ? `${res.latency_ms.toFixed(1)}ms` : "0.0ms"}
                         </span>
                       </div>
@@ -193,7 +193,7 @@ export function HILExperimentLab({
                       type="button"
                       onClick={() => handleRunSingle(sc.id)}
                       disabled={isRunning || isRunningAll}
-                      className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
                       title={`Run ${sc.id}`}
                     >
                       {isRunning ? (
@@ -211,31 +211,31 @@ export function HILExperimentLab({
 
         {/* Historical Experiments List */}
         {experiments.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <div className="pt-2 border-t border-slate-100 space-y-2">
+            <div className="text-xs font-bold text-slate-700">
               Recorded Experiment Runs ({experiments.length})
             </div>
-            <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-950 font-mono text-xs">
-              <div className="max-h-[140px] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800 p-2 space-y-1">
+            <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 font-mono text-xs">
+              <div className="max-h-[140px] overflow-y-auto divide-y divide-slate-200 p-2 space-y-1">
                 {experiments.slice(0, 10).map((exp) => (
                   <div key={exp.experiment_id} className="p-1.5 flex items-center justify-between gap-2">
                     <div className="flex items-center space-x-2 truncate">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold ${
                         exp.passed ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
                       }`}>
                         {exp.scenario_id}
                       </span>
-                      <span className="text-slate-700 dark:text-slate-300 truncate">{exp.name}</span>
+                      <span className="text-slate-800 font-medium truncate text-2xs">{exp.name}</span>
                     </div>
                     <div className="flex items-center space-x-2 shrink-0">
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-3xs text-slate-500">
                         {new Date(exp.completed_at).toLocaleTimeString()}
                       </span>
                       <button
                         type="button"
                         onClick={() => onReplayExperiment(exp.experiment_id)}
                         disabled={isLoading}
-                        className="p-1 rounded text-[10px] font-sans font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 hover:bg-purple-100"
+                        className="px-2 py-0.5 rounded text-2xs font-bold bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 transition shadow-2xs"
                         title="Replay experiment"
                       >
                         Replay

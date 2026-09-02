@@ -43,19 +43,19 @@ export const MultimodalSignalOscilloscope: React.FC<MultimodalSignalOscilloscope
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-6 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-semibold text-slate-100">Multimodal Signal Oscilloscope</h2>
+            <Activity className="w-5 h-5 text-teal-600" />
+            <h2 className="text-lg font-bold text-slate-900">Multimodal Signal Oscilloscope</h2>
             {isStreaming && (
-              <span className="flex items-center gap-1 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 animate-pulse">
-                <Radio className="w-3 h-3" /> LIVE STREAMING
+              <span className="flex items-center gap-1 text-2xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 animate-pulse">
+                <Radio className="w-3 h-3 text-emerald-600" /> LIVE STREAMING
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Real-time synchronized visualization across EEG ($\mu$V), IMU ($m/s^2, ^\circ/s$), EMG bursts, EOG blinks, and Pressure (kPa).
           </p>
         </div>
@@ -75,18 +75,18 @@ export const MultimodalSignalOscilloscope: React.FC<MultimodalSignalOscilloscope
             return (
               <div
                 key={pkt.sensor_id}
-                className="bg-slate-950/70 border border-slate-800 rounded-lg p-4 space-y-3"
+                className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-slate-200">
+                    <span className="text-xs font-mono font-bold text-slate-900">
                       {pkt.sensor_id}
                     </span>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40">
+                    <span className="text-2xs font-mono px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 font-bold">
                       {modality} ({pkt.units})
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-slate-500">
+                  <div className="text-2xs font-mono text-slate-500">
                     Seq: #{pkt.sequence_number} | Samples: {pkt.sample_count}
                   </div>
                 </div>
@@ -107,13 +107,13 @@ export const MultimodalSignalOscilloscope: React.FC<MultimodalSignalOscilloscope
                     return (
                       <div
                         key={chName}
-                        className="bg-slate-900/90 border border-slate-800/90 rounded p-2.5 space-y-1"
+                        className="bg-white border border-slate-200 rounded-lg p-2.5 space-y-1.5 shadow-2xs"
                       >
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <span className="text-slate-400 font-semibold">{chName}</span>
-                          <span className="text-slate-200">{latestVal.toFixed(2)} {pkt.units}</span>
+                        <div className="flex items-center justify-between text-2xs font-mono">
+                          <span className="text-slate-600 font-bold">{chName}</span>
+                          <span className="text-slate-900 font-semibold">{latestVal.toFixed(2)} {pkt.units}</span>
                         </div>
-                        <div className="h-9 w-full bg-slate-950 rounded flex items-center justify-center overflow-hidden px-1">
+                        <div className="h-9 w-full bg-slate-950 rounded flex items-center justify-center overflow-hidden px-1 shadow-inner">
                           {renderWaveform(chData, color)}
                         </div>
                       </div>

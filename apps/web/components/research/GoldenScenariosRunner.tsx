@@ -124,17 +124,17 @@ export function GoldenScenariosRunner({ onRunScenario }: GoldenScenariosRunnerPr
   const passedCount = Object.values(results).filter((r) => r.passed).length;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4 font-sans">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
+          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-bold text-slate-900">
               12 Golden Verification Scenarios (A through L)
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Automated scientific invariants, non-actuation boundaries, and reproducibility proofs
             </p>
           </div>
@@ -142,7 +142,7 @@ export function GoldenScenariosRunner({ onRunScenario }: GoldenScenariosRunnerPr
 
         <div className="flex items-center gap-2">
           {Object.keys(results).length > 0 && (
-            <span className="text-xs font-mono text-emerald-400 px-2 py-1 bg-emerald-950/40 rounded border border-emerald-500/30">
+            <span className="text-xs font-mono font-bold text-emerald-700 px-2 py-1 bg-emerald-50 rounded border border-emerald-200">
               {passedCount} / {SCENARIOS.length} Passed
             </span>
           )}
@@ -150,7 +150,7 @@ export function GoldenScenariosRunner({ onRunScenario }: GoldenScenariosRunnerPr
             type="button"
             onClick={handleRunAll}
             disabled={runningAll || runningId !== null}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-2xs disabled:opacity-50"
           >
             <Play className={`w-3.5 h-3.5 ${runningAll ? "animate-spin" : ""}`} />
             {runningAll ? "Running Suite..." : "Run All 12 Scenarios"}
@@ -169,23 +169,23 @@ export function GoldenScenariosRunner({ onRunScenario }: GoldenScenariosRunnerPr
               key={sc.id}
               className={`p-3.5 rounded-lg border transition-all ${
                 res?.passed
-                  ? "bg-emerald-950/20 border-emerald-500/30"
+                  ? "bg-emerald-50/50 border-emerald-200"
                   : res?.passed === false
-                  ? "bg-rose-950/20 border-rose-500/30"
-                  : "bg-slate-950 border-slate-800"
+                  ? "bg-rose-50/50 border-rose-200"
+                  : "bg-slate-50 border-slate-200"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div className="font-semibold text-xs text-white flex items-center gap-1.5">
+                <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                   {sc.name}
                 </div>
                 {res ? (
                   res.passed ? (
-                    <span className="inline-flex items-center gap-1 text-3xs font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    <span className="inline-flex items-center gap-1 text-3xs font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">
                       <CheckCircle2 className="w-3 h-3" /> PASS
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-3xs font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">
+                    <span className="inline-flex items-center gap-1 text-3xs font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded border border-rose-300">
                       <XCircle className="w-3 h-3" /> FAIL
                     </span>
                   )
@@ -194,15 +194,15 @@ export function GoldenScenariosRunner({ onRunScenario }: GoldenScenariosRunnerPr
                     type="button"
                     onClick={() => handleRun(sc.id)}
                     disabled={isCurrent || runningAll}
-                    className="text-3xs text-indigo-400 hover:text-white px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/30 hover:bg-indigo-900 transition disabled:opacity-50"
+                    className="text-3xs font-bold text-blue-600 hover:text-blue-800 px-2 py-0.5 rounded bg-white border border-blue-200 hover:bg-blue-50 transition shadow-2xs disabled:opacity-50"
                   >
                     {isCurrent ? "Running..." : "Run"}
                   </button>
                 )}
               </div>
 
-              <p className="text-3xs text-slate-400 mb-2">{sc.description}</p>
-              <div className="text-3xs font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded border border-slate-800 truncate">
+              <p className="text-3xs text-slate-500 mb-2">{sc.description}</p>
+              <div className="text-3xs font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">
                 Invariant: {sc.expectedInvariant}
               </div>
             </div>

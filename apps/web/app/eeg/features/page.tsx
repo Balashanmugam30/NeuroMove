@@ -168,24 +168,24 @@ export default function FeaturesWorkspacePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl font-bold text-slate-900">
             Motor-Imagery Epoching & Feature Foundation
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Research workspace for event normalization, trial segmentation, spectral features, and CSP representations
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
             Phase 10: EEG_FEATURES_V1
           </span>
           {featureSet && (
             <button
               type="button"
               onClick={handleViewManifest}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg transition"
+              className="px-3 py-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-200 transition shadow-2xs"
             >
               View JSON Manifest
             </button>
@@ -195,12 +195,12 @@ export default function FeaturesWorkspacePage() {
 
       {/* Status Bar */}
       {statusMessage && (
-        <div className="p-3 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs text-indigo-900 dark:text-indigo-300 flex items-center justify-between">
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-center justify-between">
           <span>{statusMessage}</span>
           <button
             type="button"
             onClick={() => setStatusMessage("")}
-            className="text-indigo-500 hover:text-indigo-700 font-bold ml-4"
+            className="text-blue-600 hover:text-blue-800 font-bold ml-4"
           >
             ×
           </button>
@@ -231,12 +231,12 @@ export default function FeaturesWorkspacePage() {
       </div>
 
       {/* Section 3: Feature Extraction Action Panel */}
-      <div className="bg-gradient-to-r from-indigo-900/10 via-slate-900/5 to-indigo-900/10 dark:from-indigo-950/40 dark:via-slate-900/40 dark:to-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/60 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-blue-50/80 via-slate-50 to-blue-50/80 border border-blue-100 rounded-xl p-6 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="text-base font-bold text-slate-900">
             Multi-Band Spectral & Spatial Covariance Extraction
           </h3>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Computes Mu (8–13 Hz) & Beta (13–30 Hz) absolute/relative/log powers, lateralization (C3-C4), and trace-normalized covariance matrices
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function FeaturesWorkspacePage() {
           type="button"
           onClick={handleRunFeatureExtraction}
           disabled={!epochSummary || isLoadingFeatures}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 transition whitespace-nowrap"
+          className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-2xs disabled:opacity-50 transition whitespace-nowrap"
         >
           {isLoadingFeatures ? "Extracting Features..." : "Extract Features & Covariance"}
         </button>
@@ -252,14 +252,14 @@ export default function FeaturesWorkspacePage() {
 
       {/* Section 4: Results Tabs (Feature Matrix vs Covariance vs Manifest) */}
       <div className="space-y-4">
-        <div className="flex border-b border-slate-200 dark:border-slate-800">
+        <div className="flex border-b border-slate-200">
           <button
             type="button"
             onClick={() => setSelectedTab("features")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
               selectedTab === "features"
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
             Feature Matrix Table
@@ -267,10 +267,10 @@ export default function FeaturesWorkspacePage() {
           <button
             type="button"
             onClick={() => setSelectedTab("covariance")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
               selectedTab === "covariance"
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
             Spatial Covariance Viewer
@@ -278,10 +278,10 @@ export default function FeaturesWorkspacePage() {
           <button
             type="button"
             onClick={() => setSelectedTab("manifest")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
               selectedTab === "manifest"
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
             Provenance Manifest
@@ -301,7 +301,7 @@ export default function FeaturesWorkspacePage() {
         )}
 
         {selectedTab === "manifest" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-slate-100 font-mono text-xs overflow-x-auto shadow-inner max-h-[500px]">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-slate-900 font-mono text-xs overflow-x-auto shadow-inner max-h-[500px]">
             <pre>{manifestJson || "No manifest selected. Run epoching or feature extraction to view."}</pre>
           </div>
         )}

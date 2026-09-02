@@ -21,8 +21,8 @@ export function ClassDistributionCard({
 
   const colors: Record<string, string> = {
     REST: "bg-slate-500 text-white",
-    LEFT_IMAGERY: "bg-indigo-600 text-white",
-    RIGHT_IMAGERY: "bg-cyan-600 text-white",
+    LEFT_IMAGERY: "bg-blue-600 text-white",
+    RIGHT_IMAGERY: "bg-teal-600 text-white",
     FEET_IMAGERY: "bg-amber-600 text-white",
     BOTH_FISTS_IMAGERY: "bg-purple-600 text-white",
     TONGUE_IMAGERY: "bg-pink-600 text-white",
@@ -30,13 +30,13 @@ export function ClassDistributionCard({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs space-y-4 font-sans">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 className="text-base font-bold text-slate-900">
           Trial Class Distribution & Lineage
         </h3>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          Total Trials: <strong className="text-slate-800 dark:text-slate-200">{total}</strong>
+        <span className="text-xs text-slate-500">
+          Total Trials: <strong className="text-slate-800 font-mono">{total}</strong>
         </span>
       </div>
 
@@ -46,15 +46,15 @@ export function ClassDistributionCard({
           const pct = total > 0 ? (count / total) * 100 : 0;
           return (
             <div key={label} className="space-y-1">
-              <div className="flex justify-between text-xs font-medium">
-                <span className="text-slate-700 dark:text-slate-300">{label}</span>
-                <span className="text-slate-500 dark:text-slate-400">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-slate-700 font-mono">{label}</span>
+                <span className="text-slate-500 font-mono text-2xs">
                   {count} trials ({pct.toFixed(1)}%)
                 </span>
               </div>
-              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${colors[label] || "bg-indigo-500"} transition-all duration-300`}
+                  className={`h-full ${colors[label] || "bg-blue-500"} transition-all duration-300`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -64,22 +64,22 @@ export function ClassDistributionCard({
       </div>
 
       {/* Lineage & Leakage Prevention Invariant Tags */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-        <div className="p-2 bg-slate-50 dark:bg-slate-800/40 rounded border border-slate-100 dark:border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Subject Boundaries</div>
-          <div className="font-semibold text-emerald-600 dark:text-emerald-400">Preserved</div>
+      <div className="pt-2 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <div className="text-slate-500 text-3xs font-mono font-bold uppercase">Subject Boundaries</div>
+          <div className="font-bold text-emerald-700 mt-0.5">Preserved</div>
         </div>
-        <div className="p-2 bg-slate-50 dark:bg-slate-800/40 rounded border border-slate-100 dark:border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Session Boundaries</div>
-          <div className="font-semibold text-emerald-600 dark:text-emerald-400">Preserved</div>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <div className="text-slate-500 text-3xs font-mono font-bold uppercase">Session Boundaries</div>
+          <div className="font-bold text-emerald-700 mt-0.5">Preserved</div>
         </div>
-        <div className="p-2 bg-slate-50 dark:bg-slate-800/40 rounded border border-slate-100 dark:border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Trace Normalization</div>
-          <div className="font-semibold text-indigo-600 dark:text-indigo-400">Enforced</div>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <div className="text-slate-500 text-3xs font-mono font-bold uppercase">Trace Normalization</div>
+          <div className="font-bold text-blue-700 mt-0.5">Enforced</div>
         </div>
-        <div className="p-2 bg-slate-50 dark:bg-slate-800/40 rounded border border-slate-100 dark:border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Intent Decision Claim</div>
-          <div className="font-semibold text-slate-500">None (Pure Feature)</div>
+        <div className="p-2 bg-slate-50 rounded border border-slate-200">
+          <div className="text-slate-500 text-3xs font-mono font-bold uppercase">Intent Claim</div>
+          <div className="font-semibold text-slate-600 mt-0.5">Pure Feature</div>
         </div>
       </div>
     </div>

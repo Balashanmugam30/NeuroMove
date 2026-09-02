@@ -314,12 +314,12 @@ export default function ResearchLabPage() {
       </Notice>
 
       {/* Experiment Control Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs uppercase font-bold text-slate-400">Select Experiment:</label>
+          <label className="text-xs uppercase font-bold text-slate-500 font-mono">Select Experiment:</label>
           {isLoading ? (
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" /> Loading...
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" /> Loading...
             </div>
           ) : (
             <select
@@ -328,7 +328,7 @@ export default function ResearchLabPage() {
                 const exp = experiments.find((x) => x.experiment_id === e.target.value);
                 if (exp) setSelectedExperiment(exp);
               }}
-              className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:ring-1 focus:ring-indigo-500 font-sans"
+              className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:ring-1 focus:ring-blue-500 font-sans"
             >
               {experiments.map((e) => (
                 <option key={e.experiment_id} value={e.experiment_id}>
@@ -341,7 +341,7 @@ export default function ResearchLabPage() {
           <button
             type="button"
             onClick={handleCreateExperiment}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-300 transition"
           >
             <Plus className="w-3.5 h-3.5" />
             New Experiment
@@ -350,14 +350,14 @@ export default function ResearchLabPage() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-3xs uppercase font-bold text-slate-400">Trials:</span>
+            <span className="text-3xs uppercase font-bold text-slate-500 font-mono">Trials:</span>
             <input
               type="number"
               min={10}
               max={100}
               value={trialCount}
               onChange={(e) => setTrialCount(Number(e.target.value))}
-              className="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono text-center"
+              className="w-16 bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-900 font-mono text-center"
             />
           </div>
 
@@ -365,7 +365,7 @@ export default function ResearchLabPage() {
             type="button"
             onClick={handleRunReplay}
             disabled={isRunningReplay || !selectedExperiment}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-md disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-2xs disabled:opacity-50"
           >
             <Play className={`w-3.5 h-3.5 ${isRunningReplay ? "animate-spin" : ""}`} />
             {isRunningReplay ? "Replaying Stages..." : "Run Replay Benchmark"}
@@ -383,7 +383,7 @@ export default function ResearchLabPage() {
       )}
 
       {/* Tab Navigation */}
-      <div className="border-b border-slate-800 flex space-x-2 overflow-x-auto pb-1">
+      <div className="border-b border-slate-200 flex space-x-2 overflow-x-auto pb-1">
         {[
           { id: "REPLAY", label: "Replay & Metrics", icon: Layers },
           { id: "ABLATION", label: "Ablation Studies", icon: GitFork },
@@ -401,8 +401,8 @@ export default function ResearchLabPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
                 isActive
-                  ? "border-indigo-500 text-indigo-400 bg-indigo-500/5"
-                  : "border-transparent text-slate-400 hover:text-white hover:border-slate-700"
+                  ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                  : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
               }`}
             >
               <Icon className="w-4 h-4" />
