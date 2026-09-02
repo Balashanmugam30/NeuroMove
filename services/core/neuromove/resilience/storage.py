@@ -276,7 +276,9 @@ class ResilienceStorage:
             )
             conn.commit()
 
-    def list_checkpoints(self, experiment_id: str | None = None, limit: int = 50) -> list[RecoveryCheckpoint]:
+    def list_checkpoints(
+        self, experiment_id: str | None = None, limit: int = 50
+    ) -> list[RecoveryCheckpoint]:
         db_path = self.db.get_db_path()
         with sqlite3.connect(db_path, timeout=5.0) as conn:
             cursor = conn.cursor()
@@ -328,9 +330,13 @@ class ResilienceStorage:
             failed = status_counts.get("FAILED", 0)
             uncertain = status_counts.get("UNCERTAIN", 0)
 
-            cursor.execute("SELECT COUNT(*) FROM resilience_invariant_results WHERE status = 'PASS';")
+            cursor.execute(
+                "SELECT COUNT(*) FROM resilience_invariant_results WHERE status = 'PASS';"
+            )
             inv_passed = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM resilience_invariant_results WHERE status = 'FAIL';")
+            cursor.execute(
+                "SELECT COUNT(*) FROM resilience_invariant_results WHERE status = 'FAIL';"
+            )
             inv_failed = cursor.fetchone()[0]
 
             cursor.execute(

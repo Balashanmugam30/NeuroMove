@@ -116,7 +116,11 @@ class FaultInjector:
         """Query whether a specific fault type is currently active for the given target."""
         for fault in self._active_faults.values():
             if fault.fault_type == fault_type and fault.status == FaultStatus.ACTIVE:
-                if target_service and fault.target_service and fault.target_service != target_service:
+                if (
+                    target_service
+                    and fault.target_service
+                    and fault.target_service != target_service
+                ):
                     continue
                 if target_stream and fault.target_stream and fault.target_stream != target_stream:
                     continue
@@ -127,7 +131,9 @@ class FaultInjector:
         """Return current simulated clock skew in seconds."""
         return self._clock_skew_ms / 1000.0
 
-    def evaluate_triggers(self, event_type: str, sequence_number: int | None = None) -> list[FaultDefinition]:
+    def evaluate_triggers(
+        self, event_type: str, sequence_number: int | None = None
+    ) -> list[FaultDefinition]:
         """Evaluate trigger conditions on event arrival and arm/activate pending faults."""
         activated: list[FaultDefinition] = []
         counter = self._event_counters.get(event_type, 0) + 1
@@ -165,14 +171,20 @@ class FaultInjector:
 
         # 1. Check STREAM_EVENT_DROP
         for fault in self.get_active_faults():
-            if fault.fault_type == FaultType.STREAM_EVENT_DROP and fault.status == FaultStatus.ACTIVE:
+            if (
+                fault.fault_type == FaultType.STREAM_EVENT_DROP
+                and fault.status == FaultStatus.ACTIVE
+            ):
                 drop_count = fault.parameters.drop_count or 1
                 result = result[drop_count:]
                 logger.debug("Dropped %d events from stream %s", drop_count, stream_name)
 
         # 2. Check STREAM_EVENT_DUPLICATE
         for fault in self.get_active_faults():
-            if fault.fault_type == FaultType.STREAM_EVENT_DUPLICATE and fault.status == FaultStatus.ACTIVE:
+            if (
+                fault.fault_type == FaultType.STREAM_EVENT_DUPLICATE
+                and fault.status == FaultStatus.ACTIVE
+            ):
                 if result:
                     dup_count = fault.parameters.duplicate_count or 1
                     duplicated = [result[0]] * dup_count
@@ -181,14 +193,20 @@ class FaultInjector:
 
         # 3. Check STREAM_EVENT_REORDER
         for fault in self.get_active_faults():
-            if fault.fault_type == FaultType.STREAM_EVENT_REORDER and fault.status == FaultStatus.ACTIVE:
+            if (
+                fault.fault_type == FaultType.STREAM_EVENT_REORDER
+                and fault.status == FaultStatus.ACTIVE
+            ):
                 if len(result) >= 2:
                     result[0], result[1] = result[1], result[0]
                     logger.debug("Reordered events in stream %s", stream_name)
 
         # 4. Check STREAM_SEQUENCE_GAP
         for fault in self.get_active_faults():
-            if fault.fault_type == FaultType.STREAM_SEQUENCE_GAP and fault.status == FaultStatus.ACTIVE:
+            if (
+                fault.fault_type == FaultType.STREAM_SEQUENCE_GAP
+                and fault.status == FaultStatus.ACTIVE
+            ):
                 if result and "sequence_number" in result[0]:
                     result[0]["sequence_number"] += 10
                     logger.debug("Simulated sequence gap in stream %s", stream_name)

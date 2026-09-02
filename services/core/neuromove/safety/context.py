@@ -113,8 +113,12 @@ class SafetyContextProvider:
             if not overrides or "session_validity" not in overrides:
                 if self._explicit_session:
                     ctx_data["session_validity"] = {
-                        "active_subject_id": self._current_context.session_validity.get("active_subject_id", "sub-01"),
-                        "active_session_id": self._current_context.session_validity.get("active_session_id", "sess-01"),
+                        "active_subject_id": self._current_context.session_validity.get(
+                            "active_subject_id", "sub-01"
+                        ),
+                        "active_session_id": self._current_context.session_validity.get(
+                            "active_session_id", "sess-01"
+                        ),
                     }
                 else:
                     ctx_data["session_validity"] = {
@@ -125,8 +129,12 @@ class SafetyContextProvider:
                 if self._explicit_model:
                     ctx_data["model_health"] = {
                         "is_active": self._current_context.model_health.get("is_active", True),
-                        "is_rolled_back": self._current_context.model_health.get("is_rolled_back", False),
-                        "model_version_id": self._current_context.model_health.get("model_version_id")
+                        "is_rolled_back": self._current_context.model_health.get(
+                            "is_rolled_back", False
+                        ),
+                        "model_version_id": self._current_context.model_health.get(
+                            "model_version_id"
+                        )
                         or intent_snapshot.get("model_version_id")
                         or "model_v1",
                     }
@@ -226,5 +234,3 @@ class SafetyContextProvider:
         self._explicit_session = True
         self._current_context.session_validity["active_subject_id"] = subject_id
         self._current_context.session_validity["active_session_id"] = session_id
-
-

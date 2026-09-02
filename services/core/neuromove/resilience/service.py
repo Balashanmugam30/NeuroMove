@@ -154,7 +154,11 @@ class ResilienceService:
         """Inject a test intent candidate through the perturbed safety gate."""
         # Check active stream delays
         for f in self.injector.get_active_faults():
-            if f.fault_type in (FaultType.STREAM_DELAY, FaultType.TIMESTAMP_DELAY, FaultType.EVENT_DELAY):
+            if f.fault_type in (
+                FaultType.STREAM_DELAY,
+                FaultType.TIMESTAMP_DELAY,
+                FaultType.EVENT_DELAY,
+            ):
                 delay_val = f.parameters.delay_ms if f.parameters.delay_ms is not None else 600.0
                 age_offset_ms += delay_val
 
@@ -165,33 +169,34 @@ class ResilienceService:
         ts = datetime.fromtimestamp(now - (age_offset_ms / 1000.0), tz=UTC).isoformat()
 
         # Propagate health overrides into context provider based on active faults
-        if (
-            self.injector.is_fault_active(FaultType.STREAM_DISCONNECT)
-            or self.injector.is_fault_active(FaultType.WEBSOCKET_DISCONNECT)
-        ):
-            self.safety_service.context_provider.set_stream_health("realtime", False, latency_ms=9999.0)
+        if self.injector.is_fault_active(
+            FaultType.STREAM_DISCONNECT
+        ) or self.injector.is_fault_active(FaultType.WEBSOCKET_DISCONNECT):
+            self.safety_service.context_provider.set_stream_health(
+                "realtime", False, latency_ms=9999.0
+            )
 
         if self.injector.is_fault_active(FaultType.CONFIDENCE_SERVICE_UNAVAILABLE):
             self.safety_service.context_provider.set_system_health("confidence_service", False)
 
         if self.injector.is_fault_active(FaultType.MODEL_ROLLBACK):
-            self.safety_service.context_provider.set_active_model("model_v1", is_active=True, is_rolled_back=True)
+            self.safety_service.context_provider.set_active_model(
+                "model_v1", is_active=True, is_rolled_back=True
+            )
 
         if self.injector.is_fault_active(FaultType.MODEL_UNAVAILABLE):
             self.safety_service.context_provider.set_active_model("model_v1", is_active=False)
 
-        if (
-            self.injector.is_fault_active(FaultType.DATABASE_UNAVAILABLE)
-            or self.injector.is_fault_active(FaultType.DATABASE_WRITE_FAILURE)
-        ):
+        if self.injector.is_fault_active(
+            FaultType.DATABASE_UNAVAILABLE
+        ) or self.injector.is_fault_active(FaultType.DATABASE_WRITE_FAILURE):
             self.safety_service.context_provider.set_system_health("database", False)
 
         if self.injector.is_fault_active(FaultType.SAFETY_SERVICE_UNAVAILABLE):
             self.safety_service.context_provider.set_system_health("backend", False)
 
-        if (
-            self.injector.is_fault_active(FaultType.SUBJECT_SWITCH)
-            or self.injector.is_fault_active(FaultType.SESSION_SWITCH)
+        if self.injector.is_fault_active(FaultType.SUBJECT_SWITCH) or self.injector.is_fault_active(
+            FaultType.SESSION_SWITCH
         ):
             self.safety_service.context_provider.set_session_context("sub-01", "sess-01")
 
@@ -260,7 +265,7 @@ class ResilienceService:
         steps_audit.append({"step": 1, "action": "Captured baseline and checkpoint"})
 
         # Check authorization BEFORE failure
-        auth_before = (baseline.current_safety_decision == SafetyDecision.AUTHORIZED)
+        auth_before = baseline.current_safety_decision == SafetyDecision.AUTHORIZED
 
         # 2. Inject specified fault sequence
         for fault in fault_sequence:
@@ -269,8 +274,14 @@ class ResilienceService:
 
         # 3. Evaluate candidate intent under fault conditions
         eval_during = self.evaluate_test_intent()
-        auth_during = (eval_during.decision == SafetyDecision.AUTHORIZED)
-        steps_audit.append({"step": 3, "action": "Evaluated candidate intent under fault", "decision": eval_during.decision.value})
+        auth_during = eval_during.decision == SafetyDecision.AUTHORIZED
+        steps_audit.append(
+            {
+                "step": 3,
+                "action": "Evaluated candidate intent under fault",
+                "decision": eval_during.decision.value,
+            }
+        )
 
         # 4. Observe system health and evaluate invariants
         mid_snapshot = self.observer.capture_snapshot()
@@ -285,7 +296,7 @@ class ResilienceService:
         steps_audit.append({"step": 4, "action": "Cleared faults and recovered pipeline"})
 
         final_snap = self.observer.capture_snapshot()
-        auth_after = (final_snap.current_safety_decision == SafetyDecision.AUTHORIZED)
+        auth_after = final_snap.current_safety_decision == SafetyDecision.AUTHORIZED
 
         # 6. Evaluate recovery certification
         rec_status, data_loss, rec_msg = self.recovery.evaluate_recovery(
@@ -293,7 +304,9 @@ class ResilienceService:
             current_health=final_snap,
             data_loss=DataLossStatus.NONE,
         )
-        steps_audit.append({"step": 5, "action": "Recovery certified", "status": rec_status.value, "msg": rec_msg})
+        steps_audit.append(
+            {"step": 5, "action": "Recovery certified", "status": rec_status.value, "msg": rec_msg}
+        )
 
         duration_ms = (time.time() - start_time) * 1000.0
 

@@ -32,7 +32,9 @@ class PipelineObserver:
 
         # 2. Safety Subsystem Snapshot
         safety_snap = default_safety_service.get_current_snapshot()
-        safety_state = safety_snap.current_state if safety_snap else SafetyArbitrationState.SAFE_IDLE
+        safety_state = (
+            safety_snap.current_state if safety_snap else SafetyArbitrationState.SAFE_IDLE
+        )
         safety_decision = safety_snap.last_decision if safety_snap else SafetyDecision.DENIED
         safety_healthy = safety_snap.system_healthy if safety_snap else False
         transport_healthy = safety_snap.stream_healthy if safety_snap else True

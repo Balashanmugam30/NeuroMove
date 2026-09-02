@@ -127,7 +127,9 @@ class InvariantEngine:
     @staticmethod
     def check_no_duplicate_active_intent(ctx: dict[str, Any]) -> InvariantResult:
         """Verify no duplicate or concurrent active intent identities exist."""
-        active_intents_count = ctx.get("active_intents_count", 1 if ctx.get("active_intent_id") else 0)
+        active_intents_count = ctx.get(
+            "active_intents_count", 1 if ctx.get("active_intent_id") else 0
+        )
         passed = active_intents_count <= 1
         return InvariantResult(
             invariant_id="INV_02_NO_DUPLICATE_ACTIVE_INTENT",

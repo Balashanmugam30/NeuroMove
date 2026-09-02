@@ -263,7 +263,9 @@ def test_recovery_evaluation_reboot_and_estop():
     assert status == RecoveryStatus.RECOVERY_FAILED
 
     # E-stop maintained -> RECOVERED_RESTRICTIVELY
-    health_estop = PipelineHealthSnapshot(current_safety_state=SafetyArbitrationState.EMERGENCY_STOP)
+    health_estop = PipelineHealthSnapshot(
+        current_safety_state=SafetyArbitrationState.EMERGENCY_STOP
+    )
     status, _, _ = orch.evaluate_recovery(
         pre_fault_checkpoint=None,
         current_health=health_estop,

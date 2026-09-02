@@ -2078,7 +2078,9 @@ def get_resilience_experiment(experiment_id: str) -> Any:
     return exp
 
 
-@api_router.post("/resilience/experiments/{experiment_id}/replay", tags=["Resilience & Fault Laboratory"])
+@api_router.post(
+    "/resilience/experiments/{experiment_id}/replay", tags=["Resilience & Fault Laboratory"]
+)
 def replay_resilience_experiment(experiment_id: str) -> Any:
     """Replay an experiment deterministically from its immutable manifest."""
     from ..resilience.service import default_resilience_service
@@ -2192,4 +2194,3 @@ async def ws_resilience_endpoint(websocket: WebSocket) -> None:
 async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
     """Multiplexed real-time WebSocket carrying all subscribed channels."""
     await ws_manager.connect_all(websocket)
-

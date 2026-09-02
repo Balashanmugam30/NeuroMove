@@ -62,7 +62,7 @@ class ReplayEngine:
         # 6. Check invariant parity
         original_passed_count = sum(1 for inv in original.invariants if inv.status == "PASS")
         replayed_passed_count = sum(1 for inv in invariants if inv.status == "PASS")
-        parity_matched = (original_passed_count == replayed_passed_count)
+        parity_matched = original_passed_count == replayed_passed_count
 
         logger.info(
             "Replay completed for %s: Parity matched = %s (%d vs %d passed)",

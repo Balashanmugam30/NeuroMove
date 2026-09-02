@@ -470,7 +470,6 @@ class SafetyService:
         """Convenience alias for unlock."""
         return self.unlock(operator_id=operator_id)
 
-
     def execute_reset(
         self, operator_id: str | None = None, clear_lockout: bool = False
     ) -> SafetyStateSnapshot:
