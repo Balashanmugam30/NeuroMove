@@ -1992,6 +1992,166 @@ def run_safety_scenario(payload: SafetyScenarioBody) -> Any:
     return default_safety_service.run_scenario(payload.scenario_id)
 
 
+# --- Phase 18: Failure Injection, Fault-Tolerance & Resilience Laboratory ---
+
+
+@api_router.get("/resilience/status", tags=["Resilience & Fault Laboratory"])
+def get_resilience_status() -> Any:
+    """Return live authoritative status of the resilience lab."""
+    from ..resilience.service import default_resilience_service
+
+    return default_resilience_service.get_status()
+
+
+@api_router.get("/resilience/faults", tags=["Resilience & Fault Laboratory"])
+def get_resilience_faults() -> Any:
+    """List all currently active injected faults."""
+    from ..resilience.service import default_resilience_service
+
+    return default_resilience_service.injector.get_active_faults()
+
+
+@api_router.post("/resilience/faults/inject", tags=["Resilience & Fault Laboratory"])
+def inject_resilience_fault(payload: dict[str, Any]) -> Any:
+    """Inject a parameterized, controlled fault into the live test harness."""
+    from ..resilience.models import FaultInjectionRequest
+    from ..resilience.service import default_resilience_service
+
+    req = FaultInjectionRequest(**payload)
+    return default_resilience_service.inject_fault(req)
+
+
+@api_router.post("/resilience/faults/{fault_id}/clear", tags=["Resilience & Fault Laboratory"])
+def clear_resilience_fault(fault_id: str) -> Any:
+    """Clear an active fault by ID."""
+    from ..resilience.service import default_resilience_service
+
+    cleared = default_resilience_service.clear_fault(fault_id)
+    if not cleared:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fault {fault_id} not found among active faults.",
+        )
+    return {"status": "cleared", "fault": cleared}
+
+
+@api_router.get("/resilience/experiments", tags=["Resilience & Fault Laboratory"])
+def get_resilience_experiments(limit: int = Query(50, ge=1, le=200)) -> Any:
+    """List historical resilience experiments."""
+    from ..resilience.service import default_resilience_service
+
+    return default_resilience_service.storage.list_experiments(limit=limit)
+
+
+@api_router.post("/resilience/experiments", tags=["Resilience & Fault Laboratory"])
+def create_resilience_experiment(payload: dict[str, Any]) -> Any:
+    """Execute a custom resilience experiment with manifest and recovery."""
+    from ..resilience.faults import create_fault_definition
+    from ..resilience.models import FaultType
+    from ..resilience.service import default_resilience_service
+
+    scenario_id = payload.get("scenario_id", "CUSTOM_EXPERIMENT")
+    name = payload.get("name", "Custom Fault Experiment")
+    seed = payload.get("seed", 42)
+    fault_types = payload.get("fault_types", ["STREAM_DELAY"])
+
+    fault_sequence = [create_fault_definition(FaultType(ft)) for ft in fault_types]
+    return default_resilience_service.run_experiment(
+        scenario_id=scenario_id,
+        name=name,
+        fault_sequence=fault_sequence,
+        seed=seed,
+    )
+
+
+@api_router.get("/resilience/experiments/{experiment_id}", tags=["Resilience & Fault Laboratory"])
+def get_resilience_experiment(experiment_id: str) -> Any:
+    """Retrieve full details of an executed experiment."""
+    from ..resilience.service import default_resilience_service
+
+    exp = default_resilience_service.storage.get_experiment(experiment_id)
+    if not exp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Experiment {experiment_id} not found.",
+        )
+    return exp
+
+
+@api_router.post("/resilience/experiments/{experiment_id}/replay", tags=["Resilience & Fault Laboratory"])
+def replay_resilience_experiment(experiment_id: str) -> Any:
+    """Replay an experiment deterministically from its immutable manifest."""
+    from ..resilience.service import default_resilience_service
+
+    try:
+        matched, original, chk = default_resilience_service.replay.replay_experiment(experiment_id)
+        return {
+            "experiment_id": experiment_id,
+            "deterministic_parity": matched,
+            "manifest_checksum": chk,
+            "original_status": original.status,
+        }
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@api_router.get("/resilience/invariants", tags=["Resilience & Fault Laboratory"])
+def get_resilience_invariants() -> Any:
+    """Return the suite of 14 platform invariants evaluated under fault injection."""
+    from ..resilience.invariants import InvariantEngine
+    from ..resilience.service import default_resilience_service
+
+    snap = default_resilience_service.observer.capture_snapshot()
+    return InvariantEngine.evaluate_all(
+        baseline=snap,
+        current=snap,
+        active_faults=[],
+    )
+
+
+@api_router.get("/resilience/metrics", tags=["Resilience & Fault Laboratory"])
+def get_resilience_metrics() -> Any:
+    """Return operational reliability and fail-closed certification metrics."""
+    from ..resilience.service import default_resilience_service
+
+    return default_resilience_service.storage.get_metrics()
+
+
+@api_router.get("/resilience/checkpoints", tags=["Resilience & Fault Laboratory"])
+def get_resilience_checkpoints(experiment_id: str | None = None) -> Any:
+    """List recovery checkpoints captured before/after experiments."""
+    from ..resilience.service import default_resilience_service
+
+    return default_resilience_service.storage.list_checkpoints(experiment_id=experiment_id)
+
+
+@api_router.post("/resilience/reset-lab", tags=["Resilience & Fault Laboratory"])
+def reset_resilience_lab() -> Any:
+    """Emergency reset clearing all active faults and restoring baseline health."""
+    from ..resilience.service import default_resilience_service
+
+    cleared = default_resilience_service.reset_lab()
+    return {"status": "reset_complete", "cleared_faults_count": cleared}
+
+
+@api_router.post("/resilience/scenarios/run", tags=["Resilience & Fault Laboratory"])
+def run_resilience_scenario(payload: dict[str, Any]) -> Any:
+    """Execute a canonical scenario from the failure registry (A—Z, AA—AH)."""
+    from ..resilience.service import default_resilience_service
+
+    scenario_id = payload.get("scenario_id", "SCENARIO_A")
+    try:
+        return default_resilience_service.run_scenario(scenario_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
 # --- WebSocket Stream Endpoints ---
 
 
@@ -2022,7 +2182,14 @@ async def ws_safety_endpoint(websocket: WebSocket) -> None:
     await ws_manager.connect_safety(websocket)
 
 
+@ws_router.websocket("/resilience")
+async def ws_resilience_endpoint(websocket: WebSocket) -> None:
+    """Real-time resilience laboratory and fault lifecycle socket."""
+    await ws_manager.connect_resilience(websocket)
+
+
 @ws_router.websocket("/stream")
 async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
     """Multiplexed real-time WebSocket carrying all subscribed channels."""
     await ws_manager.connect_all(websocket)
+

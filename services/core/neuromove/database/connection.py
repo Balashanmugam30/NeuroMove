@@ -1302,6 +1302,112 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 012: Failure Injection, Fault-Tolerance & Resilience Laboratory (Phase 18)
+            cursor.execute(
+                "SELECT COUNT(*) FROM schema_migrations WHERE version = '012_resilience_fault_lab';"
+            )
+            mig_012 = cursor.fetchone()[0] == 0
+            if mig_012:
+                logger.info("Applying migration 012_resilience_fault_lab...")
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS resilience_experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        scenario_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        seed INTEGER NOT NULL,
+                        status TEXT NOT NULL,
+                        manifest_json TEXT NOT NULL,
+                        baseline_snapshot_json TEXT NOT NULL,
+                        final_snapshot_json TEXT NOT NULL,
+                        invariants_json TEXT NOT NULL,
+                        recovery_status TEXT NOT NULL,
+                        data_loss_status TEXT NOT NULL,
+                        authorization_before_failure INTEGER NOT NULL,
+                        authorization_during_failure INTEGER NOT NULL,
+                        authorization_after_failure INTEGER NOT NULL,
+                        steps_audit_json TEXT NOT NULL,
+                        replay_hash TEXT NOT NULL,
+                        artifact_checksum TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        ended_at TEXT,
+                        duration_ms REAL NOT NULL DEFAULT 0.0
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS resilience_faults (
+                        fault_id TEXT PRIMARY KEY,
+                        experiment_id TEXT,
+                        fault_type TEXT NOT NULL,
+                        category TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        target_service TEXT,
+                        target_stream TEXT,
+                        target_session TEXT,
+                        trigger_type TEXT NOT NULL,
+                        trigger_value TEXT,
+                        parameters_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        armed_at TEXT,
+                        activated_at TEXT,
+                        cleared_at TEXT,
+                        description TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS resilience_fault_events (
+                        event_id TEXT PRIMARY KEY,
+                        experiment_id TEXT,
+                        fault_id TEXT,
+                        event_type TEXT NOT NULL,
+                        sequence_number INTEGER NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details_json TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS resilience_invariant_results (
+                        result_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        invariant_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        observed_value TEXT NOT NULL,
+                        expected_value TEXT NOT NULL,
+                        evidence_json TEXT NOT NULL,
+                        evaluated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS resilience_recovery_checkpoints (
+                        checkpoint_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        component TEXT NOT NULL,
+                        last_known_safe_state TEXT NOT NULL,
+                        sequence_number INTEGER NOT NULL,
+                        snapshot_version TEXT NOT NULL,
+                        checksum TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details_json TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('012_resilience_fault_lab');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

@@ -256,7 +256,7 @@ class CriticalSystemHealthRule(BaseSafetyRule):
         unhealthy: dict[str, str] = {}
         for req in policy.critical_health_requirements:
             status = context.system_health.get(req)
-            if not status or status.lower() in ("unknown", "error", "degraded", "unavailable"):
+            if not status or status.lower() != "healthy":
                 unhealthy[req] = status or "UNKNOWN"
 
         if unhealthy:

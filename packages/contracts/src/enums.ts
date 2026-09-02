@@ -108,6 +108,7 @@ export const TransportStreamEnum = z.enum([
   "safety",
   "confidence",
   "intent",
+  "resilience",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -217,6 +218,19 @@ export const EventTypeEnum = z.enum([
   "EXPERIMENT_CREATED",
   "EXPERIMENT_STARTED",
   "EXPERIMENT_COMPLETED",
+
+  // Fault Laboratory & Resilience (Phase 18)
+  "FAULT_DECLARED",
+  "FAULT_ACTIVE",
+  "FAULT_DETECTED",
+  "FAULT_CLEARED",
+  "RECOVERY_STARTED",
+  "RECOVERY_COMPLETED",
+  "RECOVERY_FAILED",
+  "INVARIANT_PASSED",
+  "INVARIANT_FAILED",
+  "RESILIENCE_EXPERIMENT_STARTED",
+  "RESILIENCE_EXPERIMENT_COMPLETED",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
 

@@ -50,6 +50,7 @@ class TransportStream(StrEnum):
     SAFETY = "safety"
     CONFIDENCE = "confidence"
     INTENT = "intent"
+    RESILIENCE = "resilience"
     ALL = "all"
 
 

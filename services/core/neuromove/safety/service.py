@@ -466,6 +466,11 @@ class SafetyService:
             reason="Lockout unlocked. Reset pending verification.",
         )
 
+    def unlock_lockout(self, operator_id: str | None = None) -> SafetyStateSnapshot:
+        """Convenience alias for unlock."""
+        return self.unlock(operator_id=operator_id)
+
+
     def execute_reset(
         self, operator_id: str | None = None, clear_lockout: bool = False
     ) -> SafetyStateSnapshot:

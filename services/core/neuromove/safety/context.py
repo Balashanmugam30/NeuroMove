@@ -49,8 +49,8 @@ class SafetyContext(BaseModel):
     )
     session_validity: dict[str, Any] = Field(
         default_factory=lambda: {
-            "active_subject_id": "sub-default",
-            "active_session_id": "sess-default",
+            "active_subject_id": "sub-01",
+            "active_session_id": "sess-01",
         }
     )
     operator_state: dict[str, Any] = Field(
@@ -97,6 +97,8 @@ class SafetyContextProvider:
 
     def __init__(self) -> None:
         self._current_context = SafetyContext()
+        self._explicit_session: bool = False
+        self._explicit_model: bool = False
 
     def get_context(
         self,
@@ -109,16 +111,31 @@ class SafetyContextProvider:
         if intent_snapshot:
             # Synchronize session and model references from intent if not explicitly overridden
             if not overrides or "session_validity" not in overrides:
-                ctx_data["session_validity"] = {
-                    "active_subject_id": intent_snapshot.get("subject_id") or "sub-default",
-                    "active_session_id": intent_snapshot.get("session_id") or "sess-default",
-                }
+                if self._explicit_session:
+                    ctx_data["session_validity"] = {
+                        "active_subject_id": self._current_context.session_validity.get("active_subject_id", "sub-01"),
+                        "active_session_id": self._current_context.session_validity.get("active_session_id", "sess-01"),
+                    }
+                else:
+                    ctx_data["session_validity"] = {
+                        "active_subject_id": intent_snapshot.get("subject_id") or "sub-default",
+                        "active_session_id": intent_snapshot.get("session_id") or "sess-default",
+                    }
             if not overrides or "model_health" not in overrides:
-                ctx_data["model_health"] = {
-                    "is_active": True,
-                    "is_rolled_back": False,
-                    "model_version_id": intent_snapshot.get("model_version_id") or "model_v1",
-                }
+                if self._explicit_model:
+                    ctx_data["model_health"] = {
+                        "is_active": self._current_context.model_health.get("is_active", True),
+                        "is_rolled_back": self._current_context.model_health.get("is_rolled_back", False),
+                        "model_version_id": self._current_context.model_health.get("model_version_id")
+                        or intent_snapshot.get("model_version_id")
+                        or "model_v1",
+                    }
+                else:
+                    ctx_data["model_health"] = {
+                        "is_active": True,
+                        "is_rolled_back": False,
+                        "model_version_id": intent_snapshot.get("model_version_id") or "model_v1",
+                    }
 
         if overrides:
             for k, v in overrides.items():
@@ -177,3 +194,37 @@ class SafetyContextProvider:
     def reset_state(self) -> None:
         """Reset internal context to safe defaults."""
         self._current_context = SafetyContext()
+        self._explicit_session = False
+        self._explicit_model = False
+
+    def reset_to_healthy_defaults(self) -> None:
+        """Alias for reset_state restoring clean baseline context."""
+        self.reset_state()
+
+    def set_system_health(self, service_name: str, is_healthy: bool) -> None:
+        """Set health status of an individual subsystem."""
+        self._current_context.system_health[service_name] = "healthy" if is_healthy else "unhealthy"
+
+    def set_stream_health(
+        self, stream_name: str, is_connected: bool, latency_ms: float = 15.0
+    ) -> None:
+        """Set stream connection status and telemetry latency."""
+        self._current_context.stream_health["stream_connected"] = is_connected
+        self._current_context.stream_health["latency_ms"] = latency_ms
+
+    def set_active_model(
+        self, model_version_id: str, is_active: bool = True, is_rolled_back: bool = False
+    ) -> None:
+        """Set model decoder provenance and rollback flag."""
+        self._explicit_model = True
+        self._current_context.model_health["model_version_id"] = model_version_id
+        self._current_context.model_health["is_active"] = is_active
+        self._current_context.model_health["is_rolled_back"] = is_rolled_back
+
+    def set_session_context(self, subject_id: str, session_id: str) -> None:
+        """Set active subject and session identifier."""
+        self._explicit_session = True
+        self._current_context.session_validity["active_subject_id"] = subject_id
+        self._current_context.session_validity["active_session_id"] = session_id
+
+

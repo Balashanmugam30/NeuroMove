@@ -195,6 +195,25 @@ import {
   SafetyEmergencyStopRequest,
   SafetyResetRequest,
   SafetyLockoutRequest,
+
+  // Phase 18 Resilience Laboratory
+  FaultDefinition,
+  FaultDefinitionSchema,
+  FaultInjectionRequest,
+  FaultInjectionResult,
+  FaultInjectionResultSchema,
+  FaultExperiment,
+  FaultExperimentSchema,
+  FailureScenarioResult,
+  FailureScenarioResultSchema,
+  InvariantResult,
+  InvariantResultSchema,
+  RecoveryCheckpoint,
+  RecoveryCheckpointSchema,
+  ResilienceLabStatus,
+  ResilienceLabStatusSchema,
+  ResilienceMetrics,
+  ResilienceMetricsSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -2169,6 +2188,142 @@ export async function runSafetyScenario(
   }
   const data = await res.json();
   return SafetyScenarioResultSchema.parse(data);
+}
+
+// --- Phase 18: Failure Injection & Resilience Laboratory ---
+
+export async function fetchResilienceStatus(): Promise<ResilienceLabStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResilienceLabStatusSchema.parse(data);
+}
+
+export async function fetchActiveFaults(): Promise<FaultDefinition[]> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/faults`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(FaultDefinitionSchema).parse(data);
+}
+
+export async function injectFault(
+  payload: FaultInjectionRequest
+): Promise<FaultInjectionResult> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/faults/inject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return FaultInjectionResultSchema.parse(data);
+}
+
+export async function clearFault(
+  faultId: string
+): Promise<{ status: string; fault: FaultDefinition }> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/faults/${encodeURIComponent(faultId)}/clear`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    status: data.status,
+    fault: FaultDefinitionSchema.parse(data.fault),
+  };
+}
+
+export async function fetchResilienceExperiments(
+  limit: number = 50
+): Promise<FaultExperiment[]> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/experiments?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(FaultExperimentSchema).parse(data);
+}
+
+export async function fetchResilienceExperiment(
+  experimentId: string
+): Promise<FaultExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/experiments/${encodeURIComponent(experimentId)}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return FaultExperimentSchema.parse(data);
+}
+
+export async function replayResilienceExperiment(
+  experimentId: string
+): Promise<{ experiment_id: string; deterministic_parity: boolean; manifest_checksum: string; original_status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/experiments/${encodeURIComponent(experimentId)}/replay`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function fetchResilienceInvariants(): Promise<InvariantResult[]> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/invariants`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(InvariantResultSchema).parse(data);
+}
+
+export async function fetchResilienceMetrics(): Promise<ResilienceMetrics> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/metrics`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResilienceMetricsSchema.parse(data);
+}
+
+export async function fetchResilienceCheckpoints(
+  experimentId?: string
+): Promise<RecoveryCheckpoint[]> {
+  const query = experimentId ? `?experiment_id=${encodeURIComponent(experimentId)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/resilience/checkpoints${query}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(RecoveryCheckpointSchema).parse(data);
+}
+
+export async function resetResilienceLab(): Promise<{ status: string; cleared_faults_count: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/reset-lab`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function runResilienceScenario(
+  scenarioId: string
+): Promise<FailureScenarioResult> {
+  const res = await fetch(`${API_BASE_URL}/api/resilience/scenarios/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return FailureScenarioResultSchema.parse(data);
 }
 
 

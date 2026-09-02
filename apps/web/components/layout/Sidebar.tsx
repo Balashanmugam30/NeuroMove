@@ -22,6 +22,7 @@ import {
   GitBranch,
   Gauge,
   Workflow,
+  ShieldAlert,
 } from "lucide-react";
 
 
@@ -68,9 +69,10 @@ const NAV_GROUPS: NavGroup[] = [
 
 
   {
-    name: "Safety & Arbitration",
+    name: "Safety & Reliability",
     items: [
       { href: "/safety", label: "Safety Arbitration", icon: ShieldCheck, badge: "Phase 17" },
+      { href: "/resilience", label: "Resilience Lab", icon: ShieldAlert, badge: "Phase 18" },
     ],
   },
   {
