@@ -22,8 +22,9 @@ export function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs font-sans">
+    <header className="h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shadow-xs font-sans max-w-full overflow-hidden">
       {/* Left branding & identity */}
+
       <div className="flex items-center gap-3 sm:gap-4">
         {onMenuToggle && (
           <button

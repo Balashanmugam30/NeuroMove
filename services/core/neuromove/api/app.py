@@ -1,9 +1,16 @@
+# ruff: noqa: E402
 import logging
 import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+core_dir = str(Path(__file__).resolve().parents[2])
+if core_dir not in sys.path:
+    sys.path.insert(0, core_dir)
+
+import mne  # noqa: F401
+import sklearn  # noqa: F401
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -48,8 +55,6 @@ def create_app() -> FastAPI:
     if core_dir not in sys.path:
         sys.path.insert(0, core_dir)
 
-    settings = get_settings()
-
     app = FastAPI(
         title="NeuroMove Core Control Station API",
         description="Local safety-critical BCI control, telemetry, and research service for NeuroMove.",
@@ -61,17 +66,24 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            settings.web_origin,
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://localhost:3001",
             "http://127.0.0.1:3001",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
         ],
-        allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:[0-9]+)?",
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Health check endpoints
+    @app.get("/health", tags=["System"])
+    @app.get("/api/system/health", tags=["System"])
+    def get_health_status() -> dict[str, str]:
+        return {"status": "healthy", "service": "neuromove-core"}
 
     # Attach routers
     app.include_router(api_router)

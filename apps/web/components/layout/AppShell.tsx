@@ -12,9 +12,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <TopBar onMenuToggle={() => setMobileNavOpen((prev) => !prev)} />
       <div className="flex flex-1">
         <Sidebar isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-        <main className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full min-w-0 overflow-y-auto">
           {children}
         </main>
+
       </div>
     </div>
   );

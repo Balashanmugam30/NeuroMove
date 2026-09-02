@@ -1,5 +1,3 @@
-"""API Endpoint Router for NeuroMove Control Station."""
-
 import uuid
 from typing import Any
 
@@ -1240,6 +1238,242 @@ def get_subject_calibration_history(subject_id: str) -> list[Any]:
     from ..calibration.service import get_calibration_service
 
     return get_calibration_service().get_subject_history(subject_id)
+
+
+# --- Phase 14: Adaptive Learning & Controlled Model Update Endpoints ---
+
+
+@api_router.get("/adaptation/policies", tags=["Adaptive Learning"])
+def get_adaptation_policies() -> list[Any]:
+    """List all available adaptation policies."""
+    from ..adaptation.service import get_adaptation_service
+
+    return get_adaptation_service().list_policies()
+
+
+@api_router.post("/adaptation/policies", tags=["Adaptive Learning"])
+def post_create_adaptation_policy(payload: dict[str, Any]) -> Any:
+    """Create a new declarative adaptation policy."""
+    from ..adaptation.models import CreateAdaptationPolicyRequest
+    from ..adaptation.service import get_adaptation_service
+
+    req = CreateAdaptationPolicyRequest(**payload)
+    return get_adaptation_service().create_policy(req)
+
+
+@api_router.get("/adaptation/batches", tags=["Adaptive Learning"])
+def get_adaptation_batches(subject_id: str | None = None) -> list[Any]:
+    """List registered candidate data batches."""
+    from ..adaptation.service import get_adaptation_service
+
+    return get_adaptation_service().list_batches(subject_id)
+
+
+@api_router.post("/adaptation/batches", tags=["Adaptive Learning"])
+def post_create_adaptation_batch(payload: dict[str, Any]) -> Any:
+    """Register or synthesize candidate data batch."""
+    from ..adaptation.service import get_adaptation_service
+
+    svc = get_adaptation_service()
+    name = payload.get("name", "Candidate Batch")
+    subject_id = payload.get("subject_id", "sub-001")
+    import random
+
+    n_trials = payload.get("trial_count", 10)
+    batch_seed = payload.get("random_state") or random.randint(1000, 999999)
+
+    # Synthesize realistic signals for candidate batch
+    X, y, ids = svc.synthesize_eeg_trials(
+        n_trials_per_class=max(3, n_trials // 2),
+        subject_id=subject_id,
+        seed=batch_seed,
+    )
+
+    batch = svc.create_data_batch(
+        name=name,
+        epoch_ids=ids,
+        labels=y.tolist(),
+        subject_id=subject_id,
+        source_mode=payload.get("source_mode", "SIMULATION"),
+        signals=X,
+    )
+    return batch
+
+
+@api_router.post("/adaptation/preview", tags=["Adaptive Learning"])
+def post_adaptation_preview(payload: dict[str, Any]) -> Any:
+    """Compute pre-flight compatibility and data composition preview."""
+    from ..adaptation.models import AdaptationPreviewRequest
+    from ..adaptation.service import get_adaptation_service
+
+    try:
+        req = AdaptationPreviewRequest(**payload)
+        return get_adaptation_service().compute_preview(
+            base_model_id=req.base_model_id,
+            data_batch_ids=req.data_batch_ids,
+            policy_id=req.policy_id,
+            scope=req.scope,
+            subject_id=req.subject_id,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Preview failed: {exc}",
+        ) from exc
+
+
+@api_router.post("/adaptation/run", tags=["Adaptive Learning"])
+def post_start_adaptation_run(payload: dict[str, Any]) -> Any:
+    """Execute controlled adaptation experiment under zero data leakage constraints."""
+    from ..adaptation.models import StartAdaptationRunRequest
+    from ..adaptation.service import get_adaptation_service
+
+    try:
+        req = StartAdaptationRunRequest(**payload)
+        return get_adaptation_service().run_adaptation(
+            base_model_id=req.base_model_id,
+            data_batch_ids=req.data_batch_ids,
+            policy_id=req.policy_id,
+            scope=req.scope,
+            subject_id=req.subject_id,
+            notes=req.notes,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Adaptation run failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/adaptation/runs", tags=["Adaptive Learning"])
+def get_adaptation_runs(subject_id: str | None = None) -> list[Any]:
+    """List historical adaptation runs."""
+    from ..adaptation.service import get_adaptation_service
+
+    return get_adaptation_service().list_runs(subject_id)
+
+
+@api_router.get("/adaptation/runs/{adaptation_id}", tags=["Adaptive Learning"])
+def get_adaptation_run_by_id(adaptation_id: str) -> Any:
+    """Fetch details of a specific adaptation run."""
+    from ..adaptation.service import get_adaptation_service
+
+    run = get_adaptation_service().get_run(adaptation_id)
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Adaptation run '{adaptation_id}' not found.",
+        )
+    return run
+
+
+@api_router.get("/adaptation/runs/{adaptation_id}/manifest", tags=["Adaptive Learning"])
+def get_adaptation_manifest_by_id(adaptation_id: str) -> Any:
+    """Export cryptographic provenance manifest for an adaptation run."""
+    from ..adaptation.service import get_adaptation_service
+
+    manifest = get_adaptation_service().get_manifest(adaptation_id)
+    if not manifest:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Manifest for adaptation run '{adaptation_id}' not found.",
+        )
+    return manifest
+
+
+@api_router.get("/adaptation/models", tags=["Adaptive Learning"])
+def get_adaptation_models(
+    scope: str | None = None,
+    subject_id: str | None = None,
+) -> list[Any]:
+    """List versioned models."""
+    from ..adaptation.models import AdaptationScope
+    from ..adaptation.service import get_adaptation_service
+
+    scope_enum = AdaptationScope(scope) if scope else None
+    return get_adaptation_service().list_models(scope=scope_enum, subject_id=subject_id)
+
+
+@api_router.get("/adaptation/models/{model_id}/versions", tags=["Adaptive Learning"])
+def get_model_versions_by_id(model_id: str) -> list[Any]:
+    """Retrieve version lineage chain for a model."""
+    from ..adaptation.service import get_adaptation_service
+
+    return get_adaptation_service().get_model_versions(model_id)
+
+
+@api_router.post("/adaptation/promote", tags=["Adaptive Learning"])
+def post_promote_candidate(payload: dict[str, Any]) -> Any:
+    """Explicitly promote a validated candidate model to active research status."""
+    from ..adaptation.models import PromoteCandidateRequest
+    from ..adaptation.service import get_adaptation_service
+
+    try:
+        req = PromoteCandidateRequest(**payload)
+        promoted, decision = get_adaptation_service().promote_candidate(
+            adaptation_id=req.adaptation_id,
+            operator_notes=req.operator_notes,
+        )
+        return {"promoted_model": promoted, "decision": decision}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Promotion failed: {exc}",
+        ) from exc
+
+
+@api_router.post("/adaptation/reject", tags=["Adaptive Learning"])
+def post_reject_candidate(payload: dict[str, Any]) -> Any:
+    """Explicitly reject a candidate model with operator rationale."""
+    from ..adaptation.models import RejectCandidateRequest
+    from ..adaptation.service import get_adaptation_service
+
+    try:
+        req = RejectCandidateRequest(**payload)
+        rejected, decision = get_adaptation_service().reject_candidate(
+            adaptation_id=req.adaptation_id,
+            rejection_reason=req.rejection_reason,
+        )
+        return {"rejected_model": rejected, "decision": decision}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rejection failed: {exc}",
+        ) from exc
+
+
+@api_router.post("/adaptation/rollback", tags=["Adaptive Learning"])
+def post_rollback_model(payload: dict[str, Any]) -> Any:
+    """Roll back active model pointer to a previous validated model version."""
+    from ..adaptation.models import RollbackRequest
+    from ..adaptation.service import get_adaptation_service
+
+    try:
+        req = RollbackRequest(**payload)
+        active_ver, event = get_adaptation_service().rollback(
+            target_model_id=req.target_model_id,
+            reason=req.reason,
+        )
+        return {"active_model": active_ver, "rollback_event": event}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rollback failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/adaptation/drift", tags=["Adaptive Learning"])
+def get_drift_diagnostics(
+    subject_id: str | None = "sub-001",
+    inject_shift: bool = False,
+) -> Any:
+    """Run research diagnostic distribution drift evaluation."""
+    from ..adaptation.service import get_adaptation_service
+
+    return get_adaptation_service().run_drift_diagnostics(
+        subject_id=subject_id,
+        inject_shift=inject_shift,
+    )
 
 
 # --- WebSocket Stream Endpoints ---

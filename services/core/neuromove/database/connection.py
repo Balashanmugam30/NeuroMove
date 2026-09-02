@@ -795,6 +795,150 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 008: Adaptive Learning & Controlled Model Update Pipeline
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '008_adaptive_learning';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS adaptation_policies (
+                        policy_id TEXT PRIMARY KEY,
+                        policy_version TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        mode TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        min_new_trials INTEGER NOT NULL,
+                        min_trials_per_class INTEGER NOT NULL,
+                        max_rejection_ratio REAL NOT NULL,
+                        retention_strategy TEXT NOT NULL,
+                        imbalance_policy TEXT NOT NULL,
+                        max_allowed_regression REAL NOT NULL,
+                        min_promoted_balanced_accuracy REAL NOT NULL,
+                        min_validation_samples INTEGER NOT NULL,
+                        validation_strategy TEXT NOT NULL,
+                        random_state INTEGER NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS adaptation_batches (
+                        batch_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        subject_id TEXT,
+                        source_mode TEXT NOT NULL,
+                        dataset_id TEXT,
+                        recording_id TEXT,
+                        epoch_set_id TEXT,
+                        feature_set_id TEXT,
+                        trial_count INTEGER NOT NULL,
+                        class_distribution_json TEXT NOT NULL,
+                        quality_summary_json TEXT NOT NULL,
+                        source_fingerprint TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_versions (
+                        version_id TEXT PRIMARY KEY,
+                        model_id TEXT NOT NULL,
+                        parent_model_id TEXT,
+                        version_number INTEGER NOT NULL,
+                        scope TEXT NOT NULL,
+                        subject_id TEXT,
+                        status TEXT NOT NULL,
+                        is_active INTEGER NOT NULL DEFAULT 0,
+                        adaptation_id TEXT,
+                        model_family TEXT NOT NULL,
+                        representation TEXT NOT NULL,
+                        task_id TEXT NOT NULL,
+                        metrics_json TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS adaptation_runs (
+                        adaptation_id TEXT PRIMARY KEY,
+                        base_model_id TEXT NOT NULL,
+                        candidate_model_id TEXT,
+                        policy_id TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        subject_id TEXT,
+                        data_batch_ids_json TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        training_composition_json TEXT NOT NULL,
+                        validation_composition_json TEXT NOT NULL,
+                        leakage_check_json TEXT NOT NULL,
+                        incumbent_metrics_json TEXT NOT NULL,
+                        candidate_metrics_json TEXT,
+                        comparison_json TEXT,
+                        promotion_eligibility_json TEXT,
+                        promotion_decision_json TEXT,
+                        manifest_json TEXT,
+                        started_at TEXT NOT NULL,
+                        completed_at TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS promotion_decisions (
+                        decision_id TEXT PRIMARY KEY,
+                        adaptation_id TEXT NOT NULL,
+                        base_model_id TEXT NOT NULL,
+                        candidate_model_id TEXT NOT NULL,
+                        decision TEXT NOT NULL,
+                        decision_rule_version TEXT NOT NULL,
+                        operator_action TEXT NOT NULL,
+                        reasons_json TEXT NOT NULL,
+                        metrics_summary_json TEXT NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS rollback_events (
+                        rollback_id TEXT PRIMARY KEY,
+                        from_model_id TEXT NOT NULL,
+                        to_model_id TEXT NOT NULL,
+                        reason TEXT NOT NULL,
+                        operator_action TEXT NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS drift_observations (
+                        observation_id TEXT PRIMARY KEY,
+                        subject_id TEXT,
+                        dataset_id TEXT,
+                        window_label TEXT NOT NULL,
+                        feature_shift_score REAL NOT NULL,
+                        class_distribution_shift REAL NOT NULL,
+                        signal_quality_score REAL NOT NULL,
+                        prediction_entropy REAL,
+                        status TEXT NOT NULL,
+                        thresholds_json TEXT NOT NULL,
+                        details_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('008_adaptive_learning');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

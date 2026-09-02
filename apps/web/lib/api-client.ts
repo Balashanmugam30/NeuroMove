@@ -119,7 +119,30 @@ import {
   PersonalizedModelSchema,
   CalibrationHistoryItem,
   CalibrationHistoryItemSchema,
+  AdaptationPolicy,
+  AdaptationPolicySchema,
+  CreateAdaptationPolicyRequest,
+  AdaptationDataBatch,
+  AdaptationDataBatchSchema,
+  ModelVersion,
+  ModelVersionSchema,
+  AdaptationPreviewRequest,
+  AdaptationPreview,
+  AdaptationPreviewSchema,
+  StartAdaptationRunRequest,
+  AdaptationRun,
+  AdaptationRunSchema,
+  PromotionDecision,
+  PromotionDecisionSchema,
+  RollbackEvent,
+  RollbackEventSchema,
+  DriftObservation,
+  DriftObservationSchema,
+  AdaptationManifest,
+  AdaptationManifestSchema,
 } from "@neuromove/contracts";
+
+
 
 
 
@@ -1324,9 +1347,241 @@ export async function fetchSubjectCalibrationHistory(
   return z.array(CalibrationHistoryItemSchema).parse(data);
 }
 
+// --- Phase 14: Adaptive Learning & Controlled Model Update Endpoints ---
 
+export async function fetchAdaptationPolicies(): Promise<AdaptationPolicy[]> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/policies`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(AdaptationPolicySchema).parse(data);
+}
 
+export async function createAdaptationPolicy(
+  payload: CreateAdaptationPolicyRequest
+): Promise<AdaptationPolicy> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/policies`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return AdaptationPolicySchema.parse(data);
+}
 
+export async function fetchAdaptationBatches(
+  subjectId?: string
+): Promise<AdaptationDataBatch[]> {
+  const query = subjectId ? `?subject_id=${encodeURIComponent(subjectId)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/batches${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(AdaptationDataBatchSchema).parse(data);
+}
 
+export async function createAdaptationBatch(payload: {
+  name: string;
+  subject_id?: string;
+  trial_count?: number;
+  source_mode?: string;
+}): Promise<AdaptationDataBatch> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/batches`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return AdaptationDataBatchSchema.parse(data);
+}
 
+export async function fetchAdaptationPreview(
+  payload: AdaptationPreviewRequest
+): Promise<AdaptationPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return AdaptationPreviewSchema.parse(data);
+}
 
+export async function runAdaptationExperiment(
+  payload: StartAdaptationRunRequest
+): Promise<AdaptationRun> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return AdaptationRunSchema.parse(data);
+}
+
+export async function fetchAdaptationRuns(
+  subjectId?: string
+): Promise<AdaptationRun[]> {
+  const query = subjectId ? `?subject_id=${encodeURIComponent(subjectId)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/runs${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(AdaptationRunSchema).parse(data);
+}
+
+export async function fetchAdaptationRun(
+  adaptationId: string
+): Promise<AdaptationRun> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/adaptation/runs/${adaptationId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return AdaptationRunSchema.parse(data);
+}
+
+export async function fetchAdaptationManifest(
+  adaptationId: string
+): Promise<AdaptationManifest> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/adaptation/runs/${adaptationId}/manifest`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return AdaptationManifestSchema.parse(data);
+}
+
+export async function fetchAdaptationModels(
+  scope?: string,
+  subjectId?: string
+): Promise<ModelVersion[]> {
+  const params = new URLSearchParams();
+  if (scope) params.append("scope", scope);
+  if (subjectId) params.append("subject_id", subjectId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/models${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ModelVersionSchema).parse(data);
+}
+
+export async function fetchModelVersionChain(
+  modelId: string
+): Promise<ModelVersion[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/adaptation/models/${modelId}/versions`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ModelVersionSchema).parse(data);
+}
+
+export async function promoteCandidateModel(payload: {
+  adaptation_id: string;
+  operator_notes?: string;
+}): Promise<{ promoted_model: ModelVersion; decision: PromotionDecision }> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/promote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    promoted_model: ModelVersionSchema.parse(data.promoted_model),
+    decision: PromotionDecisionSchema.parse(data.decision),
+  };
+}
+
+export async function rejectCandidateModel(payload: {
+  adaptation_id: string;
+  rejection_reason: string;
+}): Promise<{ rejected_model: ModelVersion; decision: PromotionDecision }> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/reject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    rejected_model: ModelVersionSchema.parse(data.rejected_model),
+    decision: PromotionDecisionSchema.parse(data.decision),
+  };
+}
+
+export async function rollbackModel(payload: {
+  target_model_id: string;
+  reason: string;
+}): Promise<{ active_model: ModelVersion; rollback_event: RollbackEvent }> {
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/rollback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    active_model: ModelVersionSchema.parse(data.active_model),
+    rollback_event: RollbackEventSchema.parse(data.rollback_event),
+  };
+}
+
+export async function fetchDriftDiagnostics(
+  subjectId?: string,
+  injectShift?: boolean
+): Promise<DriftObservation> {
+  const params = new URLSearchParams();
+  if (subjectId) params.append("subject_id", subjectId);
+  if (injectShift) params.append("inject_shift", "true");
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(`${API_BASE_URL}/api/adaptation/drift${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DriftObservationSchema.parse(data);
+}

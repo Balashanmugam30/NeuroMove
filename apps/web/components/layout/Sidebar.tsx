@@ -19,6 +19,7 @@ import {
   Database,
   Sliders,
   X,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,9 +35,14 @@ export interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    name: "Overview",
+    items: [
+      { href: "/overview", label: "System Overview", icon: LayoutDashboard },
+    ],
+  },
+  {
     name: "Control Station",
     items: [
-      { href: "/overview", label: "Overview", icon: LayoutDashboard },
       { href: "/live", label: "Live Control", icon: Activity, badge: "Phase 06" },
       { href: "/robot", label: "Robot Mobility", icon: Bot },
     ],
@@ -47,12 +53,11 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/eeg", label: "EEG Lab", icon: Waves },
       { href: "/eeg/preprocessing", label: "Preprocessing & DSP", icon: Sliders, badge: "Phase 09" },
       { href: "/eeg/features", label: "Epochs & Features", icon: BrainCircuit, badge: "Phase 10" },
-      { href: "/calibration", label: "Calibration", icon: Crosshair },
+      { href: "/calibration", label: "Calibration", icon: Crosshair, badge: "Phase 13" },
       { href: "/models", label: "CSP & Models", icon: BrainCircuit, badge: "Phase 11" },
       { href: "/models/lab", label: "AI Model Lab", icon: FlaskConical, badge: "Phase 12" },
+      { href: "/adaptation", label: "Adaptive Updates", icon: GitBranch, badge: "Phase 14" },
     ],
-
-
   },
   {
     name: "Safety & Arbitration",

@@ -20,7 +20,7 @@ from .models import (
     FeatureSet,
     FeatureVector,
 )
-from .service import EpochingFeatureService
+from .service import EpochingFeatureService, get_epoching_feature_service
 from .storage import FeatureStorage
 
 __all__ = [
@@ -37,6 +37,7 @@ __all__ = [
     "FeatureManifest",
     "FeatureStorage",
     "EpochingFeatureService",
+    "get_epoching_feature_service",
     "extract_epoch_feature_vector",
     "compute_covariance_representation",
     "validate_covariance_matrix",
