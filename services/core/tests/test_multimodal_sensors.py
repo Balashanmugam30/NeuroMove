@@ -53,6 +53,19 @@ def device_registry():
 
 @pytest.fixture
 def service():
+    from neuromove.safety.service import SafetyService
+    from neuromove.safety.models import SafetyArbitrationState
+    safety = SafetyService()
+    if safety.state_machine.current_state == SafetyArbitrationState.EMERGENCY_STOP:
+        safety.clear_emergency_stop()
+    elif safety.state_machine.current_state == SafetyArbitrationState.LOCKED_OUT:
+        safety.unlock()
+    safety.context_provider.reset_state()
+    safety.context_provider.set_emergency_stop(False)
+    safety.context_provider.set_lockout(False)
+    safety.context_provider.set_operator_hold(False)
+    safety.execute_reset()
+
     MultimodalSensorService.reset_instance()
     svc = MultimodalSensorService.get_instance()
     svc.reset_service()

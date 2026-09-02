@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-09-02T17:26:22.319083+00:00",
+  "benchmarks": {
+    "safety_service_startup_ms": 19.72,
+    "framing_rate_fps": 47936.1,
+    "framing_latency_us": 20.86,
+    "confidence_rate_eps": 92482.7,
+    "confidence_latency_us": 10.81,
+    "csp_fit_latency_ms": 24.12,
+    "synthetic_eeg_samples_per_sec": 325967.0
+  }
+}

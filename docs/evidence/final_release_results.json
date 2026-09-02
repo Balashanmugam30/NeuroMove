@@ -1,0 +1,1773 @@
+{
+  "timestamp": "2026-09-02T17:35:23.622Z",
+  "verdict": "RELEASE_READY",
+  "totalChecks": 135,
+  "passedChecks": 135,
+  "failedChecks": 0,
+  "passRate": "100.0%",
+  "hydrationErrors": 0,
+  "stylesheetChecks": {
+    "passed": 135,
+    "failed": 0
+  },
+  "totalConsoleErrors": 5,
+  "viewportsAudited": 5,
+  "routesAudited": 27,
+  "results": [
+    {
+      "route": "/",
+      "name": "root",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\root_desktop.png"
+    },
+    {
+      "route": "/overview",
+      "name": "overview",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\overview_desktop.png"
+    },
+    {
+      "route": "/demo",
+      "name": "demo",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\demo_desktop.png"
+    },
+    {
+      "route": "/live",
+      "name": "live",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\live_desktop.png"
+    },
+    {
+      "route": "/robot",
+      "name": "robot",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\robot_desktop.png"
+    },
+    {
+      "route": "/eeg",
+      "name": "eeg",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_desktop.png"
+    },
+    {
+      "route": "/eeg/live",
+      "name": "eeg_live",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_live_desktop.png"
+    },
+    {
+      "route": "/eeg/preprocessing",
+      "name": "eeg_preprocessing",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_preprocessing_desktop.png"
+    },
+    {
+      "route": "/eeg/features",
+      "name": "eeg_features",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_features_desktop.png"
+    },
+    {
+      "route": "/calibration",
+      "name": "calibration",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\calibration_desktop.png"
+    },
+    {
+      "route": "/models",
+      "name": "models",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_desktop.png"
+    },
+    {
+      "route": "/models/classical",
+      "name": "models_classical",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_classical_desktop.png"
+    },
+    {
+      "route": "/models/lab",
+      "name": "models_lab",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_lab_desktop.png"
+    },
+    {
+      "route": "/adaptation",
+      "name": "adaptation",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\adaptation_desktop.png"
+    },
+    {
+      "route": "/confidence",
+      "name": "confidence",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\confidence_desktop.png"
+    },
+    {
+      "route": "/intent",
+      "name": "intent",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\intent_desktop.png"
+    },
+    {
+      "route": "/safety",
+      "name": "safety",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\safety_desktop.png"
+    },
+    {
+      "route": "/resilience",
+      "name": "resilience",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\resilience_desktop.png"
+    },
+    {
+      "route": "/transport",
+      "name": "transport",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\transport_desktop.png"
+    },
+    {
+      "route": "/hardware",
+      "name": "hardware",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\hardware_desktop.png"
+    },
+    {
+      "route": "/sensors",
+      "name": "sensors",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sensors_desktop.png"
+    },
+    {
+      "route": "/research",
+      "name": "research",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_desktop.png"
+    },
+    {
+      "route": "/research/datasets",
+      "name": "research_datasets",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_datasets_desktop.png"
+    },
+    {
+      "route": "/sessions",
+      "name": "sessions",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sessions_desktop.png"
+    },
+    {
+      "route": "/results",
+      "name": "results",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\results_desktop.png"
+    },
+    {
+      "route": "/docs",
+      "name": "docs",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\docs_desktop.png"
+    },
+    {
+      "route": "/system",
+      "name": "system",
+      "viewport": "desktop",
+      "dimensions": "1440x900",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\system_desktop.png"
+    },
+    {
+      "route": "/",
+      "name": "root",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\root_laptop.png"
+    },
+    {
+      "route": "/overview",
+      "name": "overview",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\overview_laptop.png"
+    },
+    {
+      "route": "/demo",
+      "name": "demo",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\demo_laptop.png"
+    },
+    {
+      "route": "/live",
+      "name": "live",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\live_laptop.png"
+    },
+    {
+      "route": "/robot",
+      "name": "robot",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\robot_laptop.png"
+    },
+    {
+      "route": "/eeg",
+      "name": "eeg",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_laptop.png"
+    },
+    {
+      "route": "/eeg/live",
+      "name": "eeg_live",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_live_laptop.png"
+    },
+    {
+      "route": "/eeg/preprocessing",
+      "name": "eeg_preprocessing",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_preprocessing_laptop.png"
+    },
+    {
+      "route": "/eeg/features",
+      "name": "eeg_features",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_features_laptop.png"
+    },
+    {
+      "route": "/calibration",
+      "name": "calibration",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\calibration_laptop.png"
+    },
+    {
+      "route": "/models",
+      "name": "models",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_laptop.png"
+    },
+    {
+      "route": "/models/classical",
+      "name": "models_classical",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_classical_laptop.png"
+    },
+    {
+      "route": "/models/lab",
+      "name": "models_lab",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_lab_laptop.png"
+    },
+    {
+      "route": "/adaptation",
+      "name": "adaptation",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\adaptation_laptop.png"
+    },
+    {
+      "route": "/confidence",
+      "name": "confidence",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\confidence_laptop.png"
+    },
+    {
+      "route": "/intent",
+      "name": "intent",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\intent_laptop.png"
+    },
+    {
+      "route": "/safety",
+      "name": "safety",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\safety_laptop.png"
+    },
+    {
+      "route": "/resilience",
+      "name": "resilience",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\resilience_laptop.png"
+    },
+    {
+      "route": "/transport",
+      "name": "transport",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\transport_laptop.png"
+    },
+    {
+      "route": "/hardware",
+      "name": "hardware",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\hardware_laptop.png"
+    },
+    {
+      "route": "/sensors",
+      "name": "sensors",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sensors_laptop.png"
+    },
+    {
+      "route": "/research",
+      "name": "research",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_laptop.png"
+    },
+    {
+      "route": "/research/datasets",
+      "name": "research_datasets",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_datasets_laptop.png"
+    },
+    {
+      "route": "/sessions",
+      "name": "sessions",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sessions_laptop.png"
+    },
+    {
+      "route": "/results",
+      "name": "results",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\results_laptop.png"
+    },
+    {
+      "route": "/docs",
+      "name": "docs",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\docs_laptop.png"
+    },
+    {
+      "route": "/system",
+      "name": "system",
+      "viewport": "laptop",
+      "dimensions": "1280x800",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\system_laptop.png"
+    },
+    {
+      "route": "/",
+      "name": "root",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\root_tablet_landscape.png"
+    },
+    {
+      "route": "/overview",
+      "name": "overview",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\overview_tablet_landscape.png"
+    },
+    {
+      "route": "/demo",
+      "name": "demo",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\demo_tablet_landscape.png"
+    },
+    {
+      "route": "/live",
+      "name": "live",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\live_tablet_landscape.png"
+    },
+    {
+      "route": "/robot",
+      "name": "robot",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\robot_tablet_landscape.png"
+    },
+    {
+      "route": "/eeg",
+      "name": "eeg",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_tablet_landscape.png"
+    },
+    {
+      "route": "/eeg/live",
+      "name": "eeg_live",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_live_tablet_landscape.png"
+    },
+    {
+      "route": "/eeg/preprocessing",
+      "name": "eeg_preprocessing",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_preprocessing_tablet_landscape.png"
+    },
+    {
+      "route": "/eeg/features",
+      "name": "eeg_features",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_features_tablet_landscape.png"
+    },
+    {
+      "route": "/calibration",
+      "name": "calibration",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\calibration_tablet_landscape.png"
+    },
+    {
+      "route": "/models",
+      "name": "models",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_tablet_landscape.png"
+    },
+    {
+      "route": "/models/classical",
+      "name": "models_classical",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_classical_tablet_landscape.png"
+    },
+    {
+      "route": "/models/lab",
+      "name": "models_lab",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_lab_tablet_landscape.png"
+    },
+    {
+      "route": "/adaptation",
+      "name": "adaptation",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\adaptation_tablet_landscape.png"
+    },
+    {
+      "route": "/confidence",
+      "name": "confidence",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\confidence_tablet_landscape.png"
+    },
+    {
+      "route": "/intent",
+      "name": "intent",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\intent_tablet_landscape.png"
+    },
+    {
+      "route": "/safety",
+      "name": "safety",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\safety_tablet_landscape.png"
+    },
+    {
+      "route": "/resilience",
+      "name": "resilience",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\resilience_tablet_landscape.png"
+    },
+    {
+      "route": "/transport",
+      "name": "transport",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\transport_tablet_landscape.png"
+    },
+    {
+      "route": "/hardware",
+      "name": "hardware",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\hardware_tablet_landscape.png"
+    },
+    {
+      "route": "/sensors",
+      "name": "sensors",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sensors_tablet_landscape.png"
+    },
+    {
+      "route": "/research",
+      "name": "research",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_tablet_landscape.png"
+    },
+    {
+      "route": "/research/datasets",
+      "name": "research_datasets",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_datasets_tablet_landscape.png"
+    },
+    {
+      "route": "/sessions",
+      "name": "sessions",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sessions_tablet_landscape.png"
+    },
+    {
+      "route": "/results",
+      "name": "results",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\results_tablet_landscape.png"
+    },
+    {
+      "route": "/docs",
+      "name": "docs",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\docs_tablet_landscape.png"
+    },
+    {
+      "route": "/system",
+      "name": "system",
+      "viewport": "tablet_landscape",
+      "dimensions": "1024x768",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 1024,
+        "innerWidth": 1024,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\system_tablet_landscape.png"
+    },
+    {
+      "route": "/",
+      "name": "root",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\root_tablet_portrait.png"
+    },
+    {
+      "route": "/overview",
+      "name": "overview",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\overview_tablet_portrait.png"
+    },
+    {
+      "route": "/demo",
+      "name": "demo",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\demo_tablet_portrait.png"
+    },
+    {
+      "route": "/live",
+      "name": "live",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\live_tablet_portrait.png"
+    },
+    {
+      "route": "/robot",
+      "name": "robot",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\robot_tablet_portrait.png"
+    },
+    {
+      "route": "/eeg",
+      "name": "eeg",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_tablet_portrait.png"
+    },
+    {
+      "route": "/eeg/live",
+      "name": "eeg_live",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_live_tablet_portrait.png"
+    },
+    {
+      "route": "/eeg/preprocessing",
+      "name": "eeg_preprocessing",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_preprocessing_tablet_portrait.png"
+    },
+    {
+      "route": "/eeg/features",
+      "name": "eeg_features",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_features_tablet_portrait.png"
+    },
+    {
+      "route": "/calibration",
+      "name": "calibration",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\calibration_tablet_portrait.png"
+    },
+    {
+      "route": "/models",
+      "name": "models",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_tablet_portrait.png"
+    },
+    {
+      "route": "/models/classical",
+      "name": "models_classical",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_classical_tablet_portrait.png"
+    },
+    {
+      "route": "/models/lab",
+      "name": "models_lab",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_lab_tablet_portrait.png"
+    },
+    {
+      "route": "/adaptation",
+      "name": "adaptation",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\adaptation_tablet_portrait.png"
+    },
+    {
+      "route": "/confidence",
+      "name": "confidence",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\confidence_tablet_portrait.png"
+    },
+    {
+      "route": "/intent",
+      "name": "intent",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\intent_tablet_portrait.png"
+    },
+    {
+      "route": "/safety",
+      "name": "safety",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\safety_tablet_portrait.png"
+    },
+    {
+      "route": "/resilience",
+      "name": "resilience",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\resilience_tablet_portrait.png"
+    },
+    {
+      "route": "/transport",
+      "name": "transport",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\transport_tablet_portrait.png"
+    },
+    {
+      "route": "/hardware",
+      "name": "hardware",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\hardware_tablet_portrait.png"
+    },
+    {
+      "route": "/sensors",
+      "name": "sensors",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sensors_tablet_portrait.png"
+    },
+    {
+      "route": "/research",
+      "name": "research",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_tablet_portrait.png"
+    },
+    {
+      "route": "/research/datasets",
+      "name": "research_datasets",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_datasets_tablet_portrait.png"
+    },
+    {
+      "route": "/sessions",
+      "name": "sessions",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sessions_tablet_portrait.png"
+    },
+    {
+      "route": "/results",
+      "name": "results",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\results_tablet_portrait.png"
+    },
+    {
+      "route": "/docs",
+      "name": "docs",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\docs_tablet_portrait.png"
+    },
+    {
+      "route": "/system",
+      "name": "system",
+      "viewport": "tablet_portrait",
+      "dimensions": "768x1024",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\system_tablet_portrait.png"
+    },
+    {
+      "route": "/",
+      "name": "root",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\root_mobile.png"
+    },
+    {
+      "route": "/overview",
+      "name": "overview",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\overview_mobile.png"
+    },
+    {
+      "route": "/demo",
+      "name": "demo",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\demo_mobile.png"
+    },
+    {
+      "route": "/live",
+      "name": "live",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\live_mobile.png"
+    },
+    {
+      "route": "/robot",
+      "name": "robot",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\robot_mobile.png"
+    },
+    {
+      "route": "/eeg",
+      "name": "eeg",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_mobile.png"
+    },
+    {
+      "route": "/eeg/live",
+      "name": "eeg_live",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_live_mobile.png"
+    },
+    {
+      "route": "/eeg/preprocessing",
+      "name": "eeg_preprocessing",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_preprocessing_mobile.png"
+    },
+    {
+      "route": "/eeg/features",
+      "name": "eeg_features",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\eeg_features_mobile.png"
+    },
+    {
+      "route": "/calibration",
+      "name": "calibration",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\calibration_mobile.png"
+    },
+    {
+      "route": "/models",
+      "name": "models",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_mobile.png"
+    },
+    {
+      "route": "/models/classical",
+      "name": "models_classical",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_classical_mobile.png"
+    },
+    {
+      "route": "/models/lab",
+      "name": "models_lab",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\models_lab_mobile.png"
+    },
+    {
+      "route": "/adaptation",
+      "name": "adaptation",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\adaptation_mobile.png"
+    },
+    {
+      "route": "/confidence",
+      "name": "confidence",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\confidence_mobile.png"
+    },
+    {
+      "route": "/intent",
+      "name": "intent",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\intent_mobile.png"
+    },
+    {
+      "route": "/safety",
+      "name": "safety",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\safety_mobile.png"
+    },
+    {
+      "route": "/resilience",
+      "name": "resilience",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\resilience_mobile.png"
+    },
+    {
+      "route": "/transport",
+      "name": "transport",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\transport_mobile.png"
+    },
+    {
+      "route": "/hardware",
+      "name": "hardware",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\hardware_mobile.png"
+    },
+    {
+      "route": "/sensors",
+      "name": "sensors",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sensors_mobile.png"
+    },
+    {
+      "route": "/research",
+      "name": "research",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_mobile.png"
+    },
+    {
+      "route": "/research/datasets",
+      "name": "research_datasets",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\research_datasets_mobile.png"
+    },
+    {
+      "route": "/sessions",
+      "name": "sessions",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\sessions_mobile.png"
+    },
+    {
+      "route": "/results",
+      "name": "results",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\results_mobile.png"
+    },
+    {
+      "route": "/docs",
+      "name": "docs",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\docs_mobile.png"
+    },
+    {
+      "route": "/system",
+      "name": "system",
+      "viewport": "mobile",
+      "dimensions": "390x844",
+      "passed": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "hasOverflow": false
+      },
+      "screenshot": "C:\\Users\\balashanmugam\\OneDrive\\Desktop\\Projects\\NeuroMove\\scratch\\release-audit-screenshots\\system_mobile.png"
+    }
+  ]
+}
