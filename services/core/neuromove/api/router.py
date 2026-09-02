@@ -25,7 +25,6 @@ from ..domain.models import (
     CommandPayload,
     ComponentHealth,
     RobotState,
-    SafetyState,
     SignalQuality,
     SystemStatus,
     UserProfile,
@@ -172,19 +171,18 @@ def run_scenario_endpoint(scenario_id: str) -> SimulationStatus:
     return simulation_engine.start_scenario(scenario_id)
 
 
-# --- Safety State Machine ---
-
-
-@api_router.get("/safety/state", response_model=SafetyState, tags=["Safety"])
-def get_safety_state() -> SafetyState:
-    """Retrieve current validated state and risk indicators from the safety state machine."""
-    return default_safety_state_machine.get_safety_state()
+# --- Actuation Emergency Stop ---
 
 
 @api_router.post("/emergency/stop", response_model=EmergencyStopResponse, tags=["Safety"])
 def post_emergency_stop() -> EmergencyStopResponse:
     """Trigger immediate emergency stop across all local actuators and state machines."""
+    from ..safety.service import default_safety_service
+
     default_safety_state_machine.trigger_emergency_stop(reason="Operator API emergency halt")
+    default_safety_service.assert_emergency_stop(
+        reason="Operator API emergency halt", asserted_by="OPERATOR"
+    )
     simulation_engine.robot_simulator.emergency_stop_triggered = True
     return EmergencyStopResponse(
         success=True,
@@ -192,13 +190,6 @@ def post_emergency_stop() -> EmergencyStopResponse:
         timestamp=utc_now(),
         message="Emergency stop successfully engaged. System in safe fail-closed state.",
     )
-
-
-@api_router.post("/safety/reset", response_model=SafetyState, tags=["Safety"])
-def post_safety_reset() -> SafetyState:
-    """Reset system from Emergency or Fault state back to safe IDLE."""
-    default_safety_state_machine.reset_to_idle(reason="Operator API reset request")
-    return default_safety_state_machine.get_safety_state()
 
 
 # --- Real-Time Telemetry & EEG ---
@@ -1804,6 +1795,201 @@ def run_intent_scenario(payload: dict[str, Any]) -> Any:
 
     scenario_id = payload.get("scenario_id", "SCENARIO_A_NORMAL_LIFECYCLE")
     return get_intent_service().run_scenario(scenario_id)
+
+
+# --- Phase 17 Safety Arbitration & Authorization Gate ---
+
+
+class SafetyEvaluateBody(BaseModel):
+    intent_snapshot: dict[str, Any] | None = None
+    context_override: dict[str, Any] | None = None
+    policy_id: str | None = None
+
+
+class SafetyHoldBody(BaseModel):
+    operator_id: str | None = None
+    reason: str | None = None
+
+
+class SafetyEmergencyStopBody(BaseModel):
+    reason: str | None = None
+    asserted_by: str | None = None
+
+
+class SafetyResetBody(BaseModel):
+    operator_id: str | None = None
+    clear_lockout: bool = False
+
+
+class SafetyLockoutBody(BaseModel):
+    reason: str
+    operator_id: str | None = None
+
+
+class SafetyScenarioBody(BaseModel):
+    scenario_id: str
+
+
+@api_router.get("/safety/state", tags=["Safety Arbitration"])
+@api_router.get("/safety/current", tags=["Safety Arbitration"])
+def get_current_safety_snapshot() -> Any:
+    """Return authoritative singleton snapshot of software execution authorization gate."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.get_current_snapshot()
+
+
+@api_router.get("/safety/policy", tags=["Safety Arbitration"])
+def get_safety_policy() -> Any:
+    """Fetch active versioned safety arbitration policy."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.get_active_policy()
+
+
+@api_router.put("/safety/policy", tags=["Safety Arbitration"])
+def update_safety_policy(policy_data: dict[str, Any]) -> Any:
+    """Update active safety arbitration policy."""
+    from ..safety.policies import SafetyPolicy
+    from ..safety.service import default_safety_service
+
+    new_policy = SafetyPolicy(**policy_data)
+    return default_safety_service.update_policy(new_policy)
+
+
+@api_router.post("/safety/evaluate", tags=["Safety Arbitration"])
+def evaluate_safety_intent(payload: SafetyEvaluateBody) -> Any:
+    """Execute deterministic software safety arbitration against intent snapshot."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.evaluate_intent(
+        intent_snapshot=payload.intent_snapshot,
+        context_override=payload.context_override,
+        policy_id=payload.policy_id,
+    )
+
+
+@api_router.get("/safety/history", tags=["Safety Arbitration"])
+def get_safety_evaluation_history(
+    limit: int = Query(default=100, ge=1, le=500),
+    decision: str | None = Query(default=None),
+) -> list[Any]:
+    """Retrieve historical safety evaluation records."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.get_evaluation_history(limit=limit, decision=decision)
+
+
+@api_router.get("/safety/transitions", tags=["Safety Arbitration"])
+def get_safety_transition_history(
+    limit: int = Query(default=100, ge=1, le=500),
+) -> list[Any]:
+    """Retrieve audit log of state machine transitions."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.get_transition_history(limit=limit)
+
+
+@api_router.post("/safety/hold", tags=["Safety Arbitration"])
+def assert_operator_hold(payload: SafetyHoldBody | None = None) -> Any:
+    """Engage manual operator hold."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyHoldBody()
+    return default_safety_service.assert_operator_hold(
+        operator_id=body.operator_id, reason=body.reason
+    )
+
+
+@api_router.post("/safety/release-hold", tags=["Safety Arbitration"])
+def release_operator_hold(payload: SafetyHoldBody | None = None) -> Any:
+    """Release manual operator hold."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyHoldBody()
+    return default_safety_service.release_operator_hold(operator_id=body.operator_id)
+
+
+@api_router.post("/safety/emergency-stop", tags=["Safety Arbitration"])
+def assert_safety_emergency_stop(payload: SafetyEmergencyStopBody | None = None) -> Any:
+    """Assert software emergency stop (dominates all execution authorization)."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyEmergencyStopBody()
+    return default_safety_service.assert_emergency_stop(
+        reason=body.reason, asserted_by=body.asserted_by
+    )
+
+
+@api_router.post("/safety/clear-emergency-stop", tags=["Safety Arbitration"])
+def clear_safety_emergency_stop(payload: SafetyEmergencyStopBody | None = None) -> Any:
+    """Clear software emergency stop and move to RESET_PENDING."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyEmergencyStopBody()
+    return default_safety_service.clear_emergency_stop(operator_id=body.asserted_by)
+
+
+@api_router.post("/safety/reset", tags=["Safety Arbitration"])
+def reset_safety_state(payload: SafetyResetBody | None = None) -> Any:
+    """Execute complete safety reset sequence to return to SAFE_IDLE."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyResetBody()
+    return default_safety_service.execute_reset(
+        operator_id=body.operator_id, clear_lockout=body.clear_lockout
+    )
+
+
+@api_router.post("/safety/lockout", tags=["Safety Arbitration"])
+def assert_safety_lockout(payload: SafetyLockoutBody) -> Any:
+    """Engage software lockout state."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.assert_lockout(
+        reason=payload.reason, operator_id=payload.operator_id
+    )
+
+
+@api_router.post("/safety/unlock", tags=["Safety Arbitration"])
+def unlock_safety_lockout(payload: SafetyResetBody | None = None) -> Any:
+    """Unlock lockout state and transition to RESET_PENDING."""
+    from ..safety.service import default_safety_service
+
+    body = payload or SafetyResetBody()
+    return default_safety_service.unlock(operator_id=body.operator_id)
+
+
+@api_router.get("/safety/rules", tags=["Safety Arbitration"])
+def list_safety_rules() -> list[dict[str, Any]]:
+    """List all registered deterministic safety rules and categories."""
+    from ..safety.rules import DEFAULT_SAFETY_RULES
+
+    return [
+        {
+            "rule_id": r.rule_id,
+            "category": r.category,
+            "precedence_rank": int(r.precedence_rank),
+            "description": (r.__doc__ or "").strip(),
+        }
+        for r in DEFAULT_SAFETY_RULES
+    ]
+
+
+@api_router.get("/safety/diagnostics", tags=["Safety Arbitration"])
+def get_safety_diagnostics() -> Any:
+    """Return operational metrics and failure statistics for safety arbitration."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.get_diagnostics()
+
+
+@api_router.post("/safety/simulation/scenarios", tags=["Safety Arbitration"])
+def run_safety_scenario(payload: SafetyScenarioBody) -> Any:
+    """Run deterministic research safety scenario (A through O)."""
+    from ..safety.service import default_safety_service
+
+    return default_safety_service.run_scenario(payload.scenario_id)
 
 
 # --- WebSocket Stream Endpoints ---

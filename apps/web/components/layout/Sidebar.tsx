@@ -70,7 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     name: "Safety & Arbitration",
     items: [
-      { href: "/safety", label: "Safety Engine", icon: ShieldCheck },
+      { href: "/safety", label: "Safety Arbitration", icon: ShieldCheck, badge: "Phase 17" },
     ],
   },
   {

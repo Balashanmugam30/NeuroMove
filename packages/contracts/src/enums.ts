@@ -28,7 +28,17 @@ export const RuntimeStateEnum = z.enum([
 ]);
 export type RuntimeState = z.infer<typeof RuntimeStateEnum>;
 
-export const SafetyDecisionEnum = z.enum(["APPROVED", "BLOCKED", "STOP"]);
+export const SafetyDecisionEnum = z.enum([
+  "AUTHORIZED",
+  "HELD",
+  "DENIED",
+  "EMERGENCY_STOP",
+  "LOCKED_OUT",
+  "INVALID",
+  "APPROVED",
+  "BLOCKED",
+  "STOP",
+]);
 export type SafetyDecision = z.infer<typeof SafetyDecisionEnum>;
 
 export const RiskLevelEnum = z.enum(["SAFE", "WARNING", "CRITICAL"]);
@@ -166,7 +176,16 @@ export const EventTypeEnum = z.enum([
   "CONFIDENCE_STATE_EXPIRED",
   "CONFIDENCE_CONFIG_CHANGED",
 
-  // Safety State Machine & Arbitration
+  // Safety State Machine & Arbitration (Phase 17)
+  "SAFETY_EVALUATED",
+  "SAFETY_AUTHORIZED",
+  "SAFETY_HELD",
+  "SAFETY_DENIED",
+  "SAFETY_EMERGENCY_STOP",
+  "SAFETY_LOCKED_OUT",
+  "SAFETY_RESET",
+  "SAFETY_HOLD_CHANGED",
+  "SAFETY_CONTEXT_CHANGED",
   "STATE_TRANSITION",
   "SAFETY_CHECK",
   "SAFETY_APPROVED",

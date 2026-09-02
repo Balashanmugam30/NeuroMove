@@ -1160,6 +1160,148 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 011: Safety Arbitration, Constraint Evaluation & Execution Authorization Gate (Phase 17)
+            cursor.execute(
+                "SELECT COUNT(*) FROM schema_migrations WHERE version = '011_safety_arbitration';"
+            )
+            mig_011 = cursor.fetchone()[0] == 0
+            if mig_011:
+                logger.info("Applying migration 011_safety_arbitration...")
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_policies (
+                        policy_id TEXT PRIMARY KEY,
+                        version TEXT NOT NULL,
+                        allowlisted_intents_json TEXT NOT NULL,
+                        blocked_intents_json TEXT NOT NULL,
+                        max_intent_age_ms REAL NOT NULL,
+                        max_evaluation_age_ms REAL NOT NULL,
+                        max_context_age_ms REAL NOT NULL,
+                        max_authorized_duration_ms REAL NOT NULL,
+                        maximum_command_rate INTEGER NOT NULL,
+                        rate_window_ms REAL NOT NULL,
+                        minimum_command_gap_ms REAL NOT NULL,
+                        critical_health_requirements_json TEXT NOT NULL,
+                        operator_hold_enabled INTEGER NOT NULL DEFAULT 1,
+                        emergency_stop_enabled INTEGER NOT NULL DEFAULT 1,
+                        lockout_threshold INTEGER NOT NULL DEFAULT 3,
+                        lockout_policy TEXT NOT NULL DEFAULT 'REQUIRE_MANUAL_RESET',
+                        reset_requirements_json TEXT NOT NULL,
+                        parameters_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        checksum TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_context_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        system_health_json TEXT NOT NULL,
+                        stream_health_json TEXT NOT NULL,
+                        sensor_health_json TEXT NOT NULL,
+                        intent_freshness_json TEXT NOT NULL,
+                        model_health_json TEXT NOT NULL,
+                        session_validity_json TEXT NOT NULL,
+                        operator_state_json TEXT NOT NULL,
+                        environment_state_json TEXT NOT NULL,
+                        execution_rate_json TEXT NOT NULL,
+                        current_action_state_json TEXT NOT NULL,
+                        emergency_stop_state_json TEXT NOT NULL,
+                        lockout_state_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_evaluations (
+                        evaluation_id TEXT PRIMARY KEY,
+                        decision TEXT NOT NULL,
+                        safety_state TEXT NOT NULL,
+                        primary_reason TEXT NOT NULL,
+                        precedence_rank INTEGER NOT NULL,
+                        all_reasons_json TEXT NOT NULL,
+                        violated_rules_json TEXT NOT NULL,
+                        passed_rules_json TEXT NOT NULL,
+                        policy_version TEXT NOT NULL,
+                        intent_id TEXT,
+                        intent_class TEXT,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        model_version_id TEXT,
+                        confidence_score REAL,
+                        confidence_evaluation_id TEXT,
+                        temporal_confirmation_id TEXT,
+                        evaluated_at TEXT NOT NULL,
+                        duration_ms REAL NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_rule_results (
+                        result_id TEXT PRIMARY KEY,
+                        evaluation_id TEXT NOT NULL,
+                        rule_id TEXT NOT NULL,
+                        category TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        reason_code TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        evidence_json TEXT NOT NULL,
+                        evaluated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_state_transitions (
+                        transition_id TEXT PRIMARY KEY,
+                        sequence_number INTEGER NOT NULL,
+                        previous_state TEXT NOT NULL,
+                        next_state TEXT NOT NULL,
+                        trigger_name TEXT NOT NULL,
+                        reason TEXT NOT NULL,
+                        evaluation_id TEXT,
+                        intent_id TEXT,
+                        policy_version TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS safety_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        current_state TEXT NOT NULL,
+                        last_decision TEXT NOT NULL,
+                        active_intent_id TEXT,
+                        intent_class TEXT,
+                        primary_reason TEXT NOT NULL,
+                        active_policy_version TEXT NOT NULL,
+                        emergency_stop INTEGER NOT NULL DEFAULT 0,
+                        emergency_stop_reason TEXT,
+                        operator_hold INTEGER NOT NULL DEFAULT 0,
+                        operator_id TEXT,
+                        lockout INTEGER NOT NULL DEFAULT 0,
+                        lockout_reason TEXT,
+                        system_healthy INTEGER NOT NULL DEFAULT 1,
+                        stream_healthy INTEGER NOT NULL DEFAULT 1,
+                        last_evaluation_id TEXT,
+                        state_deadline REAL,
+                        transition_count INTEGER NOT NULL DEFAULT 0,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('011_safety_arbitration');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

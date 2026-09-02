@@ -17,7 +17,7 @@ describe("AppShell Layout", () => {
     expect(screen.getByText(/neuromove/i)).toBeInTheDocument();
     expect(screen.getByText("Live Control")).toBeInTheDocument();
     expect(screen.getByText("EEG Lab")).toBeInTheDocument();
-    expect(screen.getByText("Safety Engine")).toBeInTheDocument();
+    expect(screen.getByText("Safety Arbitration")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 });

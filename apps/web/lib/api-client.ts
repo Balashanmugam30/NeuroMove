@@ -177,16 +177,25 @@ import {
   IntentResetRequest,
   IntentScenarioResponse,
   IntentScenarioResponseSchema,
+
+  SafetyPolicy,
+  SafetyPolicySchema,
+  SafetyEvaluation,
+  SafetyEvaluationSchema,
+  SafetyStateSnapshot,
+  SafetyStateSnapshotSchema,
+  SafetyTransition,
+  SafetyTransitionSchema,
+  SafetyDiagnostics,
+  SafetyDiagnosticsSchema,
+  SafetyScenarioResult,
+  SafetyScenarioResultSchema,
+  SafetyEvaluateRequest,
+  SafetyHoldRequest,
+  SafetyEmergencyStopRequest,
+  SafetyResetRequest,
+  SafetyLockoutRequest,
 } from "@neuromove/contracts";
-
-
-
-
-
-
-
-
-
 import { z } from "zod";
 
 const API_BASE_URL =
@@ -1965,5 +1974,202 @@ export async function runIntentScenario(
   const data = await res.json();
   return IntentScenarioResponseSchema.parse(data);
 }
+
+// --- Phase 17 Safety Arbitration & Authorization Gate ---
+
+export async function fetchSafetyStateSnapshot(): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/current`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function fetchSafetyPolicy(): Promise<SafetyPolicy> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/policy`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyPolicySchema.parse(data);
+}
+
+export async function updateSafetyPolicy(policy: SafetyPolicy): Promise<SafetyPolicy> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/policy`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(policy),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return SafetyPolicySchema.parse(data);
+}
+
+export async function evaluateSafetyIntent(
+  payload: SafetyEvaluateRequest
+): Promise<SafetyEvaluation> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return SafetyEvaluationSchema.parse(data);
+}
+
+export async function fetchSafetyEvaluationHistory(
+  limit: number = 50,
+  decision?: string
+): Promise<SafetyEvaluation[]> {
+  const url = new URL(`${API_BASE_URL}/api/safety/history`);
+  url.searchParams.set("limit", limit.toString());
+  if (decision) url.searchParams.set("decision", decision);
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SafetyEvaluationSchema).parse(data);
+}
+
+export async function fetchSafetyTransitions(limit: number = 50): Promise<SafetyTransition[]> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/transitions?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SafetyTransitionSchema).parse(data);
+}
+
+export async function assertSafetyOperatorHold(
+  payload?: SafetyHoldRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/hold`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function releaseSafetyOperatorHold(
+  payload?: SafetyHoldRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/release-hold`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function assertSafetyEmergencyStop(
+  payload?: SafetyEmergencyStopRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/emergency-stop`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function clearSafetyEmergencyStop(
+  payload?: SafetyEmergencyStopRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/clear-emergency-stop`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function executeSafetyReset(
+  payload?: SafetyResetRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function assertSafetyLockout(
+  payload: SafetyLockoutRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/lockout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function unlockSafetyLockout(
+  payload?: SafetyResetRequest
+): Promise<SafetyStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/unlock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyStateSnapshotSchema.parse(data);
+}
+
+export async function fetchSafetyRules(): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/rules`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSafetyDiagnostics(): Promise<SafetyDiagnostics> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/diagnostics`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SafetyDiagnosticsSchema.parse(data);
+}
+
+export async function runSafetyScenario(
+  scenarioId: string
+): Promise<SafetyScenarioResult> {
+  const res = await fetch(`${API_BASE_URL}/api/safety/simulation/scenarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return SafetyScenarioResultSchema.parse(data);
+}
+
 
 

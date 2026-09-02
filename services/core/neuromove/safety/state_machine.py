@@ -4,9 +4,12 @@ Ensures fail-closed deterministic state management where no actuation or command
 can be processed unless explicitly confirmed, validated, and approved.
 """
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from ..domain.enums import (
     EventType,
@@ -18,6 +21,7 @@ from ..domain.enums import (
 from ..domain.models import SafetyState
 from ..events.dispatcher import default_event_dispatcher
 from ..events.envelope import EventEnvelope, StateTransitionPayload
+from .models import SafetyArbitrationState, SafetyStateTransition
 
 logger = logging.getLogger("neuromove.safety")
 
@@ -279,5 +283,151 @@ class SafetyStateMachine:
         )
 
 
-# Global singleton instance for local core runtime
+# Global singleton instance for local core runtime (legacy)
 default_safety_state_machine = SafetyStateMachine()
+
+
+# --- Phase 17 Canonical Safety Arbitration State Machine ---
+
+
+class SafetyArbitrationTransitionError(Exception):
+    """Raised when an arbitration state transition violates the deterministic safety matrix."""
+
+    def __init__(
+        self,
+        current: SafetyArbitrationState,
+        target: SafetyArbitrationState,
+        reason: str = "",
+    ) -> None:
+        self.current = current
+        self.target = target
+        self.reason = reason
+        super().__init__(
+            f"Invalid safety arbitration transition: {current.value} -> {target.value}. {reason}".strip()
+        )
+
+
+SAFETY_ARBITRATION_TRANSITIONS: dict[SafetyArbitrationState, set[SafetyArbitrationState]] = {
+    SafetyArbitrationState.SAFE_IDLE: {
+        SafetyArbitrationState.EVALUATING,
+        SafetyArbitrationState.EMERGENCY_STOP,
+        SafetyArbitrationState.LOCKED_OUT,
+    },
+    SafetyArbitrationState.EVALUATING: {
+        SafetyArbitrationState.AUTHORIZED,
+        SafetyArbitrationState.HELD,
+        SafetyArbitrationState.DENIED,
+        SafetyArbitrationState.EMERGENCY_STOP,
+        SafetyArbitrationState.LOCKED_OUT,
+    },
+    SafetyArbitrationState.AUTHORIZED: {
+        SafetyArbitrationState.EVALUATING,
+        SafetyArbitrationState.SAFE_IDLE,
+        SafetyArbitrationState.HELD,
+        SafetyArbitrationState.DENIED,
+        SafetyArbitrationState.EMERGENCY_STOP,
+        SafetyArbitrationState.LOCKED_OUT,
+    },
+    SafetyArbitrationState.HELD: {
+        SafetyArbitrationState.EVALUATING,
+        SafetyArbitrationState.DENIED,
+        SafetyArbitrationState.EMERGENCY_STOP,
+        SafetyArbitrationState.LOCKED_OUT,
+        SafetyArbitrationState.SAFE_IDLE,
+    },
+    SafetyArbitrationState.DENIED: {
+        SafetyArbitrationState.EVALUATING,
+        SafetyArbitrationState.SAFE_IDLE,
+        SafetyArbitrationState.EMERGENCY_STOP,
+        SafetyArbitrationState.LOCKED_OUT,
+    },
+    SafetyArbitrationState.EMERGENCY_STOP: {
+        SafetyArbitrationState.RESET_PENDING,
+    },
+    SafetyArbitrationState.RESET_PENDING: {
+        SafetyArbitrationState.SAFE_IDLE,
+        SafetyArbitrationState.LOCKED_OUT,
+        SafetyArbitrationState.EMERGENCY_STOP,
+    },
+    SafetyArbitrationState.LOCKED_OUT: {
+        SafetyArbitrationState.RESET_PENDING,
+    },
+}
+
+
+class SafetyArbitrationStateMachine:
+    """Authoritative finite state machine governing software execution authorization."""
+
+    def __init__(
+        self, initial_state: SafetyArbitrationState = SafetyArbitrationState.SAFE_IDLE
+    ) -> None:
+        self._current_state = initial_state
+        self._sequence_number = 0
+
+    @property
+    def current_state(self) -> SafetyArbitrationState:
+        return self._current_state
+
+    @property
+    def sequence_number(self) -> int:
+        return self._sequence_number
+
+    def can_transition_to(self, target: SafetyArbitrationState) -> bool:
+        if target == self._current_state:
+            return True
+        allowed = SAFETY_ARBITRATION_TRANSITIONS.get(self._current_state, set())
+        return target in allowed
+
+    def validate_transition(self, target: SafetyArbitrationState, reason: str = "") -> None:
+        if not self.can_transition_to(target):
+            raise SafetyArbitrationTransitionError(self._current_state, target, reason)
+
+    def transition_to(
+        self,
+        target_state: SafetyArbitrationState,
+        trigger_name: str,
+        reason: str,
+        evaluation_id: str | None = None,
+        intent_id: str | None = None,
+        policy_version: str = "1.0.0",
+        timestamp: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> SafetyStateTransition:
+        """Execute validated transition and produce immutable audit transition record."""
+        import uuid
+
+        from .models import SafetyStateTransition
+
+        self.validate_transition(target_state, reason=reason)
+        prev = self._current_state
+        self._current_state = target_state
+        self._sequence_number += 1
+        ts = timestamp or datetime.now(UTC).isoformat()
+
+        logger.info(
+            "Safety arbitration state transition #%d: %s -> %s [trigger=%s, reason=%s]",
+            self._sequence_number,
+            prev.value,
+            target_state.value,
+            trigger_name,
+            reason,
+        )
+
+        return SafetyStateTransition(
+            transition_id=f"strans_{uuid.uuid4().hex[:12]}",
+            sequence_number=self._sequence_number,
+            previous_state=prev,
+            next_state=target_state,
+            trigger_name=trigger_name,
+            reason=reason,
+            evaluation_id=evaluation_id,
+            intent_id=intent_id,
+            policy_version=policy_version,
+            timestamp=ts,
+            details=details,
+        )
+
+    def restore_state(self, state: SafetyArbitrationState, sequence_number: int) -> None:
+        """Restore machine state from persistent storage."""
+        self._current_state = state
+        self._sequence_number = sequence_number
