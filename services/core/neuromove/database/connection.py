@@ -1538,6 +1538,140 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 014: Hardware-in-the-Loop Integration & Validation (Phase 20)
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '014_hardware_hil';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_devices (
+                        device_id TEXT PRIMARY KEY,
+                        device_mode TEXT NOT NULL,
+                        friendly_name TEXT,
+                        manufacturer TEXT,
+                        hardware_revision TEXT,
+                        firmware_version TEXT,
+                        protocol_version TEXT,
+                        capabilities_json TEXT,
+                        hashed_serial_identifier TEXT,
+                        last_seen TEXT NOT NULL,
+                        status TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_sessions (
+                        session_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        boot_id TEXT NOT NULL,
+                        device_mode TEXT NOT NULL,
+                        protocol_version TEXT NOT NULL,
+                        firmware_version TEXT NOT NULL,
+                        connected_at TEXT NOT NULL,
+                        disconnected_at TEXT,
+                        status TEXT NOT NULL,
+                        sequence_base INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY (device_id) REFERENCES hardware_devices(device_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_connection_events (
+                        event_id TEXT PRIMARY KEY,
+                        session_id TEXT,
+                        device_id TEXT NOT NULL,
+                        from_state TEXT NOT NULL,
+                        to_state TEXT NOT NULL,
+                        reason TEXT,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_capability_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        capabilities_json TEXT NOT NULL,
+                        validated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_health_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        session_id TEXT,
+                        link_state TEXT NOT NULL,
+                        rtt_ms REAL,
+                        missed_heartbeats INTEGER NOT NULL DEFAULT 0,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_hil_experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        scenario_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        device_mode TEXT NOT NULL,
+                        device_id TEXT NOT NULL,
+                        firmware_version TEXT NOT NULL,
+                        protocol_version TEXT NOT NULL,
+                        seed INTEGER,
+                        manifest_hash TEXT NOT NULL,
+                        passed INTEGER NOT NULL,
+                        verdict TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        completed_at TEXT NOT NULL,
+                        details_json TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_hil_results (
+                        result_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        scenario_id TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        observed_ack_status TEXT,
+                        transmission_count INTEGER NOT NULL DEFAULT 0,
+                        ack_count INTEGER NOT NULL DEFAULT 0,
+                        nack_count INTEGER NOT NULL DEFAULT 0,
+                        latency_ms REAL,
+                        passed INTEGER NOT NULL,
+                        failure_reason TEXT,
+                        timestamp TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES hardware_hil_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS hardware_diagnostics (
+                        diag_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        session_id TEXT,
+                        category TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details_json TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('014_hardware_hil');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

@@ -110,6 +110,7 @@ export const TransportStreamEnum = z.enum([
   "intent",
   "resilience",
   "transport",
+  "hardware",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -248,6 +249,23 @@ export const EventTypeEnum = z.enum([
   "TRANSPORT_SEQUENCE_GAP",
   "TRANSPORT_CHECKSUM_FAILURE",
   "TRANSPORT_HEARTBEAT",
+
+  // Hardware-in-the-Loop & ESP32 Adapter (Phase 20)
+  "HARDWARE_DISCOVERED",
+  "HARDWARE_CONNECTING",
+  "HARDWARE_CONNECTED",
+  "HARDWARE_NEGOTIATING",
+  "HARDWARE_NEGOTIATED",
+  "HARDWARE_READY",
+  "HARDWARE_DEGRADED",
+  "HARDWARE_STALE",
+  "HARDWARE_DISCONNECTED",
+  "HARDWARE_RECONNECTING",
+  "HARDWARE_REBOOTED",
+  "HARDWARE_CAPABILITIES_UPDATED",
+  "HARDWARE_COMMAND_STATUS",
+  "HARDWARE_DIAGNOSTIC",
+  "HARDWARE_ERROR",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
 

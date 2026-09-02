@@ -225,6 +225,22 @@ import {
   TransportScenarioResult,
   TransportScenarioResultSchema,
   ExecutionAuthorization,
+
+  // Phase 20
+  HardwareStatus,
+  HardwareStatusSchema,
+  HardwareHealth,
+  HardwareHealthSchema,
+  SerialPortDescriptor,
+  SerialPortDescriptorSchema,
+  Esp32DeviceInfo,
+  Esp32DeviceInfoSchema,
+  HardwareSession,
+  HardwareSessionSchema,
+  HardwareDiagnostic,
+  HardwareDiagnosticSchema,
+  HILExperiment,
+  HILExperimentSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -2511,6 +2527,209 @@ export async function runTransportScenario(scenarioId: string): Promise<Transpor
   }
   const data = await res.json();
   return TransportScenarioResultSchema.parse(data);
+}
+
+// ============================================================================
+// Phase 20: Hardware-in-the-Loop & ESP32 Adapter Client Functions
+// ============================================================================
+
+export async function fetchHardwareStatus(): Promise<HardwareStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return HardwareStatusSchema.parse(data);
+}
+
+export async function fetchHardwareDevices(): Promise<Esp32DeviceInfo[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/devices`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(Esp32DeviceInfoSchema).parse(data);
+}
+
+export async function fetchHardwareDevice(deviceId: string): Promise<Esp32DeviceInfo> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/devices/${deviceId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return Esp32DeviceInfoSchema.parse(data);
+}
+
+export async function fetchHardwarePorts(): Promise<SerialPortDescriptor[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/ports`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SerialPortDescriptorSchema).parse(data);
+}
+
+export async function fetchHardwareSessions(): Promise<HardwareSession[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/sessions`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(HardwareSessionSchema).parse(data);
+}
+
+export async function fetchHardwareHealth(): Promise<HardwareHealth> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/health`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return HardwareHealthSchema.parse(data);
+}
+
+export async function fetchHardwareCapabilities(): Promise<string[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/capabilities`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchHardwareDiagnostics(limit: number = 50): Promise<HardwareDiagnostic[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/diagnostics?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(HardwareDiagnosticSchema).parse(data);
+}
+
+export async function discoverHardwarePorts(): Promise<SerialPortDescriptor[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/discover`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SerialPortDescriptorSchema).parse(data);
+}
+
+export async function connectHardwareEndpoint(payload: {
+  device_mode: string;
+  port?: string;
+  baud_rate?: number;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/connect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function disconnectHardwareEndpoint(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/disconnect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function negotiateHardwareProtocol(payload: {
+  client_protocol_version?: string;
+  session_id?: string;
+} = {}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/negotiate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function validateHardwareAuthorization(payload: ExecutionAuthorization): Promise<{
+  valid: boolean;
+  reason_code: string;
+  message: string;
+  will_transmit: boolean;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function runHardwareCommand(payload: {
+  command_type?: string;
+  intent_class: string;
+  subject_id?: string;
+  authorization: ExecutionAuthorization;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function reconnectHardware(): Promise<HardwareStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/reconnect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return HardwareStatusSchema.parse(data);
+}
+
+export async function rebootHardwareDevice(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/reboot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchHILExperiments(limit: number = 50): Promise<HILExperiment[]> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/experiments?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(HILExperimentSchema).parse(data);
+}
+
+export async function fetchHILExperiment(experimentId: string): Promise<HILExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/experiments/${experimentId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return HILExperimentSchema.parse(data);
+}
+
+export async function replayHILExperiment(experimentId: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/experiments/${experimentId}/replay`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resetHardwareLab(): Promise<HardwareStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/hardware/hil/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return HardwareStatusSchema.parse(data);
 }
 
 

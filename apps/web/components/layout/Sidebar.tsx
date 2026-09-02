@@ -24,6 +24,7 @@ import {
   Workflow,
   ShieldAlert,
   Radio,
+  Cpu,
 } from "lucide-react";
 
 
@@ -39,7 +40,7 @@ export interface NavGroup {
   }[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+export const NAV_GROUPS: NavGroup[] = [
   {
     name: "Overview",
     items: [
@@ -75,6 +76,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/safety", label: "Safety Arbitration", icon: ShieldCheck, badge: "Phase 17" },
       { href: "/resilience", label: "Resilience Lab", icon: ShieldAlert, badge: "Phase 18" },
       { href: "/transport", label: "Command Transport", icon: Radio, badge: "Phase 19" },
+      { href: "/hardware", label: "Hardware HIL Lab", icon: Cpu, badge: "Phase 20" },
     ],
   },
   {

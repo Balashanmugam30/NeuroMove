@@ -40,6 +40,9 @@ class ConnectionManager:
     async def connect_transport(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="transport")
 
+    async def connect_hardware(self, websocket: WebSocket) -> None:
+        await handle_websocket_session(websocket, default_stream="hardware")
+
     async def connect_all(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="all")
 

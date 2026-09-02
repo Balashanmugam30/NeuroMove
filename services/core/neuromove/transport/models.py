@@ -52,6 +52,7 @@ class TransportStream(StrEnum):
     INTENT = "intent"
     RESILIENCE = "resilience"
     TRANSPORT = "transport"
+    HARDWARE = "hardware"
     ALL = "all"
 
 
