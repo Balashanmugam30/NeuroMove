@@ -96,9 +96,31 @@ import {
   AblationStudyResultSchema,
   ModelComparisonResult,
   ModelComparisonResultSchema,
+
   ModelCard,
   ModelCardSchema,
+
+  SubjectProfile,
+  SubjectProfileSchema,
+  CreateSubjectProfileRequest,
+  CalibrationProtocol,
+  CalibrationProtocolSchema,
+  CalibrationSession,
+  CalibrationSessionSchema,
+  CalibrationTrial,
+
+  CalibrationTrialSchema,
+  CalibrationReport,
+  CalibrationReportSchema,
+  PersonalizationConfig,
+  PersonalizedExperimentResult,
+  PersonalizedExperimentResultSchema,
+  PersonalizedModel,
+  PersonalizedModelSchema,
+  CalibrationHistoryItem,
+  CalibrationHistoryItemSchema,
 } from "@neuromove/contracts";
+
 
 
 
@@ -1084,6 +1106,224 @@ export async function batchPredictAiModel(payload: {
   }
   return res.json();
 }
+
+// --- Phase 13: Personalized Motor-Imagery Calibration & Adaptation ---
+
+export async function fetchSubjectProfiles(): Promise<SubjectProfile[]> {
+  const res = await fetch(`${API_BASE_URL}/api/calibration/profiles`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SubjectProfileSchema).parse(data);
+}
+
+export async function createSubjectProfile(
+  payload: CreateSubjectProfileRequest
+): Promise<SubjectProfile> {
+  const res = await fetch(`${API_BASE_URL}/api/calibration/profiles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return SubjectProfileSchema.parse(data);
+}
+
+export async function fetchCalibrationProtocols(): Promise<CalibrationProtocol[]> {
+  const res = await fetch(`${API_BASE_URL}/api/calibration/protocols`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(CalibrationProtocolSchema).parse(data);
+}
+
+export async function startCalibrationSession(payload: {
+  profile_id: string;
+  subject_id: string;
+  protocol?: CalibrationProtocol;
+  source_mode?: string;
+}): Promise<{ session: CalibrationSession; trials: CalibrationTrial[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/calibration/sessions/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    session: CalibrationSessionSchema.parse(data.session),
+    trials: z.array(CalibrationTrialSchema).parse(data.trials),
+  };
+}
+
+export async function fetchCalibrationSession(
+  calibrationId: string
+): Promise<CalibrationSession> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return CalibrationSessionSchema.parse(data);
+}
+
+export async function pauseCalibrationSession(
+  calibrationId: string,
+  reason?: string
+): Promise<CalibrationSession> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/pause`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return CalibrationSessionSchema.parse(data);
+}
+
+export async function resumeCalibrationSession(
+  calibrationId: string
+): Promise<CalibrationSession> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/resume`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return CalibrationSessionSchema.parse(data);
+}
+
+export async function abortCalibrationSession(
+  calibrationId: string,
+  reason?: string
+): Promise<CalibrationSession> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/abort`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return CalibrationSessionSchema.parse(data);
+}
+
+export async function advanceSimulationTrial(
+  calibrationId: string
+): Promise<CalibrationSession> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/advance-simulation`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return CalibrationSessionSchema.parse(data);
+}
+
+export async function fetchCalibrationTrials(
+  calibrationId: string
+): Promise<CalibrationTrial[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/trials`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(CalibrationTrialSchema).parse(data);
+}
+
+export async function fetchCalibrationReport(
+  calibrationId: string
+): Promise<CalibrationReport> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/sessions/${calibrationId}/report`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return CalibrationReportSchema.parse(data);
+}
+
+export async function runPersonalization(
+  payload: PersonalizationConfig
+): Promise<PersonalizedExperimentResult> {
+  const res = await fetch(`${API_BASE_URL}/api/calibration/personalize/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return PersonalizedExperimentResultSchema.parse(data);
+}
+
+export async function fetchPersonalizedModel(
+  modelId: string
+): Promise<PersonalizedModel> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/personalize/models/${modelId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return PersonalizedModelSchema.parse(data);
+}
+
+export async function fetchSubjectCalibrationHistory(
+  subjectId: string
+): Promise<CalibrationHistoryItem[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/calibration/history/${subjectId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(CalibrationHistoryItemSchema).parse(data);
+}
+
 
 
 

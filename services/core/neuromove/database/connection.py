@@ -623,6 +623,178 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 007: Personalized Calibration & Subject Adaptation
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '007_personalized_calibration';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS subject_profiles (
+                        subject_id TEXT PRIMARY KEY,
+                        profile_id TEXT NOT NULL UNIQUE,
+                        profile_version TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        preferred_hand TEXT NOT NULL,
+                        display_name TEXT,
+                        notes TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calibration_profiles (
+                        profile_id TEXT PRIMARY KEY,
+                        subject_id TEXT NOT NULL,
+                        profile_version TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        preferred_task TEXT NOT NULL,
+                        target_classes_json TEXT NOT NULL,
+                        channel_set_json TEXT NOT NULL,
+                        preprocessing_config_json TEXT NOT NULL,
+                        epoching_config_json TEXT NOT NULL,
+                        feature_config_json TEXT NOT NULL,
+                        decoder_config_json TEXT NOT NULL,
+                        last_calibration_id TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calibration_protocols (
+                        protocol_id TEXT PRIMARY KEY,
+                        protocol_version TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        target_classes_json TEXT NOT NULL,
+                        trials_per_class INTEGER NOT NULL,
+                        rest_duration_sec REAL NOT NULL,
+                        fixation_duration_sec REAL NOT NULL,
+                        cue_duration_sec REAL NOT NULL,
+                        imagery_duration_sec REAL NOT NULL,
+                        iti_min_sec REAL NOT NULL,
+                        iti_max_sec REAL NOT NULL,
+                        break_policy TEXT NOT NULL,
+                        random_state INTEGER NOT NULL,
+                        min_valid_trials_per_class INTEGER NOT NULL,
+                        max_rejection_ratio REAL NOT NULL,
+                        qc_rules_json TEXT NOT NULL,
+                        timing_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calibration_sessions (
+                        calibration_id TEXT PRIMARY KEY,
+                        profile_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        session_number INTEGER NOT NULL,
+                        protocol_version TEXT NOT NULL,
+                        task_id TEXT NOT NULL,
+                        source_mode TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        started_at TEXT,
+                        completed_at TEXT,
+                        trial_count INTEGER NOT NULL DEFAULT 0,
+                        valid_trial_count INTEGER NOT NULL DEFAULT 0,
+                        rejected_trial_count INTEGER NOT NULL DEFAULT 0,
+                        class_distribution_json TEXT NOT NULL,
+                        quality_summary_json TEXT,
+                        pause_intervals_json TEXT NOT NULL,
+                        active_trial_index INTEGER NOT NULL DEFAULT 0,
+                        config_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calibration_trials (
+                        trial_id TEXT PRIMARY KEY,
+                        calibration_id TEXT NOT NULL,
+                        sequence_index INTEGER NOT NULL,
+                        target_label TEXT NOT NULL,
+                        cue TEXT NOT NULL,
+                        planned_onset REAL NOT NULL,
+                        actual_onset REAL,
+                        imagery_start REAL,
+                        imagery_end REAL,
+                        status TEXT NOT NULL,
+                        quality_status TEXT NOT NULL,
+                        quality_reasons_json TEXT NOT NULL,
+                        epoch_id TEXT,
+                        notes TEXT,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS personalized_experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        calibration_id TEXT NOT NULL,
+                        profile_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        model_id TEXT NOT NULL,
+                        generic_base_model_id TEXT,
+                        train_trial_count INTEGER NOT NULL,
+                        heldout_trial_count INTEGER NOT NULL,
+                        train_trial_ids_json TEXT NOT NULL,
+                        heldout_trial_ids_json TEXT NOT NULL,
+                        train_metrics_json TEXT NOT NULL,
+                        heldout_metrics_json TEXT NOT NULL,
+                        generic_comparison_json TEXT,
+                        config_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS personalized_models (
+                        model_id TEXT PRIMARY KEY,
+                        calibration_id TEXT NOT NULL,
+                        profile_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        experiment_id TEXT NOT NULL,
+                        generic_base_model_id TEXT,
+                        model_family TEXT NOT NULL,
+                        representation TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        is_stale INTEGER NOT NULL DEFAULT 0,
+                        staleness_reasons_json TEXT NOT NULL,
+                        heldout_balanced_accuracy REAL NOT NULL,
+                        heldout_f1 REAL NOT NULL,
+                        artifact_file_path TEXT NOT NULL,
+                        artifact_checksum_sha256 TEXT NOT NULL,
+                        model_card_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS calibration_reports (
+                        report_id TEXT PRIMARY KEY,
+                        calibration_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        profile_id TEXT NOT NULL,
+                        report_json TEXT NOT NULL,
+                        markdown_content TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('007_personalized_calibration');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

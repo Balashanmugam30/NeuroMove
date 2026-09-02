@@ -1034,6 +1034,214 @@ def post_ai_batch_predict(payload: dict[str, Any]) -> Any:
         ) from exc
 
 
+# --- Phase 13: Personalized Motor-Imagery Calibration & Adaptation ---
+
+
+@api_router.get("/calibration/profiles", tags=["Personalized Calibration"])
+def get_subject_profiles() -> list[Any]:
+    """List all registered pseudonymous subject profiles."""
+    from ..calibration.service import get_calibration_service
+
+    return get_calibration_service().list_subject_profiles()
+
+
+@api_router.post("/calibration/profiles", tags=["Personalized Calibration"])
+def post_create_subject_profile(payload: dict[str, Any]) -> Any:
+    """Create or register a pseudonymous subject profile."""
+    from ..calibration.models import CreateSubjectProfileRequest
+    from ..calibration.service import get_calibration_service
+
+    try:
+        req = CreateSubjectProfileRequest(**payload)
+        return get_calibration_service().create_subject_profile(req)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create subject profile: {exc}",
+        ) from exc
+
+
+@api_router.get("/calibration/profiles/{subject_id}", tags=["Personalized Calibration"])
+def get_subject_profile_by_id(subject_id: str) -> Any:
+    """Retrieve subject profile by subject ID."""
+    from ..calibration.service import get_calibration_service
+
+    profile = get_calibration_service().get_subject_profile(subject_id)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Subject profile '{subject_id}' not found.",
+        )
+    return profile
+
+
+@api_router.get("/calibration/protocols", tags=["Personalized Calibration"])
+def get_calibration_protocols() -> list[Any]:
+    """Retrieve available declarative calibration protocols."""
+    from ..calibration.protocol import CalibrationProtocolEngine
+
+    return [CalibrationProtocolEngine.get_default_protocol()]
+
+
+@api_router.post("/calibration/sessions/start", tags=["Personalized Calibration"])
+def post_start_calibration_session(payload: dict[str, Any]) -> Any:
+    """Initialize and arm a calibration session with deterministic trial schedule."""
+    from ..calibration.models import StartCalibrationSessionRequest
+    from ..calibration.service import get_calibration_service
+
+    try:
+        req = StartCalibrationSessionRequest(**payload)
+        session, trials = get_calibration_service().start_session(req)
+        return {"session": session, "trials": trials}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to start calibration session: {exc}",
+        ) from exc
+
+
+@api_router.get("/calibration/sessions/{calibration_id}", tags=["Personalized Calibration"])
+def get_calibration_session_by_id(calibration_id: str) -> Any:
+    """Retrieve calibration session state and summary."""
+    from ..calibration.service import get_calibration_service
+
+    session = get_calibration_service().get_session(calibration_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Calibration session '{calibration_id}' not found.",
+        )
+    return session
+
+
+@api_router.post("/calibration/sessions/{calibration_id}/pause", tags=["Personalized Calibration"])
+def post_pause_calibration_session(
+    calibration_id: str, payload: dict[str, Any] | None = None
+) -> Any:
+    """Pause an in-progress calibration session."""
+    from ..calibration.service import get_calibration_service
+
+    reason = payload.get("reason", "User requested pause") if payload else "User requested pause"
+    try:
+        return get_calibration_service().pause_session(calibration_id, reason=reason)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to pause session: {exc}",
+        ) from exc
+
+
+@api_router.post("/calibration/sessions/{calibration_id}/resume", tags=["Personalized Calibration"])
+def post_resume_calibration_session(calibration_id: str) -> Any:
+    """Resume a paused calibration session."""
+    from ..calibration.service import get_calibration_service
+
+    try:
+        return get_calibration_service().resume_session(calibration_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to resume session: {exc}",
+        ) from exc
+
+
+@api_router.post("/calibration/sessions/{calibration_id}/abort", tags=["Personalized Calibration"])
+def post_abort_calibration_session(
+    calibration_id: str, payload: dict[str, Any] | None = None
+) -> Any:
+    """Abort a calibration session and preserve recorded trials."""
+    from ..calibration.service import get_calibration_service
+
+    reason = (
+        payload.get("reason", "Operator aborted calibration")
+        if payload
+        else "Operator aborted calibration"
+    )
+    try:
+        return get_calibration_service().abort_session(calibration_id, reason=reason)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to abort session: {exc}",
+        ) from exc
+
+
+@api_router.post(
+    "/calibration/sessions/{calibration_id}/advance-simulation", tags=["Personalized Calibration"]
+)
+def post_advance_simulation_trial(calibration_id: str) -> Any:
+    """Step forward one trial in simulation mode."""
+    from ..calibration.service import get_calibration_service
+
+    try:
+        return get_calibration_service().advance_simulation(calibration_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to advance simulation: {exc}",
+        ) from exc
+
+
+@api_router.get("/calibration/sessions/{calibration_id}/trials", tags=["Personalized Calibration"])
+def get_calibration_trials_by_id(calibration_id: str) -> list[Any]:
+    """Retrieve all trials for a calibration session."""
+    from ..calibration.service import get_calibration_service
+
+    return get_calibration_service().get_trials(calibration_id)
+
+
+@api_router.get("/calibration/sessions/{calibration_id}/report", tags=["Personalized Calibration"])
+def get_calibration_report_by_id(calibration_id: str) -> Any:
+    """Generate and retrieve structured calibration report."""
+    from ..calibration.service import get_calibration_service
+
+    try:
+        return get_calibration_service().generate_calibration_report(calibration_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to generate report: {exc}",
+        ) from exc
+
+
+@api_router.post("/calibration/personalize/run", tags=["Personalized Calibration"])
+def post_run_personalization(payload: dict[str, Any]) -> Any:
+    """Execute leakage-safe subject-specific training, held-out evaluation, and generic benchmarking."""
+    from ..calibration.models import PersonalizationConfig
+    from ..calibration.service import get_calibration_service
+
+    try:
+        config = PersonalizationConfig(**payload)
+        return get_calibration_service().run_personalization(config)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Personalization failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/calibration/personalize/models/{model_id}", tags=["Personalized Calibration"])
+def get_personalized_model_by_id(model_id: str) -> Any:
+    """Retrieve personalized model metadata."""
+    from ..calibration.service import get_calibration_service
+
+    model = get_calibration_service().get_personalized_model(model_id)
+    if not model:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Personalized model '{model_id}' not found.",
+        )
+    return model
+
+
+@api_router.get("/calibration/history/{subject_id}", tags=["Personalized Calibration"])
+def get_subject_calibration_history(subject_id: str) -> list[Any]:
+    """Fetch chronological calibration session history for a subject."""
+    from ..calibration.service import get_calibration_service
+
+    return get_calibration_service().get_subject_history(subject_id)
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")
