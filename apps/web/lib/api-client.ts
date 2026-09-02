@@ -265,22 +265,12 @@ import {
   // Phase 22
   ResearchExperiment,
   ResearchExperimentSchema,
-  ExperimentManifest,
-  ExperimentManifestSchema,
   StageResult,
   StageResultSchema,
   MetricResult,
   MetricResultSchema,
   LatencyAnalytics,
   LatencyAnalyticsSchema,
-  ConfidenceAnalytics,
-  ConfidenceAnalyticsSchema,
-  IntentAnalytics,
-  IntentAnalyticsSchema,
-  SafetyAnalytics,
-  SafetyAnalyticsSchema,
-  HilAnalytics,
-  HilAnalyticsSchema,
   AblationRun,
   AblationRunSchema,
   RobustnessRun,
@@ -291,8 +281,22 @@ import {
   ReproducibilityResultSchema,
   ResearchArtifact,
   ResearchArtifactSchema,
-  ResearchDataset,
-  ResearchDatasetSchema,
+
+  // Phase 23
+  SensorDeviceDescriptor,
+  SensorDeviceDescriptorSchema,
+  SensorHealthSnapshot,
+  SensorHealthSnapshotSchema,
+  MultimodalSyncState,
+  MultimodalSyncStateSchema,
+  SensorCalibrationSnapshot,
+  SensorCalibrationSnapshotSchema,
+  FusionResult,
+  MultimodalContext,
+  MultimodalSession,
+  MultimodalSessionSchema,
+  MultimodalAnalyticsSummary,
+  MultimodalAnalyticsSummarySchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -3202,6 +3206,203 @@ export async function resetResearchLab(): Promise<{ status: string }> {
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return res.json();
 }
+
+// ============================================================================
+// Phase 23: Advanced Multimodal Sensors & Sensor Fusion API Client
+// ============================================================================
+
+export async function fetchSensorDevices(modality?: string): Promise<SensorDeviceDescriptor[]> {
+  const query = modality ? `?modality=${encodeURIComponent(modality)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices${query}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(SensorDeviceDescriptorSchema).parse(data);
+}
+
+export async function fetchSensorDevice(deviceId: string): Promise<SensorDeviceDescriptor> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices/${encodeURIComponent(deviceId)}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SensorDeviceDescriptorSchema.parse(data);
+}
+
+export async function connectSensorDevice(deviceId: string): Promise<{ device_id: string; connected: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices/${encodeURIComponent(deviceId)}/connect`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function disconnectSensorDevice(deviceId: string): Promise<{ device_id: string; disconnected: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices/${encodeURIComponent(deviceId)}/disconnect`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function configureSensorDevice(
+  deviceId: string,
+  config: { sampling_rate?: number; channel_names?: string[] }
+): Promise<{ device_id: string; configured: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices/${encodeURIComponent(deviceId)}/configure`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function calibrateSensorDevice(deviceId: string): Promise<SensorCalibrationSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/devices/${encodeURIComponent(deviceId)}/calibrate`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SensorCalibrationSnapshotSchema.parse(data);
+}
+
+export async function fetchSensorsHealth(): Promise<Record<string, SensorHealthSnapshot>> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/health`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.record(SensorHealthSnapshotSchema).parse(data);
+}
+
+export async function fetchSensorsSyncState(): Promise<MultimodalSyncState> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/sync`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return MultimodalSyncStateSchema.parse(data);
+}
+
+export async function startSensorSession(
+  sessionId?: string,
+  sensorIds?: string[]
+): Promise<MultimodalSession> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/session/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, sensor_ids: sensorIds }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return MultimodalSessionSchema.parse(data);
+}
+
+export async function stopSensorSession(): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/session/stop`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchMultimodalFrame(params?: {
+  chunk_size?: number;
+  candidate_intent?: string;
+  eeg_confidence?: number;
+}): Promise<{
+  packets: Record<string, any>;
+  context: MultimodalContext;
+  fusion: FusionResult;
+  sync: MultimodalSyncState;
+}> {
+  const query = new URLSearchParams();
+  if (params?.chunk_size) query.set("chunk_size", params.chunk_size.toString());
+  if (params?.candidate_intent) query.set("candidate_intent", params.candidate_intent);
+  if (params?.eeg_confidence) query.set("eeg_confidence", params.eeg_confidence.toString());
+
+  const res = await fetch(`${API_BASE_URL}/api/sensors/frame?${query.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function processSensorInference(
+  candidateIntent: string = "FORWARD",
+  eegConfidence: number = 0.90
+): Promise<Record<string, any>> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/inference`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      candidate_intent: candidateIntent,
+      eeg_confidence: eegConfidence,
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function injectSensorFault(
+  sensorId: string,
+  faultType: string
+): Promise<{ sensor_id: string; fault_type: string; injected: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/fault/inject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sensor_id: sensorId, fault_type: faultType }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function clearSensorFaults(sensorId?: string): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/fault/clear`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sensor_id: sensorId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSensorsAnalytics(): Promise<MultimodalAnalyticsSummary> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/analytics`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return MultimodalAnalyticsSummarySchema.parse(data);
+}
+
+export async function fetchSensorScenarios(): Promise<Array<{ id: string; name: string }>> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/scenarios`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function runSensorScenario(scenarioId: string): Promise<Record<string, any>> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/scenarios/${encodeURIComponent(scenarioId)}/run`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resetMultimodalService(): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/sensors/reset`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
 
 
 

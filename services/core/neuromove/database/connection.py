@@ -2136,6 +2136,193 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 017: Multimodal Sensors, Fusion, Sync & Context Engine (Phase 23)
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '017_multimodal_sensors';"
+            )
+            if not cursor.fetchone():
+                cursor.executescript(
+                    """
+                    CREATE TABLE IF NOT EXISTS multimodal_sensor_devices (
+                        device_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        modality TEXT NOT NULL,
+                        source TEXT NOT NULL,
+                        vendor TEXT NOT NULL,
+                        model TEXT NOT NULL,
+                        firmware_version TEXT NOT NULL,
+                        protocol TEXT NOT NULL,
+                        channel_count INTEGER NOT NULL,
+                        channel_names TEXT NOT NULL,
+                        supported_sampling_rates TEXT NOT NULL,
+                        default_sampling_rate INTEGER NOT NULL,
+                        adc_resolution_bits INTEGER NOT NULL,
+                        is_available INTEGER NOT NULL DEFAULT 1,
+                        is_connected INTEGER NOT NULL DEFAULT 0,
+                        connection_path TEXT,
+                        serial_hash TEXT,
+                        imu_orientation TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_sensor_sessions (
+                        session_id TEXT PRIMARY KEY,
+                        subject_id TEXT NOT NULL,
+                        start_time TEXT NOT NULL,
+                        end_time TEXT,
+                        active_sensors TEXT NOT NULL,
+                        global_state TEXT NOT NULL,
+                        analysis_profile TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_sensor_configs (
+                        config_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        sensor_id TEXT NOT NULL,
+                        modality TEXT NOT NULL,
+                        sampling_rate INTEGER NOT NULL,
+                        channel_names TEXT NOT NULL,
+                        buffer_size INTEGER NOT NULL,
+                        filters TEXT NOT NULL,
+                        config_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_sensor_health (
+                        health_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        sensor_id TEXT NOT NULL,
+                        modality TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        buffer_occupancy_pct REAL NOT NULL,
+                        packet_loss_rate REAL NOT NULL,
+                        jitter_ms REAL NOT NULL,
+                        drift_ppm REAL NOT NULL,
+                        is_healthy INTEGER NOT NULL,
+                        last_seen TEXT NOT NULL,
+                        channels_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_clock_sync (
+                        sync_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        global_session_time_iso TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        primary_clock_sensor_id TEXT NOT NULL,
+                        estimated_offsets_ms_json TEXT NOT NULL,
+                        estimated_drifts_ppm_json TEXT NOT NULL,
+                        max_jitter_ms REAL NOT NULL,
+                        alignment_quality_pct REAL NOT NULL,
+                        is_aligned INTEGER NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_calibrations (
+                        calibration_id TEXT PRIMARY KEY,
+                        sensor_id TEXT NOT NULL,
+                        modality TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        parameters_json TEXT NOT NULL,
+                        quality_metrics_json TEXT NOT NULL,
+                        manifest_hash TEXT NOT NULL,
+                        is_calibrated INTEGER NOT NULL,
+                        is_ready INTEGER NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_fusion_results (
+                        fusion_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        strategy TEXT NOT NULL,
+                        participating_sensor_ids_json TEXT NOT NULL,
+                        participating_modalities_json TEXT NOT NULL,
+                        evidence_json TEXT NOT NULL,
+                        alignment_quality REAL NOT NULL,
+                        has_contradiction INTEGER NOT NULL,
+                        contradiction_outcome TEXT NOT NULL,
+                        contradiction_reason TEXT,
+                        fused_context_score REAL NOT NULL,
+                        context_confidence REAL NOT NULL,
+                        is_valid INTEGER NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_context_events (
+                        context_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        motion_state TEXT NOT NULL,
+                        motion_contamination_state TEXT NOT NULL,
+                        peripheral_activation INTEGER NOT NULL,
+                        ocular_artifact_detected INTEGER NOT NULL,
+                        contact_present INTEGER NOT NULL,
+                        pulse_bpm REAL,
+                        context_confidence REAL NOT NULL,
+                        is_movement_valid INTEGER NOT NULL,
+                        is_eeg_contaminated INTEGER NOT NULL,
+                        is_stale INTEGER NOT NULL,
+                        participating_sensors_json TEXT NOT NULL,
+                        active_contradictions_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_contradictions (
+                        contradiction_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        rule_name TEXT NOT NULL,
+                        conflicting_sensor_ids_json TEXT NOT NULL,
+                        conflicting_modalities_json TEXT NOT NULL,
+                        outcome TEXT NOT NULL,
+                        reason TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_recordings (
+                        recording_id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        start_time TEXT NOT NULL,
+                        end_time TEXT,
+                        packet_count INTEGER NOT NULL,
+                        byte_size INTEGER NOT NULL,
+                        storage_path TEXT NOT NULL,
+                        checksum TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (session_id) REFERENCES multimodal_sensor_sessions(session_id)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS multimodal_fixtures (
+                        fixture_id TEXT PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        modalities_json TEXT NOT NULL,
+                        sample_rates_json TEXT NOT NULL,
+                        channel_maps_json TEXT NOT NULL,
+                        duration_sec REAL NOT NULL,
+                        checksum TEXT NOT NULL,
+                        privacy_level TEXT NOT NULL,
+                        expected_context TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('017_multimodal_sensors');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

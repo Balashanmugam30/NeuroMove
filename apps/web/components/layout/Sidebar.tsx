@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   Radio,
   Cpu,
+  Layers,
 } from "lucide-react";
 
 
@@ -59,6 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/eeg", label: "EEG Lab", icon: Waves },
       { href: "/eeg/live", label: "Live EEG Acquisition", icon: Activity, badge: "Phase 21" },
+      { href: "/sensors", label: "Multimodal Sensors", icon: Layers, badge: "Phase 23" },
       { href: "/eeg/preprocessing", label: "Preprocessing & DSP", icon: Sliders, badge: "Phase 09" },
       { href: "/eeg/features", label: "Epochs & Features", icon: BrainCircuit, badge: "Phase 10" },
       { href: "/calibration", label: "Calibration", icon: Crosshair, badge: "Phase 13" },

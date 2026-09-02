@@ -113,6 +113,7 @@ export const TransportStreamEnum = z.enum([
   "hardware",
   "eeg_acquisition",
   "research",
+  "sensors",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -310,6 +311,102 @@ export const EventTypeEnum = z.enum([
   "RESEARCH_ARTIFACT_EXPORTED",
   "RESEARCH_DIAGNOSTIC",
   "RESEARCH_ERROR",
+
+  // Multimodal Sensors & Context Engine (Phase 23)
+  "SENSOR_DISCOVERED",
+  "SENSOR_CONNECTING",
+  "SENSOR_CONNECTED",
+  "SENSOR_CONFIGURED",
+  "SENSOR_CALIBRATING",
+  "SENSOR_CALIBRATED",
+  "SENSOR_STREAMING",
+  "SENSOR_PAUSED",
+  "SENSOR_DEGRADED",
+  "SENSOR_STALE",
+  "SENSOR_DISCONNECTED",
+  "SENSOR_RECONNECTING",
+  "SENSOR_DIAGNOSTIC",
+  "SENSOR_HEALTH_UPDATED",
+  "SENSOR_SYNC_UPDATED",
+  "SENSOR_FUSION_COMPLETED",
+  "SENSOR_CONTEXT_UPDATED",
+  "SENSOR_CONTRADICTION_DETECTED",
+  "SENSOR_ERROR",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
+
+// ============================================================================
+// Phase 23: Multimodal Sensors & Context Engine Enums
+// ============================================================================
+
+export const SensorModalityEnum = z.enum([
+  "EEG",
+  "IMU",
+  "EMG",
+  "EOG",
+  "PPG",
+  "PRESSURE",
+  "AUXILIARY",
+]);
+export type SensorModality = z.infer<typeof SensorModalityEnum>;
+
+export const SensorSourceEnum = z.enum([
+  "PHYSICAL",
+  "SIMULATOR",
+  "RECORDED",
+]);
+export type SensorSource = z.infer<typeof SensorSourceEnum>;
+
+export const SensorStateEnum = z.enum([
+  "DISCONNECTED",
+  "DISCOVERING",
+  "CONNECTING",
+  "CONFIGURING",
+  "CALIBRATING",
+  "STREAMING",
+  "PAUSED",
+  "DEGRADED",
+  "STALE",
+  "RECONNECTING",
+  "STOPPING",
+  "ERROR",
+]);
+export type SensorState = z.infer<typeof SensorStateEnum>;
+
+export const SynchronizationStatusEnum = z.enum([
+  "SYNCHRONIZED",
+  "DEGRADED",
+  "UNSYNCHRONIZED",
+  "DRIFT_DETECTED",
+  "RESYNCING",
+  "FAILED",
+]);
+export type SynchronizationStatus = z.infer<typeof SynchronizationStatusEnum>;
+
+export const ContradictionOutcomeEnum = z.enum([
+  "INFORMATIONAL",
+  "DEGRADED",
+  "HOLD",
+  "INVALID",
+]);
+export type ContradictionOutcome = z.infer<typeof ContradictionOutcomeEnum>;
+
+export const MotionContaminationStateEnum = z.enum([
+  "MOTION_QUIET",
+  "MOTION_ACTIVE",
+  "LIKELY_CONTAMINATED",
+  "UNKNOWN",
+]);
+export type MotionContaminationState = z.infer<typeof MotionContaminationStateEnum>;
+
+export const FusionStrategyEnum = z.enum([
+  "TEMPORAL_COINCIDENCE",
+  "RULE_BASED_CONTEXT",
+  "FEATURE_LEVEL",
+  "DECISION_LEVEL",
+  "CONFIDENCE_MODULATION",
+  "CONTRADICTION_GATED",
+]);
+export type FusionStrategy = z.infer<typeof FusionStrategyEnum>;
+
 

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Response, WebSocket, status
+from fastapi import APIRouter, Body, HTTPException, Query, Response, WebSocket, status
 from pydantic import BaseModel, Field
 
 from ..analysis.models import (
@@ -3072,6 +3072,228 @@ def post_reset_research_lab() -> Any:
     return {"status": "RESET_SUCCESSFUL"}
 
 
+# ============================================================================
+# Phase 23: Advanced Multimodal Sensors & Sensor Fusion Endpoints
+# ============================================================================
+
+
+@api_router.get("/sensors/devices", tags=["Multimodal Sensors"])
+def get_sensor_devices(modality: str | None = Query(None)) -> Any:
+    """List all discovered/registered multimodal sensor devices."""
+    from neuromove.domain.enums import SensorModality
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    mod_enum = SensorModality(modality.upper()) if modality else None
+    devices = service.list_devices(mod_enum)
+    return [d.model_dump() for d in devices]
+
+
+@api_router.get("/sensors/devices/{device_id}", tags=["Multimodal Sensors"])
+def get_sensor_device(device_id: str) -> Any:
+    """Get descriptor for a specific sensor device."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    desc = service.get_device(device_id)
+    if not desc:
+        raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
+    return desc.model_dump()
+
+
+@api_router.post("/sensors/devices/{device_id}/connect", tags=["Multimodal Sensors"])
+def post_connect_sensor(device_id: str) -> Any:
+    """Connect to a physical or simulated sensor device."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    success = service.connect_device(device_id)
+    return {"device_id": device_id, "connected": success}
+
+
+@api_router.post("/sensors/devices/{device_id}/disconnect", tags=["Multimodal Sensors"])
+def post_disconnect_sensor(device_id: str) -> Any:
+    """Disconnect a sensor device."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    success = service.disconnect_device(device_id)
+    return {"device_id": device_id, "disconnected": success}
+
+
+@api_router.post("/sensors/devices/{device_id}/configure", tags=["Multimodal Sensors"])
+def post_configure_sensor(device_id: str, payload: dict[str, Any] = Body(...)) -> Any:
+    """Configure sensor sampling rate and channel map."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    success = service.configure_device(
+        device_id=device_id,
+        sampling_rate=payload.get("sampling_rate"),
+        channel_names=payload.get("channel_names"),
+    )
+    return {"device_id": device_id, "configured": success}
+
+
+@api_router.post("/sensors/devices/{device_id}/calibrate", tags=["Multimodal Sensors"])
+def post_calibrate_sensor(device_id: str) -> Any:
+    """Execute baseline calibration for a sensor device."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    snapshot = service.calibrate_device(device_id)
+    return snapshot.model_dump()
+
+
+@api_router.get("/sensors/health", tags=["Multimodal Sensors"])
+def get_sensors_health() -> Any:
+    """Get real-time quality and health snapshots for active sensors."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    healths = service.get_health_snapshot()
+    return {k: v.model_dump() for k, v in healths.items()}
+
+
+@api_router.get("/sensors/sync", tags=["Multimodal Sensors"])
+def get_sensors_sync_state() -> Any:
+    """Get current multimodal synchronization and alignment state."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    state = service.sync_coordinator.get_sync_state()
+    return state.model_dump()
+
+
+@api_router.post("/sensors/session/start", tags=["Multimodal Sensors"])
+def post_start_sensor_session(payload: dict[str, Any] = Body(...)) -> Any:
+    """Start synchronized multimodal recording / streaming session."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    session_id = payload.get("session_id", f"session_{int(datetime.now(UTC).timestamp())}")
+    sensor_ids = payload.get("sensor_ids")
+    session = service.start_session(session_id, sensor_ids)
+    return session.model_dump()
+
+
+@api_router.post("/sensors/session/stop", tags=["Multimodal Sensors"])
+def post_stop_sensor_session() -> Any:
+    """Stop active multimodal session."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    service.stop_session()
+    return {"status": "STOPPED"}
+
+
+@api_router.get("/sensors/frame", tags=["Multimodal Sensors"])
+def get_multimodal_frame(
+    chunk_size: int = 10,
+    candidate_intent: str = "FORWARD",
+    eeg_confidence: float = 0.90,
+) -> Any:
+    """Acquire one synchronized multimodal frame with QC, contradiction, and fusion context."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    packets, context, fusion, sync = service.read_multimodal_frame(
+        chunk_size=chunk_size,
+        candidate_intent=candidate_intent,
+        eeg_confidence=eeg_confidence,
+    )
+    return {
+        "packets": {k: v.model_dump() for k, v in packets.items()},
+        "context": context.model_dump(),
+        "fusion": fusion.model_dump(),
+        "sync": sync.model_dump(),
+    }
+
+
+@api_router.post("/sensors/inference", tags=["Multimodal Sensors"])
+def post_process_inference_frame(payload: dict[str, Any] = Body(...)) -> Any:
+    """Run full canonical pipeline (Acquisition -> Sync -> QC -> Fusion -> Context -> Intent -> Safety -> HIL)."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    return service.process_inference_frame(
+        candidate_intent=payload.get("candidate_intent", "FORWARD"),
+        eeg_confidence=float(payload.get("eeg_confidence", 0.90)),
+    )
+
+
+@api_router.post("/sensors/fault/inject", tags=["Multimodal Sensors"])
+def post_inject_sensor_fault(payload: dict[str, Any] = Body(...)) -> Any:
+    """Inject simulated anomaly or fault into target sensor."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    sensor_id = payload.get("sensor_id", "sensor_imu_sim")
+    fault_type = payload.get("fault_type", "MOTION_BURST")
+    success = service.inject_fault(sensor_id, fault_type)
+    return {"sensor_id": sensor_id, "fault_type": fault_type, "injected": success}
+
+
+@api_router.post("/sensors/fault/clear", tags=["Multimodal Sensors"])
+def post_clear_sensor_faults(payload: dict[str, Any] = Body(default={})) -> Any:
+    """Clear active faults on sensors."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    service.clear_faults(payload.get("sensor_id"))
+    return {"status": "FAULTS_CLEARED"}
+
+
+@api_router.get("/sensors/analytics", tags=["Multimodal Sensors"])
+def get_sensors_analytics() -> Any:
+    """Get multimodal analytics summary metrics."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    return service.get_analytics_summary().model_dump()
+
+
+@api_router.get("/sensors/scenarios", tags=["Multimodal Sensors"])
+def get_sensor_scenarios() -> Any:
+    """List all 12 Phase 23 Golden Scenarios."""
+    return [
+        {"id": "SCENARIO_A", "name": "EEG + IMU Healthy Synchronized Baseline"},
+        {"id": "SCENARIO_B", "name": "EEG Only Standalone Operation"},
+        {"id": "SCENARIO_C", "name": "IMU Disconnection Handling"},
+        {"id": "SCENARIO_D", "name": "Timestamp Drift & Desynchronization"},
+        {"id": "SCENARIO_E", "name": "Contradictory Movement Context Hold"},
+        {"id": "SCENARIO_F", "name": "Channel Dropout Quality Fault"},
+        {"id": "SCENARIO_G", "name": "EMG Peripheral Activation Context"},
+        {"id": "SCENARIO_H", "name": "EOG Ocular Artifact Indicator"},
+        {"id": "SCENARIO_I", "name": "Deterministic Multimodal Fixture Replay"},
+        {"id": "SCENARIO_J", "name": "Multimodal Fault Recovery & Recalibration"},
+        {"id": "SCENARIO_K", "name": "Authorized End-to-End HIL Dispatch (Non-Actuation Enforced)"},
+        {"id": "SCENARIO_L", "name": "Unsafe Multimodal State (Zero Transmission)"},
+    ]
+
+
+@api_router.post("/sensors/scenarios/{scenario_id}/run", tags=["Multimodal Sensors"])
+def post_run_sensor_scenario(scenario_id: str) -> Any:
+    """Run a specific Phase 23 Golden Scenario."""
+    from neuromove.multimodal_sensors.scenarios import MultimodalGoldenScenarios
+
+    scenarios = MultimodalGoldenScenarios()
+    res = scenarios.run_scenario(scenario_id)
+    if not res.get("passed") and "Unknown scenario" in res.get("error", ""):
+        raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found")
+    return res
+
+
+@api_router.post("/sensors/reset", tags=["Multimodal Sensors"])
+def post_reset_multimodal_service() -> Any:
+    """Reset multimodal service to clean baseline."""
+    from neuromove.multimodal_sensors.service import MultimodalSensorService
+
+    service = MultimodalSensorService.get_instance()
+    service.reset_service()
+    return {"status": "RESET_SUCCESSFUL"}
+
+
 # --- WebSocket Stream Endpoints ---
 
 
@@ -3130,6 +3352,12 @@ async def ws_eeg_acquisition_endpoint(websocket: WebSocket) -> None:
 async def ws_research_endpoint(websocket: WebSocket) -> None:
     """Real-time Research Replay & Analytics telemetry stream socket."""
     await ws_manager.connect_research(websocket)
+
+
+@ws_router.websocket("/sensors")
+async def ws_sensors_endpoint(websocket: WebSocket) -> None:
+    """Real-time Multimodal Sensors & Fusion telemetry stream socket."""
+    await ws_manager.connect_sensors(websocket)
 
 
 @ws_router.websocket("/stream")
