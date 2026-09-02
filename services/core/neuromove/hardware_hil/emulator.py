@@ -35,10 +35,8 @@ from neuromove.transport_protocol.models import (
     CommandAckStatus,
     CommandEnvelope,
     CommandNack,
-    CommandType,
     DeviceCapability,
     MessageType,
-    TransportConnectionState,
 )
 from neuromove.transport_protocol.protocol import negotiate_protocol_version
 from neuromove.transport_protocol.sequence import SequenceTracker
@@ -138,9 +136,7 @@ class Esp32ProtocolEmulator:
             self.connection_state = HardwareConnectionState.DISCONNECTED
             return False, self.protocol_version, "Simulated hardware link disconnected"
 
-        success, negotiated_version, reason = negotiate_protocol_version(
-            client_protocol_version
-        )
+        success, negotiated_version, reason = negotiate_protocol_version(client_protocol_version)
         if success:
             self.connection_state = HardwareConnectionState.READY
             self.active_session_id = session_id
@@ -249,7 +245,11 @@ class Esp32ProtocolEmulator:
             )
 
         # 2. Check session boundary
-        if self.active_session_id and envelope.session_id and envelope.session_id != self.active_session_id:
+        if (
+            self.active_session_id
+            and envelope.session_id
+            and envelope.session_id != self.active_session_id
+        ):
             return create_nack(
                 message_id=f"nack_{envelope.message_id}",
                 command_id=envelope.command_id,
@@ -266,7 +266,10 @@ class Esp32ProtocolEmulator:
                 # Check if this exact command was already received
                 if envelope.command_id in self.received_commands:
                     self.duplicate_commands.append(envelope.command_id)
-                    logger.info("Idempotent duplicate command %s received; returning COMMAND_DUPLICATE ACK", envelope.command_id)
+                    logger.info(
+                        "Idempotent duplicate command %s received; returning COMMAND_DUPLICATE ACK",
+                        envelope.command_id,
+                    )
                     return create_ack(
                         message_id=f"ack_dup_{envelope.message_id}",
                         command_id=envelope.command_id,
@@ -302,11 +305,13 @@ class Esp32ProtocolEmulator:
             expires_at_dt = expires_at_dt.replace(tzinfo=UTC)
 
         if now_dt >= expires_at_dt:
-            self.rejected_commands.append({
-                "command_id": envelope.command_id,
-                "reason": "EXPIRED_AUTHORIZATION",
-                "timestamp": now_dt.isoformat(),
-            })
+            self.rejected_commands.append(
+                {
+                    "command_id": envelope.command_id,
+                    "reason": "EXPIRED_AUTHORIZATION",
+                    "timestamp": now_dt.isoformat(),
+                }
+            )
             return create_nack(
                 message_id=f"nack_exp_{envelope.message_id}",
                 command_id=envelope.command_id,
@@ -320,7 +325,9 @@ class Esp32ProtocolEmulator:
         if self._fault_drop_ack:
             self._fault_drop_ack = False
             self.received_commands[envelope.command_id] = envelope
-            logger.warning("Simulated fault: dropping outgoing ACK for command %s", envelope.command_id)
+            logger.warning(
+                "Simulated fault: dropping outgoing ACK for command %s", envelope.command_id
+            )
             return create_nack(
                 message_id=f"nack_dropack_{envelope.message_id}",
                 command_id=envelope.command_id,
@@ -336,7 +343,10 @@ class Esp32ProtocolEmulator:
         if envelope.payload and envelope.payload.intent_class in ("STOP", "SAFE_STOP"):
             logger.info("ESP32 Emulator SAFE_STOP executed: halting simulated subsystems")
         elif envelope.payload and envelope.payload.intent_class == "CANCEL_INTENT":
-            logger.info("ESP32 Emulator CANCEL_INTENT executed: clearing pending command %s", envelope.command_id)
+            logger.info(
+                "ESP32 Emulator CANCEL_INTENT executed: clearing pending command %s",
+                envelope.command_id,
+            )
 
         return create_ack(
             message_id=f"ack_{envelope.message_id}",

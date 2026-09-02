@@ -10,8 +10,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from neuromove.transport_protocol.models import (
-    CommandAck,
-    CommandNack,
     DeviceCapability,
     HeartbeatStatus,
     TransportMetrics,

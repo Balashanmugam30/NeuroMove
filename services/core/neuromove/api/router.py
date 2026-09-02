@@ -2395,7 +2395,9 @@ def get_hardware_device_by_id(device_id: str) -> Any:
     for d in devices:
         if d.get("device_id") == device_id:
             return d
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device {device_id} not found")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Device {device_id} not found"
+    )
 
 
 @api_router.get("/hardware/ports", tags=["Hardware-in-the-Loop & ESP32 Adapter"])
@@ -2422,7 +2424,7 @@ def get_hardware_sessions() -> list[dict[str, Any]]:
                 "device_mode": status_data.active_mode,
                 "protocol_version": "1.0",
                 "firmware_version": "0.1.0",
-                "connected_at": datetime.now(UTC).isoformat(),
+                "connected_at": utc_now().isoformat(),
                 "status": "ACTIVE",
                 "sequence_base": 0,
             }
@@ -2443,7 +2445,10 @@ def get_hardware_capabilities() -> list[str]:
     """Retrieve advertised capabilities of the active hardware adapter."""
     from ..hardware_hil.service import default_hardware_service
 
-    return [str(c.value if hasattr(c, "value") else c) for c in default_hardware_service.adapter.capabilities()]
+    return [
+        str(c.value if hasattr(c, "value") else c)
+        for c in default_hardware_service.adapter.capabilities()
+    ]
 
 
 @api_router.get("/hardware/diagnostics", tags=["Hardware-in-the-Loop & ESP32 Adapter"])
@@ -2475,7 +2480,9 @@ def post_hardware_connect(payload: dict[str, Any]) -> Any:
 
     try:
         mode = HardwareEndpointMode(mode_str)
-        success = default_hardware_service.set_endpoint_mode(mode=mode, port=port, baud_rate=baud_rate)
+        success = default_hardware_service.set_endpoint_mode(
+            mode=mode, port=port, baud_rate=baud_rate
+        )
         return {
             "success": success,
             "device_mode": mode.value,
@@ -2502,13 +2509,18 @@ def post_hardware_negotiate(payload: dict[str, Any]) -> Any:
     from ..hardware_hil.service import default_hardware_service
 
     version = payload.get("client_protocol_version", "1.0")
-    session_id = payload.get("session_id", default_hardware_service.active_session_id or "sess_hw_01")
+    session_id = payload.get(
+        "session_id", default_hardware_service.active_session_id or "sess_hw_01"
+    )
     success, negotiated, reason = default_hardware_service.adapter.negotiate(version, session_id)
     return {
         "success": success,
         "negotiated_version": negotiated,
         "reason": reason,
-        "capabilities": [str(c.value if hasattr(c, "value") else c) for c in default_hardware_service.adapter.capabilities()],
+        "capabilities": [
+            str(c.value if hasattr(c, "value") else c)
+            for c in default_hardware_service.adapter.capabilities()
+        ],
     }
 
 
@@ -2569,9 +2581,6 @@ def post_hardware_hil_reconnect() -> Any:
 
     default_hardware_service.adapter.disconnect()
     default_hardware_service.state_machine.reset()
-    default_hardware_service.state_machine.transition_to(
-        from_state := default_hardware_service.state_machine.current_state,
-    ) if False else None
     default_hardware_service._initialize_default_state()
     return default_hardware_service.get_status().model_dump()
 
@@ -2597,7 +2606,9 @@ def get_hardware_hil_experiments(limit: int = 50) -> list[dict[str, Any]]:
     return default_hardware_service.storage.list_experiments(limit=limit)
 
 
-@api_router.get("/hardware/hil/experiments/{experiment_id}", tags=["Hardware-in-the-Loop & ESP32 Adapter"])
+@api_router.get(
+    "/hardware/hil/experiments/{experiment_id}", tags=["Hardware-in-the-Loop & ESP32 Adapter"]
+)
 def get_hardware_hil_experiment_by_id(experiment_id: str) -> Any:
     """Retrieve experiment details by ID."""
     from ..hardware_hil.service import default_hardware_service
@@ -2606,10 +2617,15 @@ def get_hardware_hil_experiment_by_id(experiment_id: str) -> Any:
     for exp in exps:
         if exp.get("experiment_id") == experiment_id:
             return exp
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment {experiment_id} not found")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment {experiment_id} not found"
+    )
 
 
-@api_router.post("/hardware/hil/experiments/{experiment_id}/replay", tags=["Hardware-in-the-Loop & ESP32 Adapter"])
+@api_router.post(
+    "/hardware/hil/experiments/{experiment_id}/replay",
+    tags=["Hardware-in-the-Loop & ESP32 Adapter"],
+)
 def post_hardware_hil_experiment_replay(experiment_id: str) -> Any:
     """Replay a recorded HIL scenario experiment."""
     from ..hardware_hil.service import default_hardware_service
@@ -2617,7 +2633,9 @@ def post_hardware_hil_experiment_replay(experiment_id: str) -> Any:
     exps = default_hardware_service.storage.list_experiments(limit=100)
     target = next((e for e in exps if e.get("experiment_id") == experiment_id), None)
     if not target:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment {experiment_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment {experiment_id} not found"
+        )
 
     scenario_id = target.get("scenario_id", "SCENARIO_A")
     result = default_hardware_service.run_scenario(scenario_id)
@@ -2690,4 +2708,3 @@ async def ws_hardware_endpoint(websocket: WebSocket) -> None:
 async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
     """Multiplexed real-time WebSocket carrying all subscribed channels."""
     await ws_manager.connect_all(websocket)
-

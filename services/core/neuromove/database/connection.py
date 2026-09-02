@@ -1539,9 +1539,7 @@ class DatabaseManager:
                 conn.commit()
 
             # Migration 014: Hardware-in-the-Loop Integration & Validation (Phase 20)
-            cursor.execute(
-                "SELECT 1 FROM schema_migrations WHERE version = '014_hardware_hil';"
-            )
+            cursor.execute("SELECT 1 FROM schema_migrations WHERE version = '014_hardware_hil';")
             if not cursor.fetchone():
                 cursor.execute(
                     """

@@ -118,7 +118,7 @@ def test_state_machine_illegal_transition() -> None:
 
 def test_virtual_serial_duplex_communication() -> None:
     pair = VirtualSerialPair(port_name="TEST_PORT", timeout_s=0.2)
-    test_bytes = b"\xAA\x55TEST_DATA\x55\xAA"
+    test_bytes = b"\xaa\x55TEST_DATA\x55\xaa"
 
     pair.host_to_device.write(test_bytes)
     received = pair.host_to_device.read_all()

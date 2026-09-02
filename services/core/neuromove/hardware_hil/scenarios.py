@@ -6,8 +6,6 @@ fault tolerance, monotonic sequencing, idempotent deduplication, and recovery cy
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -15,8 +13,6 @@ from typing import Any
 from neuromove.hardware_hil.emulator import Esp32ProtocolEmulator
 from neuromove.hardware_hil.models import (
     HardwareConnectionState,
-    HardwareEndpointMode,
-    HILExperiment,
     HILScenarioResult,
 )
 from neuromove.hardware_hil.ports import discover_serial_ports
@@ -29,8 +25,6 @@ from neuromove.transport_protocol.commands import (
 from neuromove.transport_protocol.framing import pack_frame
 from neuromove.transport_protocol.models import (
     CommandAckStatus,
-    CommandPayload,
-    CommandType,
     ExecutionAuthorization,
     TransportConnectionState,
 )
@@ -127,10 +121,7 @@ class HILScenarioRegistry:
 
     def list_scenarios(self) -> list[dict[str, Any]]:
         """Return list of registered scenarios."""
-        return [
-            {"scenario_id": sid, **info}
-            for sid, info in self.scenarios.items()
-        ]
+        return [{"scenario_id": sid, **info} for sid, info in self.scenarios.items()]
 
     def _create_valid_auth(
         self,
@@ -229,7 +220,13 @@ class HILScenarioRegistry:
         auth = self._create_valid_auth(decision="AUTHORIZED")
         is_valid, reason_code, _ = validate_authorization(auth)
         if not is_valid:
-            return HILScenarioResult(scenario_id="SCENARIO_D", name="Authorized Command Execution", description="", passed=False, failure_reason=f"Pre-validation failed: {reason_code}")
+            return HILScenarioResult(
+                scenario_id="SCENARIO_D",
+                name="Authorized Command Execution",
+                description="",
+                passed=False,
+                failure_reason=f"Pre-validation failed: {reason_code}",
+            )
 
         envelope = create_command_envelope(
             auth=auth,
@@ -456,7 +453,10 @@ class HILScenarioRegistry:
         emulator = Esp32ProtocolEmulator()
         old_boot = emulator.boot_id
         new_boot = emulator.reboot()
-        passed = old_boot != new_boot and emulator.connection_state == HardwareConnectionState.DISCONNECTED
+        passed = (
+            old_boot != new_boot
+            and emulator.connection_state == HardwareConnectionState.DISCONNECTED
+        )
         return HILScenarioResult(
             scenario_id="SCENARIO_M",
             name="Device Cold Reboot",
@@ -631,7 +631,9 @@ class HILScenarioRegistry:
         frame_bytes = pack_frame(envelope)
         ack = adapter.send_frame(frame_bytes)
 
-        passed = success and hasattr(ack, "status") and ack.status == CommandAckStatus.COMMAND_ACCEPTED
+        passed = (
+            success and hasattr(ack, "status") and ack.status == CommandAckStatus.COMMAND_ACCEPTED
+        )
         return HILScenarioResult(
             scenario_id="SCENARIO_T",
             name="Full End-to-End HIL Recovery",

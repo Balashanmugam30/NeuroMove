@@ -10,10 +10,8 @@ from neuromove.database.connection import DatabaseManager
 from neuromove.hardware_hil.models import (
     Esp32DeviceInfo,
     HardwareDiagnostic,
-    HardwareHealth,
     HardwareSession,
     HILExperiment,
-    HILScenarioResult,
 )
 
 logger = logging.getLogger(__name__)

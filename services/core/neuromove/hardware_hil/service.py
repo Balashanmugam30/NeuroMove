@@ -3,36 +3,30 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from neuromove.domain.enums import EventType
-from neuromove.events.envelope import EventEnvelope
 from neuromove.hardware_hil.emulator import Esp32ProtocolEmulator
 from neuromove.hardware_hil.models import (
     Esp32DeviceInfo,
     FirmwareIdentity,
     HardwareConnectionState,
-    HardwareDiagnostic,
     HardwareEndpointMode,
     HardwareHealth,
-    HardwareRecoveryResult,
     HardwareSession,
     HardwareStatus,
     HILExperiment,
     HILScenarioResult,
     SerialPortDescriptor,
 )
-from neuromove.hardware_hil.ports import discover_serial_ports, validate_port_settings
+from neuromove.hardware_hil.ports import discover_serial_ports
 from neuromove.hardware_hil.scenarios import HILScenarioRegistry
 from neuromove.hardware_hil.serial_adapter import SerialEsp32Adapter
 from neuromove.hardware_hil.state_machine import HardwareConnectionStateMachine
 from neuromove.hardware_hil.storage import HardwareHilStorage
 from neuromove.hardware_hil.virtual_adapter import VirtualSerialAdapter
-from neuromove.transport.models import TransportStream
 from neuromove.transport_protocol.adapters import SimulatedEsp32Adapter, TransportAdapter
 from neuromove.transport_protocol.commands import (
     create_command_envelope,
@@ -43,11 +37,8 @@ from neuromove.transport_protocol.heartbeat import HeartbeatMonitor
 from neuromove.transport_protocol.models import (
     CommandAck,
     CommandAckStatus,
-    CommandNack,
-    CommandPayload,
     CommandType,
     ExecutionAuthorization,
-    HeartbeatStatus,
     TransportMetrics,
 )
 from neuromove.transport_protocol.reliability import RetryManager
@@ -118,16 +109,12 @@ class HardwareHilService:
             is_hil_only=True,
         )
         self.storage.record_device(self.device_info)
-        self.state_machine.transition_to(
-            HardwareConnectionState.CONNECTING, "Initial bootstrap"
-        )
+        self.state_machine.transition_to(HardwareConnectionState.CONNECTING, "Initial bootstrap")
         self.state_machine.transition_to(
             HardwareConnectionState.NEGOTIATING, "Negotiating bootstrap session"
         )
         self.adapter.negotiate("1.0", self.active_session_id)
-        self.state_machine.transition_to(
-            HardwareConnectionState.READY, "Handshake complete"
-        )
+        self.state_machine.transition_to(HardwareConnectionState.READY, "Handshake complete")
 
     def get_status(self) -> HardwareStatus:
         """Return the current aggregated HardwareStatus."""
@@ -181,7 +168,9 @@ class HardwareHilService:
 
         self.active_mode = mode
         self.state_machine.reset()
-        self.state_machine.transition_to(HardwareConnectionState.CONNECTING, f"Switching mode to {mode}")
+        self.state_machine.transition_to(
+            HardwareConnectionState.CONNECTING, f"Switching mode to {mode}"
+        )
 
         if mode == HardwareEndpointMode.VIRTUAL_SERIAL:
             self.active_port = port or "VIRTUAL_COM_01"
@@ -301,7 +290,9 @@ class HardwareHilService:
             if ack_or_nack.status == CommandAckStatus.COMMAND_DUPLICATE:
                 self.metrics.commands_duplicated += 1
             return {
-                "status": ack_or_nack.status.value if hasattr(ack_or_nack.status, "value") else str(ack_or_nack.status),
+                "status": ack_or_nack.status.value
+                if hasattr(ack_or_nack.status, "value")
+                else str(ack_or_nack.status),
                 "command_id": command_id,
                 "sequence_number": seq_num,
                 "message_id": ack_or_nack.message_id,
@@ -328,7 +319,7 @@ class HardwareHilService:
             return rtt
         except Exception as exc:
             logger.warning("Heartbeat ping failed: %s", exc)
-            new_state = self.heartbeat_monitor.record_missed_heartbeat()
+            self.heartbeat_monitor.record_missed_heartbeat()
             if self.heartbeat_monitor._missed_count >= 3:
                 self.state_machine.transition_to(
                     HardwareConnectionState.STALE, "3 missed heartbeats"
@@ -353,8 +344,12 @@ class HardwareHilService:
         self.active_session_id = f"sess_hw_{uuid.uuid4().hex[:8]}"
 
         # Re-negotiate
-        self.state_machine.transition_to(HardwareConnectionState.CONNECTING, "Post-reboot reconnect")
-        self.state_machine.transition_to(HardwareConnectionState.NEGOTIATING, "Post-reboot negotiation")
+        self.state_machine.transition_to(
+            HardwareConnectionState.CONNECTING, "Post-reboot reconnect"
+        )
+        self.state_machine.transition_to(
+            HardwareConnectionState.NEGOTIATING, "Post-reboot negotiation"
+        )
         self.adapter.negotiate("1.0", self.active_session_id)
         self.state_machine.transition_to(HardwareConnectionState.READY, "Reboot recovery complete")
         return new_boot
@@ -364,7 +359,9 @@ class HardwareHilService:
         result = self.scenario_registry.run_scenario(scenario_id)
 
         # Construct experiment manifest
-        manifest_raw = f"{scenario_id}:{self.active_mode}:{result.passed}:{result.observed_ack_status}"
+        manifest_raw = (
+            f"{scenario_id}:{self.active_mode}:{result.passed}:{result.observed_ack_status}"
+        )
         manifest_hash = hashlib.sha256(manifest_raw.encode("utf-8")).hexdigest()
 
         exp = HILExperiment(
@@ -379,7 +376,10 @@ class HardwareHilService:
             verdict="PASS" if result.passed else "FAIL",
             started_at=datetime.now(UTC).isoformat(),
             completed_at=datetime.now(UTC).isoformat(),
-            details={"observed_ack_status": result.observed_ack_status, "latency_ms": result.latency_ms},
+            details={
+                "observed_ack_status": result.observed_ack_status,
+                "latency_ms": result.latency_ms,
+            },
         )
         self.storage.record_experiment(exp)
         return result

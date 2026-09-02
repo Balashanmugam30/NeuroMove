@@ -62,7 +62,9 @@ class SerialEsp32Adapter(TransportAdapter):
                 write_timeout=self.write_timeout_s,
             )
             self._is_connected = True
-            logger.info("Physical serial port %s opened successfully at %d baud", self.port, self.baud_rate)
+            logger.info(
+                "Physical serial port %s opened successfully at %d baud", self.port, self.baud_rate
+            )
             return True
         except ImportError:
             logger.error("pyserial is not installed in the environment.")
@@ -114,7 +116,7 @@ class SerialEsp32Adapter(TransportAdapter):
             while time.monotonic() - start_time < self.read_timeout_s:
                 if self._serial_handle.in_waiting > 0:
                     response_buffer.extend(self._serial_handle.read(self._serial_handle.in_waiting))
-                    if len(response_buffer) >= 16 and response_buffer.endswith(b"\x55\xAA"):
+                    if len(response_buffer) >= 16 and response_buffer.endswith(b"\x55\xaa"):
                         break
                 time.sleep(0.005)
 

@@ -30,7 +30,12 @@ def discover_serial_ports() -> list[SerialPortDescriptor]:
         for p in ports:
             hint = None
             desc_lower = (p.description or "").lower()
-            if "esp32" in desc_lower or "cp210" in desc_lower or "ch340" in desc_lower or "ftdi" in desc_lower:
+            if (
+                "esp32" in desc_lower
+                or "cp210" in desc_lower
+                or "ch340" in desc_lower
+                or "ftdi" in desc_lower
+            ):
                 hint = "ESP32_COMPATIBLE"
             elif "virtual" in desc_lower:
                 hint = "VIRTUAL_SERIAL"
@@ -98,9 +103,7 @@ def validate_port_settings(
     """
     valid_baud_rates = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
     if baud_rate not in valid_baud_rates:
-        raise ValueError(
-            f"Invalid baud rate {baud_rate}. Must be one of {valid_baud_rates}."
-        )
+        raise ValueError(f"Invalid baud rate {baud_rate}. Must be one of {valid_baud_rates}.")
 
     if read_timeout_ms < 50 or read_timeout_ms > 10000:
         raise ValueError("read_timeout_ms must be between 50ms and 10000ms.")
