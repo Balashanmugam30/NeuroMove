@@ -37,6 +37,9 @@ class ConnectionManager:
     async def connect_resilience(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="resilience")
 
+    async def connect_transport(self, websocket: WebSocket) -> None:
+        await handle_websocket_session(websocket, default_stream="transport")
+
     async def connect_all(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="all")
 

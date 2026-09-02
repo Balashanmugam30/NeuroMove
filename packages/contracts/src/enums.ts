@@ -109,6 +109,7 @@ export const TransportStreamEnum = z.enum([
   "confidence",
   "intent",
   "resilience",
+  "transport",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -231,6 +232,22 @@ export const EventTypeEnum = z.enum([
   "INVARIANT_FAILED",
   "RESILIENCE_EXPERIMENT_STARTED",
   "RESILIENCE_EXPERIMENT_COMPLETED",
+
+  // Command Transport & ESP32 Protocol (Phase 19)
+  "TRANSPORT_CONNECTED",
+  "TRANSPORT_DISCONNECTED",
+  "TRANSPORT_NEGOTIATING",
+  "TRANSPORT_NEGOTIATED",
+  "TRANSPORT_DEGRADED",
+  "TRANSPORT_COMMAND_CREATED",
+  "TRANSPORT_COMMAND_SENT",
+  "TRANSPORT_COMMAND_ACKED",
+  "TRANSPORT_COMMAND_REJECTED",
+  "TRANSPORT_COMMAND_RETRIED",
+  "TRANSPORT_COMMAND_EXPIRED",
+  "TRANSPORT_SEQUENCE_GAP",
+  "TRANSPORT_CHECKSUM_FAILURE",
+  "TRANSPORT_HEARTBEAT",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
 

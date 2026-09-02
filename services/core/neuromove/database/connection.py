@@ -1408,6 +1408,136 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 013: ESP32 Protocol, Command Transport & Framing Layer (Phase 19)
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '013_transport_protocol';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_devices (
+                        device_id TEXT PRIMARY KEY,
+                        device_type TEXT NOT NULL,
+                        firmware_version TEXT NOT NULL,
+                        protocol_version TEXT NOT NULL,
+                        capabilities_json TEXT NOT NULL,
+                        boot_id TEXT NOT NULL,
+                        session_id TEXT,
+                        status TEXT NOT NULL,
+                        registered_at TEXT NOT NULL,
+                        last_seen_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_sessions (
+                        session_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        protocol_version TEXT NOT NULL,
+                        connection_state TEXT NOT NULL,
+                        sequence_baseline INTEGER NOT NULL DEFAULT 0,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_commands (
+                        command_id TEXT PRIMARY KEY,
+                        authorization_id TEXT NOT NULL,
+                        intent_id TEXT,
+                        device_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        model_version_id TEXT,
+                        command_type TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        issued_at TEXT NOT NULL,
+                        expires_at TEXT NOT NULL,
+                        attempt_count INTEGER NOT NULL DEFAULT 0,
+                        last_sequence INTEGER,
+                        last_error TEXT,
+                        payload_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_messages (
+                        message_id TEXT PRIMARY KEY,
+                        command_id TEXT,
+                        sequence_number INTEGER NOT NULL,
+                        direction TEXT NOT NULL,
+                        message_type TEXT NOT NULL,
+                        length_bytes INTEGER NOT NULL,
+                        checksum TEXT NOT NULL,
+                        raw_frame_preview TEXT,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_acknowledgements (
+                        ack_id TEXT PRIMARY KEY,
+                        message_id TEXT NOT NULL,
+                        command_id TEXT,
+                        sequence_number INTEGER,
+                        status TEXT NOT NULL,
+                        retryable INTEGER NOT NULL DEFAULT 0,
+                        error_code TEXT,
+                        reason TEXT,
+                        latency_ms REAL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_protocol_events (
+                        event_id TEXT PRIMARY KEY,
+                        session_id TEXT,
+                        event_type TEXT NOT NULL,
+                        sequence_number INTEGER NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details_json TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_connection_events (
+                        event_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        from_state TEXT NOT NULL,
+                        to_state TEXT NOT NULL,
+                        reason TEXT,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS transport_heartbeats (
+                        heartbeat_id TEXT PRIMARY KEY,
+                        device_id TEXT NOT NULL,
+                        sequence_number INTEGER NOT NULL,
+                        sent_at TEXT NOT NULL,
+                        received_at TEXT,
+                        rtt_ms REAL,
+                        status TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('013_transport_protocol');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

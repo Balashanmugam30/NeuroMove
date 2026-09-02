@@ -2154,6 +2154,217 @@ def run_resilience_scenario(payload: dict[str, Any]) -> Any:
         ) from exc
 
 
+# --- Phase 19: ESP32 Protocol & Command Transport Endpoints ---
+
+
+@api_router.get("/transport/status", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_status() -> Any:
+    """Return live authoritative status of the transport layer and link health."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.get_status()
+
+
+@api_router.get("/transport/devices", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_devices() -> list[Any]:
+    """Retrieve registered simulated/real endpoint devices."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.storage.get_devices()
+
+
+@api_router.get("/transport/devices/{device_id}", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_device(device_id: str) -> Any:
+    """Retrieve detail of a registered endpoint device."""
+    from ..transport_protocol.service import default_transport_service
+
+    devices = default_transport_service.storage.get_devices()
+    for d in devices:
+        if d.get("device_id") == device_id:
+            return d
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Device '{device_id}' not found",
+    )
+
+
+@api_router.get("/transport/capabilities", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_capabilities() -> Any:
+    """Retrieve negotiated device capabilities."""
+    from ..transport_protocol.service import default_transport_service
+
+    return [c.value for c in default_transport_service.adapter.capabilities()]
+
+
+@api_router.get("/transport/connection", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_connection() -> Any:
+    """Retrieve current connection state and heartbeat status."""
+    from ..transport_protocol.service import default_transport_service
+
+    status_obj = default_transport_service.get_status()
+    return {
+        "connection_state": status_obj.connection_state.value,
+        "heartbeat": status_obj.heartbeat.model_dump(),
+        "device_id": status_obj.device.device_id if status_obj.device else None,
+    }
+
+
+@api_router.get("/transport/commands", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_commands(limit: int = 50, command_status: str | None = None) -> list[Any]:
+    """Retrieve recent commands with optional status filter."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.storage.get_commands(limit=limit, status=command_status)
+
+
+@api_router.get("/transport/commands/{command_id}", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_command(command_id: str) -> Any:
+    """Retrieve specific command lifecycle audit record."""
+    from ..transport_protocol.service import default_transport_service
+
+    cmd = default_transport_service.storage.get_command(command_id)
+    if not cmd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Command '{command_id}' not found",
+        )
+    return cmd
+
+
+@api_router.get("/transport/trace", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_trace(limit: int = 100) -> list[Any]:
+    """Retrieve development/research protocol packet capture trace."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.storage.get_traces(limit=limit)
+
+
+@api_router.post("/transport/negotiate", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_negotiate(payload: dict[str, Any]) -> Any:
+    """Initiate 3-way protocol handshake and version negotiation."""
+    from ..transport_protocol.service import default_transport_service
+
+    version = payload.get("protocol_version", "1.0")
+    session_id = payload.get("session_id", "sess-01")
+    compat, ver, reason = default_transport_service.negotiate(version, session_id)
+    return {
+        "success": compat,
+        "negotiated_version": ver,
+        "reason": reason,
+        "connection_state": default_transport_service.connection_state.value,
+    }
+
+
+@api_router.post("/transport/commands/validate", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_commands_validate(payload: dict[str, Any]) -> Any:
+    """Validate Phase 17 ExecutionAuthorization before frame construction."""
+    from ..transport_protocol.models import ExecutionAuthorization
+    from ..transport_protocol.service import default_transport_service
+
+    auth = ExecutionAuthorization.model_validate(payload)
+    is_valid, reason_code, msg = default_transport_service.validate_command_authorization(auth)
+    return {
+        "valid": is_valid,
+        "reason_code": reason_code,
+        "message": msg,
+    }
+
+
+@api_router.post("/transport/commands/send", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_commands_send(payload: dict[str, Any]) -> Any:
+    """Validate Phase 17 authorization, construct envelope, transmit frame to adapter."""
+    from ..transport_protocol.models import ExecutionAuthorization
+    from ..transport_protocol.service import default_transport_service
+
+    auth = ExecutionAuthorization.model_validate(payload)
+    return default_transport_service.send_authorized_command(auth)
+
+
+@api_router.post(
+    "/transport/commands/{command_id}/cancel", tags=["Command Transport & ESP32 Protocol"]
+)
+def post_transport_command_cancel(command_id: str) -> Any:
+    """Cancel an in-flight command."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.cancel_command(command_id)
+
+
+@api_router.get("/transport/metrics", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_metrics() -> Any:
+    """Retrieve aggregated transport diagnostic metrics."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.storage.get_metrics()
+
+
+@api_router.get("/transport/heartbeats", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_heartbeats() -> Any:
+    """Retrieve current heartbeat status and trigger a heartbeat ping."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.ping_heartbeat()
+
+
+@api_router.post("/transport/simulation/reset", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_simulation_reset() -> Any:
+    """Reset the transport simulator and clear audit registries."""
+    from ..transport_protocol.service import default_transport_service
+
+    default_transport_service.reset_simulation()
+    return {"status": "SUCCESS", "message": "Simulation reset completed"}
+
+
+@api_router.post("/transport/simulation/fault", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_simulation_fault(payload: dict[str, Any]) -> Any:
+    """Configure simulated endpoint fault parameters (drop, delay, corrupt, disconnect)."""
+    from ..transport_protocol.service import default_transport_service
+
+    if hasattr(default_transport_service.adapter, "simulator"):
+        default_transport_service.adapter.simulator.set_faults(
+            drop_next=payload.get("drop_next", False),
+            delay_ms=float(payload.get("delay_ms", 0.0)),
+            corrupt_crc=payload.get("corrupt_crc", False),
+            drop_ack=payload.get("drop_ack", False),
+            disconnect=payload.get("disconnect", False),
+            skew_seconds=float(payload.get("skew_seconds", 0.0)),
+        )
+        return {"status": "SUCCESS", "faults": payload}
+    return {"status": "IGNORED", "message": "Adapter does not support simulation faults"}
+
+
+@api_router.post("/transport/simulation/reconnect", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_simulation_reconnect() -> Any:
+    """Trigger simulator reconnection and renegotiation."""
+    from ..transport_protocol.service import default_transport_service
+
+    success = default_transport_service.reconnect()
+    return {"status": "SUCCESS" if success else "FAILED", "connected": success}
+
+
+@api_router.get("/transport/scenarios", tags=["Command Transport & ESP32 Protocol"])
+def get_transport_scenarios() -> list[Any]:
+    """List all canonical transport verification scenarios (A through T)."""
+    from ..transport_protocol.service import default_transport_service
+
+    return default_transport_service.scenario_registry.list_scenarios()
+
+
+@api_router.post("/transport/scenarios/run", tags=["Command Transport & ESP32 Protocol"])
+def post_transport_scenarios_run(payload: dict[str, Any]) -> Any:
+    """Execute a canonical deterministic scenario (A through T)."""
+    from ..transport_protocol.service import default_transport_service
+
+    scenario_id = payload.get("scenario_id", "SCENARIO_A")
+    try:
+        return default_transport_service.scenario_registry.run_scenario(scenario_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
 # --- WebSocket Stream Endpoints ---
 
 
@@ -2188,6 +2399,12 @@ async def ws_safety_endpoint(websocket: WebSocket) -> None:
 async def ws_resilience_endpoint(websocket: WebSocket) -> None:
     """Real-time resilience laboratory and fault lifecycle socket."""
     await ws_manager.connect_resilience(websocket)
+
+
+@ws_router.websocket("/transport")
+async def ws_transport_endpoint(websocket: WebSocket) -> None:
+    """Real-time command transport and protocol telemetry socket."""
+    await ws_manager.connect_transport(websocket)
 
 
 @ws_router.websocket("/stream")

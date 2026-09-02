@@ -214,6 +214,17 @@ import {
   ResilienceLabStatusSchema,
   ResilienceMetrics,
   ResilienceMetricsSchema,
+
+  // Phase 19
+  TransportLabStatus,
+  TransportLabStatusSchema,
+  CommandTrace,
+  CommandTraceSchema,
+  TransportMetrics,
+  TransportMetricsSchema,
+  TransportScenarioResult,
+  TransportScenarioResultSchema,
+  ExecutionAuthorization,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -2325,6 +2336,183 @@ export async function runResilienceScenario(
   const data = await res.json();
   return FailureScenarioResultSchema.parse(data);
 }
+
+// ============================================================================
+// Phase 19: ESP32 Protocol & Command Transport API
+// ============================================================================
+
+export async function fetchTransportStatus(): Promise<TransportLabStatus> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return TransportLabStatusSchema.parse(data);
+}
+
+export async function fetchTransportDevices(): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/devices`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportDevice(deviceId: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/devices/${deviceId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportCapabilities(): Promise<string[]> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/capabilities`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportConnection(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/connection`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportCommands(status?: string, limit: number = 50): Promise<any[]> {
+  const query = status ? `?command_status=${encodeURIComponent(status)}&limit=${limit}` : `?limit=${limit}`;
+  const res = await fetch(`${API_BASE_URL}/api/transport/commands${query}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportCommand(commandId: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/commands/${commandId}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportTraces(limit: number = 100): Promise<CommandTrace[]> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/trace?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(CommandTraceSchema).parse(data);
+}
+
+export async function negotiateTransportProtocol(payload: {
+  protocol_version?: string;
+  session_id?: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/negotiate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function validateTransportCommand(auth: ExecutionAuthorization): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/commands/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(auth),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function sendTransportCommand(auth: ExecutionAuthorization): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/commands/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(auth),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function cancelTransportCommand(commandId: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/commands/${commandId}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportMetrics(): Promise<TransportMetrics> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/metrics`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return TransportMetricsSchema.parse(data);
+}
+
+export async function pingTransportHeartbeat(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/heartbeats`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resetTransportSimulation(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/simulation/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function injectTransportFault(payload: {
+  drop_next?: boolean;
+  delay_ms?: number;
+  corrupt_crc?: boolean;
+  drop_ack?: boolean;
+  disconnect?: boolean;
+  skew_seconds?: number;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/simulation/fault`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function reconnectTransport(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/simulation/reconnect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTransportScenarios(): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/scenarios`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function runTransportScenario(scenarioId: string): Promise<TransportScenarioResult> {
+  const res = await fetch(`${API_BASE_URL}/api/transport/scenarios/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return TransportScenarioResultSchema.parse(data);
+}
+
 
 
 
