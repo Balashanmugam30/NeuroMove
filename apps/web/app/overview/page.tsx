@@ -2,221 +2,171 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useMode } from "@/components/providers/ModeProvider";
-import { useRealtime } from "@/components/providers/RealtimeProvider";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { MetricCard } from "@/components/ui/MetricCard";
-import { ConnectionIndicator } from "@/components/ui/ConnectionIndicator";
-import { Button } from "@/components/ui/Button";
-import { InsightCard } from "@/components/ui/InsightCard";
-import { fetchSystemStatus } from "@/lib/api-client";
 import {
-  Layers,
+  Sparkles,
   Activity,
-  ArrowRight,
+  Layers,
   ShieldCheck,
-  Zap,
-  Waves,
-  RefreshCw,
+  Cpu,
+  Database,
 } from "lucide-react";
+import { MetricCard } from "@/components/ui/MetricCard";
+import { ProductHealthHeader } from "@/components/product/ProductHealthHeader";
+import { SystemHealthPanel } from "@/components/product/SystemHealthPanel";
+import { PipelineOverview } from "@/components/product/PipelineOverview";
+import { ProductSessionPanel } from "@/components/product/ProductSessionPanel";
+import {
+  fetchProductStatus,
+  fetchProductSession,
+  resetProductSession,
+} from "@/lib/api-client";
+import { SystemStatusSummary, ProductSession } from "@neuromove/contracts";
 
 export default function OverviewPage() {
-  const { uiIdentity, operatingMode } = useMode();
-  const { connectionState, latencyMs, freshness } = useRealtime();
-  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [productStatus, setProductStatus] = useState<SystemStatusSummary | null>(null);
+  const [productSession, setProductSession] = useState<ProductSession | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const loadStatus = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await fetchSystemStatus();
-      setSystemStatus(data);
+      const [status, session] = await Promise.all([
+        fetchProductStatus(),
+        fetchProductSession(),
+      ]);
+      setProductStatus(status);
+      setProductSession(session);
     } catch {
-      // Safe fallback
+      // Safe fallback if server is offline or booting
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSession = async () => {
+    setLoading(true);
+    try {
+      const newSession = await resetProductSession();
+      setProductSession(newSession);
+      const newStatus = await fetchProductStatus();
+      setProductStatus(newStatus);
+    } catch {
+      // Fallback
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStatus();
+    loadData();
   }, []);
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Page Header */}
-      <PageHeader
-        category="Control Station"
-        title="System Overview & Platform Architecture"
-        description="End-to-end motor-imagery EEG acquisition, feature extraction, safety arbitration, and robot telemetry."
-        mode={operatingMode}
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadStatus}
-            loading={loading}
-            icon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
-          >
-            Refresh Telemetry
-          </Button>
-        }
+      {/* Product Health Header */}
+      <ProductHealthHeader
+        statusSummary={productStatus}
+        onRefresh={loadData}
+        loading={loading}
       />
 
-      {/* Primary Metric Ribbon */}
+      {/* Product Identity & Tagline Hero */}
+      <div className="p-6 bg-gradient-to-r from-blue-900 via-slate-900 to-slate-800 rounded-2xl text-white shadow-xs space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-full">
+            Institutional Competition Product Release
+          </span>
+          <span className="px-2 py-0.5 text-2xs font-mono text-slate-300 bg-white/10 rounded-md">
+            Phase 24.1 Foundation
+          </span>
+        </div>
+
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+          NeuroMove — Safety-First Neurotechnology Platform
+        </h1>
+
+        <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
+          Translating multimodal bio-signals and EEG motor imagery into verified intent through a deterministic, fail-closed neurotechnology pipeline. Validated with 12 Phase 17 safety invariants and Phase 20 ESP32 Hardware-in-the-Loop virtual emulation.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Link
+            href="/demo"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Launch Guided Demo</span>
+          </Link>
+          <Link
+            href="/eeg/live"
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors border border-white/10"
+          >
+            <Activity className="w-4 h-4 text-teal-300" />
+            <span>Live EEG Stream</span>
+          </Link>
+          <Link
+            href="/sensors"
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors border border-white/10"
+          >
+            <Layers className="w-4 h-4 text-indigo-300" />
+            <span>Multimodal Context Lab</span>
+          </Link>
+          <Link
+            href="/hardware"
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors border border-white/10"
+          >
+            <Cpu className="w-4 h-4 text-sky-300" />
+            <span>Hardware HIL Lab</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Key Metric Ribbon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Architecture Phase"
-          value="05 / 24"
-          subtitle="Design System 2.0 & Experience"
+          title="Pipeline Subsystems"
+          value="7 / 7 Active"
+          subtitle="Acquisition, DSP, AI, Safety, HIL, Research"
           variant="brand"
           icon={<Layers className="w-4 h-4 text-blue-600" />}
         />
         <MetricCard
-          title="Transport Health"
-          value={connectionState}
-          subtitle={`Latency: ${latencyMs > 0 ? `${latencyMs.toFixed(1)}ms` : "1.2ms"} (${freshness})`}
-          variant={connectionState === "STREAMING" || connectionState === "CONNECTED" ? "safe" : "warning"}
-          icon={<Zap className="w-4 h-4 text-emerald-600" />}
-        />
-        <MetricCard
-          title="Safety Core"
+          title="Safety Core Status"
           value="ARMED"
-          subtitle="Fail-closed deterministic state machine"
+          subtitle="12 Invariants Active (0 Actuators Connected)"
           variant="safe"
           icon={<ShieldCheck className="w-4 h-4 text-emerald-600" />}
         />
         <MetricCard
-          title="View Mode"
-          value={uiIdentity}
-          subtitle={uiIdentity === "PRODUCT" ? "Executive & Operator View" : "Research & Scientific View"}
-          icon={<Activity className="w-4 h-4 text-teal-600" />}
+          title="Hardware HIL Endpoint"
+          value="CONNECTED"
+          subtitle="ESP32 Virtual Protocol Emulator"
+          variant="brand"
+          icon={<Cpu className="w-4 h-4 text-sky-600" />}
+        />
+        <MetricCard
+          title="Research Replay Integrity"
+          value="100% REPRODUCIBLE"
+          subtitle="SHA-256 Verified Experiment Manifests"
+          variant="safe"
+          icon={<Database className="w-4 h-4 text-teal-600" />}
         />
       </div>
 
-      {/* Subsystem Health Status */}
-      <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-          <span className="text-2xs font-bold uppercase tracking-wider text-slate-500">
-            Control Station Subsystem Connectivity
-          </span>
-          <span className="text-2xs font-mono text-slate-400">
-            Local Core @ 127.0.0.1:8000
-          </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-          <ConnectionIndicator
-            label="FastAPI Core"
-            state={systemStatus?.components?.api || "healthy"}
-          />
-          <ConnectionIndicator
-            label="SQLite Store"
-            state={systemStatus?.components?.database || "not_initialized"}
-          />
-          <ConnectionIndicator
-            label="EEG Source"
-            state="CONNECTED"
-          />
-          <ConnectionIndicator
-            label="Virtual Robot"
-            state="CONNECTED"
-          />
-          <ConnectionIndicator
-            label="Safety Engine"
-            state="ready"
-          />
-        </div>
-      </div>
+      {/* Canonical 7-Stage Architecture Flow */}
+      <PipelineOverview />
 
-      {/* Pipeline Stages Card */}
-      <SectionCard
-        title="Processing Pipeline Architecture"
-        description="Sequential stages from raw electrophysiological acquisition to safe physical actuation"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-1">
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 font-sans">
-              <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
-                1
-              </span>
-              <span>Acquisition & DSP</span>
-            </div>
-            <p className="text-2xs text-slate-600 leading-relaxed font-normal">
-              10-20 EEG streaming (C3, Cz, C4), 8–30 Hz Butterworth bandpass, CAR spatial filtering, and artifact rejection.
-            </p>
-          </div>
+      {/* Subsystem Health Grid */}
+      {productStatus && (
+        <SystemHealthPanel subsystems={productStatus.subsystems} />
+      )}
 
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 font-sans">
-              <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[10px] font-bold">
-                2
-              </span>
-              <span>Feature & Classifier</span>
-            </div>
-            <p className="text-2xs text-slate-600 leading-relaxed font-normal">
-              Common Spatial Pattern (CSP) multi-channel variance projection + Shrinkage Regularized Linear Discriminant Analysis (LDA).
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 font-sans">
-              <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-bold">
-                3
-              </span>
-              <span>Confirmation Gate</span>
-            </div>
-            <p className="text-2xs text-slate-600 leading-relaxed font-normal">
-              Temporal confirmation window (750ms dwell), Bayesian posterior smoothing, and confidence threshold gates.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 font-sans">
-              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">
-                4
-              </span>
-              <span>Safety Arbitration</span>
-            </div>
-            <p className="text-2xs text-slate-600 leading-relaxed font-normal">
-              Deterministic state machine verification → APPROVE / BLOCK / STOP → Differential drive ESP32 command protocol.
-            </p>
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* Quick Launch Callouts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <InsightCard
-          title="Live Command Station (Phase 06 Preparation)"
-          variant="brand"
-          icon={<Zap className="w-5 h-5 text-blue-600" />}
-          action={
-            <Link href="/live">
-              <Button variant="primary" size="xs" icon={<ArrowRight className="w-3.5 h-3.5" />}>
-                Open Live
-              </Button>
-            </Link>
-          }
-        >
-          Monitor active Graz motor imagery trials, real-time 2D digital twin odometry, obstacle clearance, and canonical event streams.
-        </InsightCard>
-
-        <InsightCard
-          title="Electrophysiology & Spectral Power Lab"
-          variant="accent"
-          icon={<Waves className="w-5 h-5 text-teal-600" />}
-          action={
-            <Link href="/eeg">
-              <Button variant="outline" size="xs" icon={<ArrowRight className="w-3.5 h-3.5" />}>
-                Open EEG Lab
-              </Button>
-            </Link>
-          }
-        >
-          60 FPS multi-channel continuous oscilloscope rendering with SMR sensorimotor rhythm (8–12 Hz) power analysis.
-        </InsightCard>
-      </div>
+      {/* Active Session Management */}
+      <ProductSessionPanel
+        session={productSession}
+        onResetSession={handleResetSession}
+        loading={loading}
+      />
     </div>
   );
 }

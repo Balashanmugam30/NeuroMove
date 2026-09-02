@@ -2323,6 +2323,79 @@ class DatabaseManager:
                 )
                 conn.commit()
 
+            # Migration 018: Final Competition Product Foundation & Demo Orchestration (Phase 24.1)
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '018_product_foundation';"
+            )
+            mig_018 = cursor.fetchone() is None
+            if mig_018:
+                logger.info("Applying migration 018_product_foundation...")
+                cursor.executescript(
+                    """
+                    CREATE TABLE IF NOT EXISTS product_sessions (
+                        session_id TEXT PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        acquisition_session_id TEXT,
+                        sensor_session_id TEXT,
+                        model_version TEXT NOT NULL,
+                        confidence_policy TEXT NOT NULL,
+                        intent_id TEXT,
+                        safety_decision TEXT NOT NULL,
+                        hil_session_id TEXT,
+                        experiment_id TEXT,
+                        manifest_hash TEXT NOT NULL,
+                        provenance_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    );
+
+                    CREATE TABLE IF NOT EXISTS product_demo_runs (
+                        run_id TEXT PRIMARY KEY,
+                        scenario_id TEXT NOT NULL,
+                        product_session_id TEXT NOT NULL,
+                        state TEXT NOT NULL,
+                        current_step INTEGER NOT NULL DEFAULT 1,
+                        total_steps INTEGER NOT NULL DEFAULT 9,
+                        source_type TEXT NOT NULL,
+                        steps_json TEXT NOT NULL,
+                        candidate_intent TEXT NOT NULL,
+                        confidence_score REAL NOT NULL,
+                        safety_verdict TEXT NOT NULL,
+                        hil_ack INTEGER NOT NULL DEFAULT 0,
+                        is_blocked INTEGER NOT NULL DEFAULT 0,
+                        block_reason TEXT,
+                        error_message TEXT,
+                        reproducibility_status TEXT NOT NULL,
+                        duration_ms REAL NOT NULL DEFAULT 0.0,
+                        created_at TEXT NOT NULL,
+                        completed_at TEXT
+                    );
+
+                    CREATE TABLE IF NOT EXISTS product_demo_results (
+                        result_id TEXT PRIMARY KEY,
+                        run_id TEXT NOT NULL UNIQUE,
+                        scenario_id TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        source_type TEXT NOT NULL,
+                        candidate_intent TEXT NOT NULL,
+                        confidence_score REAL NOT NULL,
+                        safety_verdict TEXT NOT NULL,
+                        hil_status TEXT NOT NULL,
+                        latency_breakdown_json TEXT NOT NULL,
+                        provenance_json TEXT NOT NULL,
+                        explanation_text TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('018_product_foundation');"
+                )
+                conn.commit()
+
             self._is_initialized = True
 
             logger.info("SQLite database initialized successfully at %s", db_path)

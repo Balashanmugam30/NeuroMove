@@ -319,6 +319,20 @@ class EventType(StrEnum):
     SENSOR_CONTRADICTION_DETECTED = "SENSOR_CONTRADICTION_DETECTED"
     SENSOR_ERROR = "SENSOR_ERROR"
 
+    # Final Product & Demo Orchestration (Phase 24.1)
+    PRODUCT_SESSION_CREATED = "PRODUCT_SESSION_CREATED"
+    PRODUCT_SESSION_READY = "PRODUCT_SESSION_READY"
+    PRODUCT_SESSION_RESET = "PRODUCT_SESSION_RESET"
+    PRODUCT_DEMO_STARTED = "PRODUCT_DEMO_STARTED"
+    PRODUCT_DEMO_PAUSED = "PRODUCT_DEMO_PAUSED"
+    PRODUCT_DEMO_RESUMED = "PRODUCT_DEMO_RESUMED"
+    PRODUCT_DEMO_STEP_COMPLETED = "PRODUCT_DEMO_STEP_COMPLETED"
+    PRODUCT_STAGE_CHANGED = "PRODUCT_STAGE_CHANGED"
+    PRODUCT_SAFETY_BLOCKED = "PRODUCT_SAFETY_BLOCKED"
+    PRODUCT_HIL_COMPLETED = "PRODUCT_HIL_COMPLETED"
+    PRODUCT_DEMO_COMPLETED = "PRODUCT_DEMO_COMPLETED"
+    PRODUCT_DEMO_FAILED = "PRODUCT_DEMO_FAILED"
+
 
 class SensorModality(StrEnum):
     """Supported multimodal sensor signal modalities."""
@@ -395,4 +409,78 @@ class FusionStrategy(StrEnum):
     DECISION_LEVEL = "DECISION_LEVEL"
     CONFIDENCE_MODULATION = "CONFIDENCE_MODULATION"
     CONTRADICTION_GATED = "CONTRADICTION_GATED"
+
+
+class ProductSessionStatus(StrEnum):
+    """Lifecycle status of a unified competition product session."""
+
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    HELD = "HELD"
+    RESET = "RESET"
+    FAILED = "FAILED"
+
+
+class DemoState(StrEnum):
+    """Finite state machine of a guided product demonstration."""
+
+    IDLE = "IDLE"
+    SOURCE_READY = "SOURCE_READY"
+    ACQUIRING = "ACQUIRING"
+    CONTEXT_READY = "CONTEXT_READY"
+    DECODING = "DECODING"
+    CONFIRMING = "CONFIRMING"
+    INTENT_READY = "INTENT_READY"
+    SAFETY_CHECK = "SAFETY_CHECK"
+    AUTHORIZED = "AUTHORIZED"
+    HIL_EXECUTING = "HIL_EXECUTING"
+    COMPLETED = "COMPLETED"
+    HELD = "HELD"
+    DENIED = "DENIED"
+    FAILED = "FAILED"
+    RECOVERING = "RECOVERING"
+
+
+class SystemHealthStatus(StrEnum):
+    """Aggregated subsystem health indicator."""
+
+    HEALTHY = "HEALTHY"
+    READY = "READY"
+    ACTIVE = "ACTIVE"
+    DEGRADED = "DEGRADED"
+    BLOCKED = "BLOCKED"
+    STALE = "STALE"
+    ERROR = "ERROR"
+
+
+class ProductDemoScenario(StrEnum):
+    """6 Golden Demonstration Scenarios."""
+
+    PRODUCT_A = "PRODUCT_A"
+    PRODUCT_B = "PRODUCT_B"
+    PRODUCT_C = "PRODUCT_C"
+    PRODUCT_D = "PRODUCT_D"
+    PRODUCT_E = "PRODUCT_E"
+    PRODUCT_F = "PRODUCT_F"
+
+
+class ProductStage(StrEnum):
+    """7 canonical architecture pipeline stages."""
+
+    SENSORS = "SENSORS"
+    SIGNAL = "SIGNAL"
+    DECODING = "DECODING"
+    CONFIDENCE = "CONFIDENCE"
+    INTENT = "INTENT"
+    SAFETY = "SAFETY"
+    HIL = "HIL"
+    RESEARCH = "RESEARCH"
+
+
+class ProductExecutionOutcome(StrEnum):
+    """Outcome of an end-to-end product execution."""
+
+    PASS = "PASS"
+    BLOCKED = "BLOCKED"
+    FAILED = "FAILED"
 

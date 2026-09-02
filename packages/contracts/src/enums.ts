@@ -114,6 +114,7 @@ export const TransportStreamEnum = z.enum([
   "eeg_acquisition",
   "research",
   "sensors",
+  "product",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -332,8 +333,94 @@ export const EventTypeEnum = z.enum([
   "SENSOR_CONTEXT_UPDATED",
   "SENSOR_CONTRADICTION_DETECTED",
   "SENSOR_ERROR",
+
+  // Final Product & Demo Orchestration (Phase 24.1)
+  "PRODUCT_SESSION_CREATED",
+  "PRODUCT_SESSION_READY",
+  "PRODUCT_SESSION_RESET",
+  "PRODUCT_DEMO_STARTED",
+  "PRODUCT_DEMO_PAUSED",
+  "PRODUCT_DEMO_RESUMED",
+  "PRODUCT_DEMO_STEP_COMPLETED",
+  "PRODUCT_STAGE_CHANGED",
+  "PRODUCT_SAFETY_BLOCKED",
+  "PRODUCT_HIL_COMPLETED",
+  "PRODUCT_DEMO_COMPLETED",
+  "PRODUCT_DEMO_FAILED",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
+
+// ============================================================================
+// Phase 24.1: Final Competition Product Foundation & Demo Enums
+// ============================================================================
+
+export const ProductSessionStatusEnum = z.enum([
+  "ACTIVE",
+  "COMPLETED",
+  "HELD",
+  "RESET",
+  "FAILED",
+]);
+export type ProductSessionStatus = z.infer<typeof ProductSessionStatusEnum>;
+
+export const DemoStateEnum = z.enum([
+  "IDLE",
+  "SOURCE_READY",
+  "ACQUIRING",
+  "CONTEXT_READY",
+  "DECODING",
+  "CONFIRMING",
+  "INTENT_READY",
+  "SAFETY_CHECK",
+  "AUTHORIZED",
+  "HIL_EXECUTING",
+  "COMPLETED",
+  "HELD",
+  "DENIED",
+  "FAILED",
+  "RECOVERING",
+]);
+export type DemoState = z.infer<typeof DemoStateEnum>;
+
+export const SystemHealthStatusEnum = z.enum([
+  "HEALTHY",
+  "READY",
+  "ACTIVE",
+  "DEGRADED",
+  "BLOCKED",
+  "STALE",
+  "ERROR",
+]);
+export type SystemHealthStatus = z.infer<typeof SystemHealthStatusEnum>;
+
+export const ProductDemoScenarioEnum = z.enum([
+  "PRODUCT_A",
+  "PRODUCT_B",
+  "PRODUCT_C",
+  "PRODUCT_D",
+  "PRODUCT_E",
+  "PRODUCT_F",
+]);
+export type ProductDemoScenario = z.infer<typeof ProductDemoScenarioEnum>;
+
+export const ProductStageEnum = z.enum([
+  "SENSORS",
+  "SIGNAL",
+  "DECODING",
+  "CONFIDENCE",
+  "INTENT",
+  "SAFETY",
+  "HIL",
+  "RESEARCH",
+]);
+export type ProductStage = z.infer<typeof ProductStageEnum>;
+
+export const ProductExecutionOutcomeEnum = z.enum([
+  "PASS",
+  "BLOCKED",
+  "FAILED",
+]);
+export type ProductExecutionOutcome = z.infer<typeof ProductExecutionOutcomeEnum>;
 
 // ============================================================================
 // Phase 23: Multimodal Sensors & Context Engine Enums

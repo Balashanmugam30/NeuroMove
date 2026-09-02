@@ -43,24 +43,23 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    name: "Overview",
+    name: "Product",
     items: [
-      { href: "/overview", label: "System Overview", icon: LayoutDashboard },
+      { href: "/overview", label: "Executive Overview", icon: LayoutDashboard, badge: "Phase 24" },
+      { href: "/demo", label: "Guided Demo & Scenarios", icon: FlaskConical, badge: "Phase 24.1" },
     ],
   },
   {
-    name: "Control Station",
+    name: "Acquire",
     items: [
-      { href: "/live", label: "Live Control", icon: Activity, badge: "Phase 06" },
-      { href: "/robot", label: "Robot Mobility", icon: Bot },
-    ],
-  },
-  {
-    name: "BCI Pipeline",
-    items: [
-      { href: "/eeg", label: "EEG Lab", icon: Waves },
       { href: "/eeg/live", label: "Live EEG Acquisition", icon: Activity, badge: "Phase 21" },
       { href: "/sensors", label: "Multimodal Sensors", icon: Layers, badge: "Phase 23" },
+    ],
+  },
+  {
+    name: "Decode",
+    items: [
+      { href: "/eeg", label: "EEG Lab", icon: Waves },
       { href: "/eeg/preprocessing", label: "Preprocessing & DSP", icon: Sliders, badge: "Phase 09" },
       { href: "/eeg/features", label: "Epochs & Features", icon: BrainCircuit, badge: "Phase 10" },
       { href: "/calibration", label: "Calibration", icon: Crosshair, badge: "Phase 13" },
@@ -68,18 +67,18 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/models/lab", label: "AI Model Lab", icon: FlaskConical, badge: "Phase 12" },
       { href: "/adaptation", label: "Adaptive Updates", icon: GitBranch, badge: "Phase 14" },
       { href: "/confidence", label: "Confidence & Temporal", icon: Gauge, badge: "Phase 15" },
-      { href: "/intent", label: "Intent State Machine", icon: Workflow, badge: "Phase 16" },
     ],
   },
-
-
   {
-    name: "Safety & Reliability",
+    name: "Safety & Execution",
     items: [
+      { href: "/intent", label: "Intent State Machine", icon: Workflow, badge: "Phase 16" },
       { href: "/safety", label: "Safety Arbitration", icon: ShieldCheck, badge: "Phase 17" },
       { href: "/resilience", label: "Resilience Lab", icon: ShieldAlert, badge: "Phase 18" },
       { href: "/transport", label: "Command Transport", icon: Radio, badge: "Phase 19" },
       { href: "/hardware", label: "Hardware HIL Lab", icon: Cpu, badge: "Phase 20" },
+      { href: "/live", label: "Live Control", icon: Activity, badge: "Phase 06" },
+      { href: "/robot", label: "Robot Mobility", icon: Bot },
     ],
   },
   {

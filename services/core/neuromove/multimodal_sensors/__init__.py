@@ -22,9 +22,7 @@ from neuromove.multimodal_sensors.models import (
     SensorStreamPacket,
 )
 from neuromove.multimodal_sensors.qc import MultimodalQcEngine
-from neuromove.multimodal_sensors.replay import MultimodalReplayEngine
-from neuromove.multimodal_sensors.scenarios import MultimodalGoldenScenarios
-from neuromove.multimodal_sensors.service import MultimodalSensorService
+from neuromove.multimodal_sensors.service import MultimodalSensorService, default_multimodal_service
 from neuromove.multimodal_sensors.storage import MultimodalSensorStorage
 from neuromove.multimodal_sensors.sync import MultimodalSyncCoordinator
 
@@ -54,4 +52,6 @@ __all__ = [
     "MultimodalSensorStorage",
     "MultimodalSensorService",
     "MultimodalGoldenScenarios",
+    "default_multimodal_service",
 ]
+

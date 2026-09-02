@@ -382,3 +382,7 @@ class MultimodalSensorService:
         self._latest_sync = None
         for s_id in self._active_sensor_ids:
             self.calibrate_device(s_id)
+
+
+# Singleton instance
+default_multimodal_service = MultimodalSensorService()

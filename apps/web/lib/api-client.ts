@@ -297,6 +297,18 @@ import {
   MultimodalSessionSchema,
   MultimodalAnalyticsSummary,
   MultimodalAnalyticsSummarySchema,
+
+  // Phase 24.1
+  ProductSession,
+  ProductSessionSchema,
+  SystemStatusSummary,
+  SystemStatusSummarySchema,
+  DemoRun,
+  DemoRunSchema,
+  DemoResult,
+  DemoResultSchema,
+  DemoScenario,
+  DemoScenarioSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -3402,6 +3414,104 @@ export async function resetMultimodalService(): Promise<{ status: string }> {
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return res.json();
 }
+
+// ============================================================================
+// Phase 24.1: Competition Product Foundation & Demo Orchestration APIs
+// ============================================================================
+
+export async function fetchProductStatus(): Promise<SystemStatusSummary> {
+  const res = await fetch(`${API_BASE_URL}/api/product/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return SystemStatusSummarySchema.parse(data);
+}
+
+export async function fetchProductSession(): Promise<ProductSession> {
+  const res = await fetch(`${API_BASE_URL}/api/product/session`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ProductSessionSchema.parse(data);
+}
+
+export async function resetProductSession(): Promise<ProductSession> {
+  const res = await fetch(`${API_BASE_URL}/api/product/session/reset`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ProductSessionSchema.parse(data);
+}
+
+export async function fetchDemoScenarios(): Promise<DemoScenario[]> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/scenarios`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(DemoScenarioSchema).parse(data);
+}
+
+export async function startDemoScenario(scenarioId: string): Promise<DemoRun> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DemoRunSchema.parse(data);
+}
+
+export async function advanceDemoStep(runId?: string): Promise<DemoRun> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/step`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(runId ? { run_id: runId } : {}),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DemoRunSchema.parse(data);
+}
+
+export async function executeDemoScenario(scenarioId: string): Promise<DemoResult> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DemoResultSchema.parse(data);
+}
+
+export async function fetchActiveDemoRun(): Promise<DemoRun | null> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/active`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  if (!data) return null;
+  return DemoRunSchema.parse(data);
+}
+
+export async function fetchDemoResult(runId: string): Promise<DemoResult> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/result/${encodeURIComponent(runId)}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return DemoResultSchema.parse(data);
+}
+
+export async function resetDemo(): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/product/demo/reset`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
 
 
 

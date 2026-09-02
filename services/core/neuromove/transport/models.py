@@ -56,6 +56,7 @@ class TransportStream(StrEnum):
     EEG_ACQUISITION = "eeg_acquisition"
     RESEARCH = "research"
     SENSORS = "sensors"
+    PRODUCT = "product"
     ALL = "all"
 
 

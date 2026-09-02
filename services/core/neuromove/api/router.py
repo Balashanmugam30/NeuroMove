@@ -3360,8 +3360,106 @@ async def ws_sensors_endpoint(websocket: WebSocket) -> None:
     await ws_manager.connect_sensors(websocket)
 
 
+@ws_router.websocket("/product")
+async def ws_product_endpoint(websocket: WebSocket) -> None:
+    """Real-time Product Level Aggregation stream socket."""
+    await ws_manager.connect_product(websocket)
+
+
 @ws_router.websocket("/stream")
 async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
     """Multiplexed real-time WebSocket carrying all subscribed channels."""
     await ws_manager.connect_all(websocket)
+
+
+# ============================================================================
+# Phase 24.1: Final Competition Product Foundation & Demo Orchestration
+# ============================================================================
+
+from ..product.service import default_product_service
+
+
+@api_router.get("/product/status", tags=["Product Platform"])
+def get_product_system_status() -> dict[str, Any]:
+    """Return unified aggregated system status across all subsystems."""
+    return default_product_service.get_system_status().model_dump()
+
+
+@api_router.get("/product/session", tags=["Product Platform"])
+def get_product_session() -> dict[str, Any]:
+    """Retrieve current unified product session metadata."""
+    return default_product_service.get_session().model_dump()
+
+
+@api_router.post("/product/session/reset", tags=["Product Platform"])
+def post_reset_product_session() -> dict[str, Any]:
+    """Clean reset of product session state and demo orchestrator."""
+    return default_product_service.reset_session().model_dump()
+
+
+@api_router.get("/product/demo/scenarios", tags=["Product Platform"])
+def get_product_demo_scenarios() -> list[dict[str, Any]]:
+    """List 6 Golden Demonstration Scenarios."""
+    return [sc.model_dump() for sc in default_product_service.list_demo_scenarios()]
+
+
+@api_router.post("/product/demo/start", tags=["Product Platform"])
+def post_start_demo_scenario(payload: dict[str, Any]) -> dict[str, Any]:
+    """Initialize a guided demonstration run."""
+    scenario_id = payload.get("scenario_id", "PRODUCT_A")
+    return default_product_service.start_demo_scenario(scenario_id).model_dump()
+
+
+@api_router.post("/product/demo/step", tags=["Product Platform"])
+def post_advance_demo_step(payload: dict[str, Any]) -> dict[str, Any]:
+    """Advance a single step in the active demonstration run."""
+    run_id = payload.get("run_id")
+    if not run_id:
+        active = default_product_service.get_active_demo_run()
+        if not active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active demonstration run found.",
+            )
+    try:
+        return default_product_service.advance_demo_step(run_id).model_dump()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@api_router.post("/product/demo/run", tags=["Product Platform"])
+def post_execute_demo_scenario(payload: dict[str, Any]) -> dict[str, Any]:
+    """Execute full 9-step scenario and return sealed result."""
+    scenario_id = payload.get("scenario_id", "PRODUCT_A")
+    return default_product_service.execute_demo_scenario(scenario_id).model_dump()
+
+
+@api_router.get("/product/demo/active", tags=["Product Platform"])
+def get_active_demo_run() -> dict[str, Any] | None:
+    """Get active demonstration run if any."""
+    active = default_product_service.get_active_demo_run()
+    return active.model_dump() if active else None
+
+
+@api_router.get("/product/demo/result/{run_id}", tags=["Product Platform"])
+def get_demo_result(run_id: str) -> dict[str, Any]:
+    """Retrieve sealed demonstration result by run ID."""
+    res = default_product_service.get_demo_result(run_id)
+    if not res:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Demo result for run {run_id} not found.",
+        )
+    return res.model_dump()
+
+
+@api_router.post("/product/demo/reset", tags=["Product Platform"])
+def post_reset_demo() -> dict[str, str]:
+    """Reset active demo run state."""
+    default_product_service.reset_demo()
+    return {"status": "RESET"}
+
 

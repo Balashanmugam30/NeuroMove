@@ -52,6 +52,9 @@ class ConnectionManager:
     async def connect_sensors(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="sensors")
 
+    async def connect_product(self, websocket: WebSocket) -> None:
+        await handle_websocket_session(websocket, default_stream="product")
+
     async def connect_all(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="all")
 

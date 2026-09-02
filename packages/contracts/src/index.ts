@@ -19,3 +19,4 @@ export * from "./hardware";
 export * from "./eeg_acquisition";
 export * from "./research";
 export * from "./sensors";
+export * from "./product";
