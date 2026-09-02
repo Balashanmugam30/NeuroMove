@@ -20,7 +20,9 @@ import {
   Sliders,
   X,
   GitBranch,
+  Gauge,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export interface NavGroup {
@@ -57,8 +59,10 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/models", label: "CSP & Models", icon: BrainCircuit, badge: "Phase 11" },
       { href: "/models/lab", label: "AI Model Lab", icon: FlaskConical, badge: "Phase 12" },
       { href: "/adaptation", label: "Adaptive Updates", icon: GitBranch, badge: "Phase 14" },
+      { href: "/confidence", label: "Confidence & Temporal", icon: Gauge, badge: "Phase 15" },
     ],
   },
+
   {
     name: "Safety & Arbitration",
     items: [

@@ -1476,6 +1476,190 @@ def get_drift_diagnostics(
     )
 
 
+# ============================================================================
+# Phase 15: Confidence Estimation & Temporal Confirmation Endpoints
+# ============================================================================
+
+
+@api_router.get("/confidence/config", tags=["Confidence & Temporal Confirmation"])
+def get_confidence_configuration(
+    subject_id: str | None = Query(None),
+    model_version_id: str | None = Query(None),
+) -> Any:
+    """Retrieve active confidence estimation and temporal gating configuration."""
+    from ..confidence.service import get_confidence_service
+
+    return get_confidence_service().get_config(
+        subject_id=subject_id,
+        model_version_id=model_version_id,
+    )
+
+
+@api_router.put("/confidence/config", tags=["Confidence & Temporal Confirmation"])
+def update_confidence_configuration(payload: dict[str, Any]) -> Any:
+    """Update confidence estimation and temporal confirmation policies."""
+    from ..confidence.models import ConfidenceConfig
+    from ..confidence.service import get_confidence_service
+
+    try:
+        config = ConfidenceConfig(**payload)
+        return get_confidence_service().update_config(config)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid configuration payload: {exc}",
+        ) from exc
+
+
+@api_router.post("/confidence/evaluate", tags=["Confidence & Temporal Confirmation"])
+def evaluate_confidence(payload: dict[str, Any]) -> Any:
+    """Evaluate single prediction through multi-factor gating and temporal confirmation engine."""
+    from ..confidence.models import ConfidenceInput
+    from ..confidence.service import get_confidence_service
+
+    try:
+        inp = ConfidenceInput(**payload)
+        decision, temporal, handoff = get_confidence_service().evaluate_prediction(inp)
+        return {
+            "decision": decision,
+            "temporal": temporal,
+            "handoff": handoff,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Evaluation failed: {exc}",
+        ) from exc
+
+
+@api_router.post("/confidence/reset", tags=["Confidence & Temporal Confirmation"])
+def reset_temporal_state(payload: dict[str, Any] | None = None) -> Any:
+    """Explicitly reset temporal confirmation accumulation state."""
+    from ..confidence.models import TemporalResetReason
+    from ..confidence.service import get_confidence_service
+
+    reason_str = payload.get("reason", "MANUAL_RESET") if payload else "MANUAL_RESET"
+    try:
+        reason = TemporalResetReason(reason_str)
+    except ValueError:
+        reason = TemporalResetReason.MANUAL_RESET
+
+    get_confidence_service().reset_temporal_state(reason)
+    return {"status": "RESET", "reason": reason.value}
+
+
+@api_router.get("/confidence/state", tags=["Confidence & Temporal Confirmation"])
+def get_confidence_state() -> Any:
+    """Retrieve current temporal confirmation state."""
+    from ..confidence.service import get_confidence_service
+
+    svc = get_confidence_service()
+    return {
+        "state": svc.temporal_engine.state,
+        "config": svc.config,
+    }
+
+
+@api_router.get("/confidence/history", tags=["Confidence & Temporal Confirmation"])
+def get_confidence_history(
+    limit: int = Query(50, ge=1, le=500),
+    subject_id: str | None = Query(None),
+) -> Any:
+    """Retrieve historical confidence evaluations and confirmation transitions."""
+    from ..confidence.service import get_confidence_service
+
+    return get_confidence_service().storage.get_history(
+        limit=limit,
+        subject_id=subject_id,
+    )
+
+
+@api_router.get("/confidence/events", tags=["Confidence & Temporal Confirmation"])
+def get_temporal_events(limit: int = Query(50, ge=1, le=500)) -> Any:
+    """Retrieve audit history of temporal confirmation state changes."""
+    from ..confidence.service import get_confidence_service
+
+    return get_confidence_service().storage.get_temporal_events(limit=limit)
+
+
+@api_router.get("/confidence/calibration", tags=["Confidence & Temporal Confirmation"])
+def get_calibration_profile(model_version_id: str = Query("v1")) -> Any:
+    """Retrieve active calibration profile for model checkpoint."""
+    from ..confidence.models import CalibrationMethod, CalibrationScope
+    from ..confidence.service import get_confidence_service
+
+    svc = get_confidence_service()
+    profile = svc.storage.get_calibration_profile(model_version_id)
+    if not profile:
+        # Generate baseline demonstration profile
+        y_true = [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1]
+        raw_scores = [0.85, 0.20, 0.78, 0.92, 0.15, 0.35, 0.88, 0.22, 0.91, 0.30, 0.79, 0.84]
+        profile = svc.calibrate_model(
+            model_version_id=model_version_id,
+            uncalibrated_scores=raw_scores,
+            labels=y_true,
+            method=CalibrationMethod.PLATT,
+            scope=CalibrationScope.MODEL,
+            dataset_reference="baseline_validation_set",
+        )
+    return profile
+
+
+@api_router.post("/confidence/calibrate", tags=["Confidence & Temporal Confirmation"])
+def post_calibrate_model(payload: dict[str, Any]) -> Any:
+    """Fit a new calibration profile on validation dataset."""
+    from ..confidence.models import CalibrationMethod, CalibrationScope
+    from ..confidence.service import get_confidence_service
+
+    model_version_id = payload.get("model_version_id", "v1")
+    uncalibrated_scores = payload.get("uncalibrated_scores", [0.85, 0.20, 0.78, 0.92, 0.15, 0.35])
+    labels = payload.get("labels", [1, 0, 1, 1, 0, 0])
+    method_str = payload.get("method", "PLATT")
+    scope_str = payload.get("scope", "GLOBAL")
+
+    try:
+        profile = get_confidence_service().calibrate_model(
+            model_version_id=model_version_id,
+            uncalibrated_scores=uncalibrated_scores,
+            labels=labels,
+            method=CalibrationMethod(method_str),
+            scope=CalibrationScope(scope_str),
+            subject_id=payload.get("subject_id"),
+            dataset_reference=payload.get("dataset_reference", "custom_validation_set"),
+        )
+        return profile
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Calibration fitting failed: {exc}",
+        ) from exc
+
+
+@api_router.get("/confidence/metrics", tags=["Confidence & Temporal Confirmation"])
+def get_confidence_metrics(model_version_id: str = Query("v1")) -> Any:
+    """Retrieve statistical reliability curve and Brier/ECE research evaluation metrics."""
+    from ..confidence.calibrator import ConfidenceCalibrator
+    from ..confidence.service import get_confidence_service
+
+    profile = get_confidence_service().storage.get_calibration_profile(model_version_id)
+    if profile:
+        return profile.calibration_metrics
+
+    # Fallback default evaluation metrics
+    y_true = [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1]
+    y_prob = [0.85, 0.20, 0.78, 0.92, 0.15, 0.35, 0.88, 0.22, 0.91, 0.30, 0.79, 0.84]
+    return ConfidenceCalibrator.calculate_calibration_metrics(y_true, y_prob)
+
+
+@api_router.post("/confidence/simulation/scenarios", tags=["Confidence & Temporal Confirmation"])
+def run_confidence_scenario(payload: dict[str, Any]) -> Any:
+    """Run deterministic research verification scenario (A through H)."""
+    from ..confidence.service import get_confidence_service
+
+    scenario_id = payload.get("scenario_id", "SCENARIO_A_STABLE_HIGH_CONFIDENCE")
+    return get_confidence_service().run_deterministic_scenario(scenario_id)
+
+
 # --- WebSocket Stream Endpoints ---
 
 ws_router = APIRouter(prefix="/ws")

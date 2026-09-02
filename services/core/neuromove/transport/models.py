@@ -48,6 +48,7 @@ class TransportStream(StrEnum):
     EEG = "eeg"
     ROBOT = "robot"
     SAFETY = "safety"
+    CONFIDENCE = "confidence"
     ALL = "all"
 
 

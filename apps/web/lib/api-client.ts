@@ -140,7 +140,28 @@ import {
   DriftObservationSchema,
   AdaptationManifest,
   AdaptationManifestSchema,
+
+  ConfidenceConfig,
+  ConfidenceConfigSchema,
+  ConfidenceCalibrationProfile,
+  ConfidenceCalibrationProfileSchema,
+  CalibrationMetrics,
+  CalibrationMetricsSchema,
+  ConfidenceInput,
+  ConfidenceDecision,
+  ConfidenceDecisionSchema,
+  TemporalConfirmationState,
+  TemporalConfirmationStateSchema,
+  TemporalConfirmationDecision,
+  TemporalConfirmationDecisionSchema,
+  Phase16IntentHandoffPayload,
+  Phase16IntentHandoffPayloadSchema,
+  ConfidenceHistoryRecord,
+  ConfidenceHistoryRecordSchema,
+  TemporalConfirmationEvent,
+  TemporalConfirmationEventSchema,
 } from "@neuromove/contracts";
+
 
 
 
@@ -1585,3 +1606,190 @@ export async function fetchDriftDiagnostics(
   const data = await res.json();
   return DriftObservationSchema.parse(data);
 }
+
+// ============================================================================
+// Phase 15: Confidence Estimation & Temporal Confirmation Operations
+// ============================================================================
+
+export async function fetchConfidenceConfig(
+  subjectId?: string,
+  modelVersionId?: string
+): Promise<ConfidenceConfig> {
+  const params = new URLSearchParams();
+  if (subjectId) params.append("subject_id", subjectId);
+  if (modelVersionId) params.append("model_version_id", modelVersionId);
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(`${API_BASE_URL}/api/confidence/config${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ConfidenceConfigSchema.parse(data);
+}
+
+export async function updateConfidenceConfig(
+  config: Partial<ConfidenceConfig>
+): Promise<ConfidenceConfig> {
+  const res = await fetch(`${API_BASE_URL}/api/confidence/config`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ConfidenceConfigSchema.parse(data);
+}
+
+export async function evaluateConfidence(
+  payload: ConfidenceInput
+): Promise<{
+  decision: ConfidenceDecision;
+  temporal: TemporalConfirmationDecision;
+  handoff: Phase16IntentHandoffPayload;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/confidence/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return {
+    decision: ConfidenceDecisionSchema.parse(data.decision),
+    temporal: TemporalConfirmationDecisionSchema.parse(data.temporal),
+    handoff: Phase16IntentHandoffPayloadSchema.parse(data.handoff),
+  };
+}
+
+export async function resetTemporalState(
+  reason?: string
+): Promise<{ status: string; reason: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/confidence/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: reason || "MANUAL_RESET" }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function fetchConfidenceState(): Promise<{
+  state: TemporalConfirmationState;
+  config: ConfidenceConfig;
+}> {
+  const res = await fetch(`${API_BASE_URL}/api/confidence/state`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return {
+    state: TemporalConfirmationStateSchema.parse(data.state),
+    config: ConfidenceConfigSchema.parse(data.config),
+  };
+}
+
+export async function fetchConfidenceHistory(
+  limit: number = 50,
+  subjectId?: string
+): Promise<ConfidenceHistoryRecord[]> {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (subjectId) params.append("subject_id", subjectId);
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/confidence/history?${params.toString()}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ConfidenceHistoryRecordSchema).parse(data);
+}
+
+export async function fetchTemporalEvents(
+  limit: number = 50
+): Promise<TemporalConfirmationEvent[]> {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  const res = await fetch(
+    `${API_BASE_URL}/api/confidence/events?${params.toString()}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(TemporalConfirmationEventSchema).parse(data);
+}
+
+export async function fetchCalibrationProfile(
+  modelVersionId: string = "v1"
+): Promise<ConfidenceCalibrationProfile> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/confidence/calibration?model_version_id=${modelVersionId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ConfidenceCalibrationProfileSchema.parse(data);
+}
+
+export async function calibrateModel(payload: {
+  model_version_id: string;
+  uncalibrated_scores: number[];
+  labels: number[];
+  method?: string;
+  scope?: string;
+  subject_id?: string;
+  dataset_reference?: string;
+}): Promise<ConfidenceCalibrationProfile> {
+  const res = await fetch(`${API_BASE_URL}/api/confidence/calibrate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return ConfidenceCalibrationProfileSchema.parse(data);
+}
+
+export async function fetchConfidenceMetrics(
+  modelVersionId: string = "v1"
+): Promise<CalibrationMetrics> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/confidence/metrics?model_version_id=${modelVersionId}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return CalibrationMetricsSchema.parse(data);
+}
+
+export async function runConfidenceScenario(
+  scenarioId: string
+): Promise<{ scenario_id: string; executed_at: string; results: any[] }> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/confidence/simulation/scenarios`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario_id: scenarioId }),
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  return res.json();
+}
+

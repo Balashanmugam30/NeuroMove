@@ -10,5 +10,4 @@ export * from "./decoding";
 export * from "./experiments";
 export * from "./calibration";
 export * from "./adaptation";
-
-
+export * from "./confidence";

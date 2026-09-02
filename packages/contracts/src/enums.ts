@@ -96,6 +96,7 @@ export const TransportStreamEnum = z.enum([
   "eeg",
   "robot",
   "safety",
+  "confidence",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -146,6 +147,15 @@ export const EventTypeEnum = z.enum([
   "INTENT_CONFIRMED",
   "INTENT_REJECTED",
 
+  // Confidence & Temporal Confirmation (Phase 15)
+  "CONFIDENCE_EVALUATED",
+  "CONFIDENCE_REJECTED",
+  "TEMPORAL_EVIDENCE_UPDATED",
+  "TEMPORAL_CONFIRMATION_REACHED",
+  "TEMPORAL_CONFIRMATION_RESET",
+  "CONFIDENCE_STATE_EXPIRED",
+  "CONFIDENCE_CONFIG_CHANGED",
+
   // Safety State Machine & Arbitration
   "STATE_TRANSITION",
   "SAFETY_CHECK",
@@ -180,3 +190,4 @@ export const EventTypeEnum = z.enum([
   "EXPERIMENT_COMPLETED",
 ]);
 export type EventType = z.infer<typeof EventTypeEnum>;
+

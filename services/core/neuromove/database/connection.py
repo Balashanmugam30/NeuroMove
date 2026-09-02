@@ -24,7 +24,9 @@ class DatabaseManager:
     def get_connection(self, db_path: Path | None = None) -> sqlite3.Connection:
         """Create a sqlite3 connection to database path."""
         target_path = db_path or self.get_db_path()
-        return sqlite3.connect(target_path)
+        conn = sqlite3.connect(target_path)
+        conn.row_factory = sqlite3.Row
+        return conn
 
     def initialize_db(self) -> None:
         """Create database directory and initialize core schema tables."""
@@ -936,6 +938,121 @@ class DatabaseManager:
                 )
                 cursor.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('008_adaptive_learning');"
+                )
+                conn.commit()
+
+            # Migration 009: Confidence Estimation & Temporal Confirmation Engine
+            cursor.execute(
+                "SELECT 1 FROM schema_migrations WHERE version = '009_confidence_temporal';"
+            )
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS confidence_configurations (
+                        config_id TEXT PRIMARY KEY,
+                        version TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        subject_id TEXT,
+                        model_version_id TEXT,
+                        high_threshold REAL NOT NULL,
+                        medium_threshold REAL NOT NULL,
+                        min_eligible_confidence REAL NOT NULL,
+                        min_consecutive_windows INTEGER NOT NULL,
+                        min_duration_ms REAL NOT NULL,
+                        max_gap_ms REAL NOT NULL,
+                        cooldown_ms REAL NOT NULL,
+                        refractory_ms REAL NOT NULL,
+                        hysteresis_enter REAL NOT NULL,
+                        hysteresis_exit REAL NOT NULL,
+                        max_age_ms REAL NOT NULL,
+                        quality_floor REAL NOT NULL,
+                        allow_same_class_reconfirmation INTEGER NOT NULL DEFAULT 0,
+                        parameters_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        checksum TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS confidence_calibration_profiles (
+                        calibration_id TEXT PRIMARY KEY,
+                        model_version_id TEXT NOT NULL,
+                        scope TEXT NOT NULL,
+                        subject_id TEXT,
+                        method TEXT NOT NULL,
+                        fit_dataset_reference TEXT NOT NULL,
+                        parameters_json TEXT NOT NULL,
+                        calibration_metrics_json TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'ACTIVE',
+                        checksum TEXT NOT NULL,
+                        fit_timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS confidence_evaluations (
+                        evaluation_id TEXT PRIMARY KEY,
+                        prediction_id TEXT NOT NULL,
+                        model_version_id TEXT NOT NULL,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        predicted_class TEXT NOT NULL,
+                        raw_score REAL NOT NULL,
+                        score_type TEXT NOT NULL,
+                        normalized_score REAL NOT NULL,
+                        calibrated_confidence REAL NOT NULL,
+                        confidence_band TEXT NOT NULL,
+                        eligibility TEXT NOT NULL,
+                        class_margin REAL NOT NULL,
+                        runner_up_class TEXT,
+                        signal_quality REAL NOT NULL,
+                        freshness TEXT NOT NULL,
+                        model_validity TEXT NOT NULL,
+                        components_json TEXT NOT NULL,
+                        decision_reason TEXT NOT NULL,
+                        timestamp REAL NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS temporal_confirmation_events (
+                        event_id TEXT PRIMARY KEY,
+                        sequence_number INTEGER NOT NULL,
+                        event_type TEXT NOT NULL,
+                        candidate_class TEXT,
+                        consecutive_windows INTEGER NOT NULL,
+                        accumulated_duration_ms REAL NOT NULL,
+                        confidence_score REAL NOT NULL,
+                        decision_reason TEXT NOT NULL,
+                        model_version_id TEXT NOT NULL,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS confidence_history (
+                        history_id TEXT PRIMARY KEY,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        model_version_id TEXT NOT NULL,
+                        predicted_class TEXT NOT NULL,
+                        confidence REAL NOT NULL,
+                        band TEXT NOT NULL,
+                        eligibility TEXT NOT NULL,
+                        temporal_status TEXT NOT NULL,
+                        decision_reason TEXT NOT NULL,
+                        timestamp TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('009_confidence_temporal');"
                 )
                 conn.commit()
 

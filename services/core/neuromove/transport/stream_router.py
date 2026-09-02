@@ -70,6 +70,16 @@ class StreamRouter:
             )
             connection_registry.broadcast(safety_msg)
 
+        # Route confidence & temporal events to 'confidence' stream
+        if "CONFIDENCE" in evt_type_val or "TEMPORAL" in evt_type_val:
+            confidence_msg = TransportMessage(
+                type=TransportMessageType.EVENT,
+                stream=TransportStream.CONFIDENCE.value,
+                timestamp=datetime.now(UTC),
+                event=envelope,
+            )
+            connection_registry.broadcast(confidence_msg)
+
     def handle_eeg_chunk(self, chunk: EEGChunk) -> None:
         """Route high-frequency EEG time-series batches to 'eeg' stream subscribers."""
         chunk_dict = chunk.model_dump(mode="json")
