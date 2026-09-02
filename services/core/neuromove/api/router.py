@@ -1660,7 +1660,154 @@ def run_confidence_scenario(payload: dict[str, Any]) -> Any:
     return get_confidence_service().run_deterministic_scenario(scenario_id)
 
 
+# --- Phase 16: Canonical Intent State Machine & Lifecycle Endpoints ---
+
+
+@api_router.get("/intent/state", tags=["Canonical Intent State Machine"])
+def get_intent_state() -> Any:
+    """Retrieve current authoritative intent state snapshot and transition count."""
+    from ..intent.service import get_intent_service
+
+    return get_intent_service().get_snapshot()
+
+
+@api_router.get("/intent/current", tags=["Canonical Intent State Machine"])
+def get_current_intent() -> Any:
+    """Retrieve current active or candidate intent record, if any."""
+    from ..intent.service import get_intent_service
+
+    return get_intent_service().get_current_intent()
+
+
+@api_router.get("/intent/history", tags=["Canonical Intent State Machine"])
+def get_intent_transition_history(
+    limit: int = Query(50, ge=1, le=500),
+    intent_id: str | None = Query(None),
+) -> Any:
+    """Retrieve immutable transition history log."""
+    from ..intent.service import get_intent_service
+
+    return get_intent_service().storage.get_transition_history(limit=limit, intent_id=intent_id)
+
+
+@api_router.get("/intent/records", tags=["Canonical Intent State Machine"])
+def get_intent_records(
+    limit: int = Query(50, ge=1, le=500),
+    state: str | None = Query(None),
+    subject_id: str | None = Query(None),
+) -> Any:
+    """Retrieve historical intent records."""
+    from ..intent.models import IntentLifecycleState
+    from ..intent.service import get_intent_service
+
+    st = IntentLifecycleState(state) if state else None
+    return get_intent_service().storage.get_intent_records(
+        limit=limit, state=st, subject_id=subject_id
+    )
+
+
+@api_router.get("/intent/policy", tags=["Canonical Intent State Machine"])
+def get_intent_policy() -> Any:
+    """Retrieve active intent lifecycle configuration policy."""
+    from ..intent.service import get_intent_service
+
+    return get_intent_service().get_policy()
+
+
+@api_router.put("/intent/policy", tags=["Canonical Intent State Machine"])
+def update_intent_policy(policy_data: dict[str, Any]) -> Any:
+    """Update intent lifecycle policy configuration."""
+    from ..intent.models import IntentPolicy
+    from ..intent.service import get_intent_service
+
+    try:
+        updated = IntentPolicy(**policy_data)
+        return get_intent_service().update_policy(updated)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid intent policy payload: {exc}",
+        ) from exc
+
+
+@api_router.post("/intent/ingest", tags=["Canonical Intent State Machine"])
+def ingest_intent_handoff(payload: dict[str, Any]) -> Any:
+    """Ingest authoritative Phase 15 handoff or prediction evidence into intent state machine."""
+    from ..intent.models import IntentIngestRequest
+    from ..intent.service import get_intent_service
+
+    try:
+        req = IntentIngestRequest(**payload)
+        snapshot = get_intent_service().ingest_handoff(req)
+        return snapshot
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to ingest intent handoff: {exc}",
+        ) from exc
+
+
+@api_router.post("/intent/cancel", tags=["Canonical Intent State Machine"])
+def cancel_intent(payload: dict[str, Any] | None = None) -> Any:
+    """Explicitly cancel active, confirmed, or candidate intent."""
+    from ..intent.models import IntentCancelRequest
+    from ..intent.service import get_intent_service
+
+    req = IntentCancelRequest(**(payload or {}))
+    return get_intent_service().cancel_intent(req)
+
+
+@api_router.post("/intent/complete", tags=["Canonical Intent State Machine"])
+def complete_intent(payload: dict[str, Any] | None = None) -> Any:
+    """Mark active intent lifecycle as completed (software lifecycle completion only)."""
+    from ..intent.models import IntentCompleteRequest
+    from ..intent.service import get_intent_service
+
+    try:
+        req = IntentCompleteRequest(**(payload or {}))
+        return get_intent_service().complete_intent(req)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@api_router.post("/intent/reset", tags=["Canonical Intent State Machine"])
+def reset_intent_state(payload: dict[str, Any] | None = None) -> Any:
+    """Reset state machine to NO_INTENT while preserving historical audit log."""
+    from ..intent.models import IntentResetRequest
+    from ..intent.service import get_intent_service
+
+    req = IntentResetRequest(**(payload or {}))
+    return get_intent_service().reset_state(req)
+
+
+@api_router.get("/intent/{intent_id}", tags=["Canonical Intent State Machine"])
+def get_intent_by_id(intent_id: str) -> Any:
+    """Retrieve detailed record for a specific intent ID."""
+    from ..intent.service import get_intent_service
+
+    rec = get_intent_service().storage.get_intent_record(intent_id)
+    if not rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Intent record '{intent_id}' not found",
+        )
+    return rec
+
+
+@api_router.post("/intent/simulation/scenarios", tags=["Canonical Intent State Machine"])
+def run_intent_scenario(payload: dict[str, Any]) -> Any:
+    """Execute deterministic research lifecycle verification scenarios (A through L)."""
+    from ..intent.service import get_intent_service
+
+    scenario_id = payload.get("scenario_id", "SCENARIO_A_NORMAL_LIFECYCLE")
+    return get_intent_service().run_scenario(scenario_id)
+
+
 # --- WebSocket Stream Endpoints ---
+
 
 ws_router = APIRouter(prefix="/ws")
 

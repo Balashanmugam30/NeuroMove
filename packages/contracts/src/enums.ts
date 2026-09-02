@@ -97,6 +97,7 @@ export const TransportStreamEnum = z.enum([
   "robot",
   "safety",
   "confidence",
+  "intent",
   "all",
 ]);
 export type TransportStream = z.infer<typeof TransportStreamEnum>;
@@ -141,11 +142,20 @@ export const EventTypeEnum = z.enum([
   "EEG_DISCONNECTED",
   "TELEMETRY",
 
-  // BCI Prediction & Intent
+  // BCI Prediction & Intent Lifecycle (Phase 16)
   "PREDICTION",
   "INTENT_CANDIDATE",
   "INTENT_CONFIRMED",
+  "INTENT_ACTIVATED",
+  "INTENT_CANCELLED",
+  "INTENT_EXPIRED",
+  "INTENT_INTERRUPTED",
+  "INTENT_COMPLETED",
+  "INTENT_REPLACEMENT_REQUESTED",
+  "INTENT_STATE_CHANGED",
+  "INTENT_CONTEXT_RESET",
   "INTENT_REJECTED",
+
 
   // Confidence & Temporal Confirmation (Phase 15)
   "CONFIDENCE_EVALUATED",

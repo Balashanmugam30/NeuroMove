@@ -157,10 +157,28 @@ import {
   Phase16IntentHandoffPayload,
   Phase16IntentHandoffPayloadSchema,
   ConfidenceHistoryRecord,
+
   ConfidenceHistoryRecordSchema,
   TemporalConfirmationEvent,
   TemporalConfirmationEventSchema,
+
+  IntentPolicy,
+  IntentPolicySchema,
+  IntentRecord,
+  IntentRecordSchema,
+
+  IntentStateTransition,
+  IntentStateTransitionSchema,
+  IntentStateSnapshot,
+  IntentStateSnapshotSchema,
+  IntentIngestRequest,
+  IntentCancelRequest,
+  IntentCompleteRequest,
+  IntentResetRequest,
+  IntentScenarioResponse,
+  IntentScenarioResponseSchema,
 } from "@neuromove/contracts";
+
 
 
 
@@ -1792,4 +1810,160 @@ export async function runConfidenceScenario(
   }
   return res.json();
 }
+
+// --- Phase 16: Canonical Intent State Machine & Lifecycle Endpoints ---
+
+export async function fetchIntentState(): Promise<IntentStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/state`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return IntentStateSnapshotSchema.parse(data);
+}
+
+export async function fetchCurrentIntent(): Promise<IntentRecord | null> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/current`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  if (!data) return null;
+  return IntentRecordSchema.parse(data);
+}
+
+export async function fetchIntentHistory(
+  limit: number = 50,
+  intentId?: string
+): Promise<IntentStateTransition[]> {
+  const query = intentId ? `&intent_id=${encodeURIComponent(intentId)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/intent/history?limit=${limit}${query}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(IntentStateTransitionSchema).parse(data);
+}
+
+export async function fetchIntentRecords(
+  limit: number = 50,
+  state?: string,
+  subjectId?: string
+): Promise<IntentRecord[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (state) params.set("state", state);
+  if (subjectId) params.set("subject_id", subjectId);
+  const res = await fetch(`${API_BASE_URL}/api/intent/records?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(IntentRecordSchema).parse(data);
+}
+
+export async function fetchIntentPolicy(): Promise<IntentPolicy> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/policy`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return IntentPolicySchema.parse(data);
+}
+
+export async function updateIntentPolicy(
+  policy: Partial<IntentPolicy>
+): Promise<IntentPolicy> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/policy`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(policy),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentPolicySchema.parse(data);
+}
+
+export async function ingestIntentHandoff(
+  payload: IntentIngestRequest
+): Promise<IntentStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/ingest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentStateSnapshotSchema.parse(data);
+}
+
+export async function cancelIntent(
+  payload?: IntentCancelRequest
+): Promise<IntentStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentStateSnapshotSchema.parse(data);
+}
+
+export async function completeIntent(
+  payload?: IntentCompleteRequest
+): Promise<IntentStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentStateSnapshotSchema.parse(data);
+}
+
+export async function resetIntentState(
+  payload?: IntentResetRequest
+): Promise<IntentStateSnapshot> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentStateSnapshotSchema.parse(data);
+}
+
+export async function runIntentScenario(
+  scenarioId: string
+): Promise<IntentScenarioResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/intent/simulation/scenarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario_id: scenarioId }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP error ${res.status}`);
+  }
+  const data = await res.json();
+  return IntentScenarioResponseSchema.parse(data);
+}
+
 

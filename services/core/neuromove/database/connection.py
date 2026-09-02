@@ -23,6 +23,8 @@ class DatabaseManager:
 
     def get_connection(self, db_path: Path | None = None) -> sqlite3.Connection:
         """Create a sqlite3 connection to database path."""
+        if not self._is_initialized:
+            self.initialize_db()
         target_path = db_path or self.get_db_path()
         conn = sqlite3.connect(target_path)
         conn.row_factory = sqlite3.Row
@@ -1053,6 +1055,108 @@ class DatabaseManager:
                 )
                 cursor.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('009_confidence_temporal');"
+                )
+                conn.commit()
+
+            # Migration 010: Canonical Intent State Machine & Lifecycle (Phase 16)
+            cursor.execute(
+                "SELECT COUNT(*) FROM schema_migrations WHERE version = '010_intent_state_machine';"
+            )
+            mig_010 = cursor.fetchone()[0] == 0
+            if mig_010:
+                logger.info("Applying migration 010_intent_state_machine...")
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS intent_policies (
+                        policy_id TEXT PRIMARY KEY,
+                        version TEXT NOT NULL,
+                        candidate_timeout_ms REAL NOT NULL,
+                        confirmation_acceptance_window_ms REAL NOT NULL,
+                        active_intent_timeout_ms REAL NOT NULL,
+                        allow_replacement INTEGER NOT NULL DEFAULT 1,
+                        replacement_requires_confirmation INTEGER NOT NULL DEFAULT 1,
+                        same_class_reconfirmation_cooldown_ms REAL NOT NULL,
+                        cross_class_replacement_policy TEXT NOT NULL,
+                        subject_change_policy TEXT NOT NULL,
+                        session_change_policy TEXT NOT NULL,
+                        model_change_policy TEXT NOT NULL,
+                        rest_handling_policy TEXT NOT NULL,
+                        parameters_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        checksum TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS intent_records (
+                        intent_id TEXT PRIMARY KEY,
+                        intent_class TEXT NOT NULL,
+                        current_state TEXT NOT NULL,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        model_version_id TEXT NOT NULL,
+                        confidence_score REAL NOT NULL,
+                        confidence_band TEXT NOT NULL,
+                        eligibility TEXT NOT NULL,
+                        source_event_id TEXT,
+                        confidence_evaluation_id TEXT,
+                        temporal_confirmation_id TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL,
+                        state_deadline REAL,
+                        is_terminal INTEGER NOT NULL DEFAULT 0,
+                        terminal_reason TEXT,
+                        policy_version TEXT NOT NULL
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS intent_state_transitions (
+                        transition_id TEXT PRIMARY KEY,
+                        sequence_number INTEGER NOT NULL,
+                        intent_id TEXT,
+                        intent_class TEXT,
+                        previous_state TEXT NOT NULL,
+                        next_state TEXT NOT NULL,
+                        trigger_name TEXT NOT NULL,
+                        reason TEXT NOT NULL,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        model_version_id TEXT,
+                        source_event_id TEXT,
+                        confidence_score REAL,
+                        policy_version TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        details TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS intent_snapshots (
+                        snapshot_id TEXT PRIMARY KEY,
+                        active_intent_id TEXT,
+                        current_state TEXT NOT NULL,
+                        intent_class TEXT,
+                        subject_id TEXT,
+                        session_id TEXT,
+                        model_version_id TEXT,
+                        confidence_score REAL,
+                        confidence_evaluation_id TEXT,
+                        temporal_confirmation_id TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL,
+                        state_deadline REAL,
+                        transition_reason TEXT NOT NULL,
+                        policy_version TEXT NOT NULL,
+                        transition_count INTEGER NOT NULL DEFAULT 0
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('010_intent_state_machine');"
                 )
                 conn.commit()
 

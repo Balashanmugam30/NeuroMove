@@ -49,6 +49,7 @@ class TransportStream(StrEnum):
     ROBOT = "robot"
     SAFETY = "safety"
     CONFIDENCE = "confidence"
+    INTENT = "intent"
     ALL = "all"
 
 

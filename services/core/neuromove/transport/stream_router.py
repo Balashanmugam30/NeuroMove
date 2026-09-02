@@ -80,6 +80,16 @@ class StreamRouter:
             )
             connection_registry.broadcast(confidence_msg)
 
+        # Route intent lifecycle events to 'intent' stream
+        if "INTENT" in evt_type_val:
+            intent_msg = TransportMessage(
+                type=TransportMessageType.EVENT,
+                stream=TransportStream.INTENT.value,
+                timestamp=datetime.now(UTC),
+                event=envelope,
+            )
+            connection_registry.broadcast(intent_msg)
+
     def handle_eeg_chunk(self, chunk: EEGChunk) -> None:
         """Route high-frequency EEG time-series batches to 'eeg' stream subscribers."""
         chunk_dict = chunk.model_dump(mode="json")

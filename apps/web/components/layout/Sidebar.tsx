@@ -21,7 +21,9 @@ import {
   X,
   GitBranch,
   Gauge,
+  Workflow,
 } from "lucide-react";
+
 
 import { cn } from "@/lib/utils";
 
@@ -60,8 +62,10 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/models/lab", label: "AI Model Lab", icon: FlaskConical, badge: "Phase 12" },
       { href: "/adaptation", label: "Adaptive Updates", icon: GitBranch, badge: "Phase 14" },
       { href: "/confidence", label: "Confidence & Temporal", icon: Gauge, badge: "Phase 15" },
+      { href: "/intent", label: "Intent State Machine", icon: Workflow, badge: "Phase 16" },
     ],
   },
+
 
   {
     name: "Safety & Arbitration",
