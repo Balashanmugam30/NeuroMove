@@ -46,6 +46,9 @@ class ConnectionManager:
     async def connect_eeg_acquisition(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="eeg_acquisition")
 
+    async def connect_research(self, websocket: WebSocket) -> None:
+        await handle_websocket_session(websocket, default_stream="research")
+
     async def connect_all(self, websocket: WebSocket) -> None:
         await handle_websocket_session(websocket, default_stream="all")
 

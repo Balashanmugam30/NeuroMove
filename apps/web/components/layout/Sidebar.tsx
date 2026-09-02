@@ -85,7 +85,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/research/datasets", label: "Public Datasets", icon: Database, badge: "Phase 08" },
       { href: "/sessions", label: "Sessions", icon: History },
-      { href: "/research", label: "Research Lab", icon: FlaskConical },
+      { href: "/research", label: "Research Lab", icon: FlaskConical, badge: "Phase 22" },
       { href: "/results", label: "Evidence & Results", icon: BarChart3 },
     ],
   },

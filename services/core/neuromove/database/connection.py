@@ -1873,6 +1873,267 @@ class DatabaseManager:
                 cursor.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('015_eeg_acquisition');"
                 )
+
+                # Migration 016: Research Analytics, Deterministic Replay & Scientific Evaluation (Phase 22)
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_experiments (
+                        experiment_id TEXT PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        analysis_type TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        replay_mode TEXT NOT NULL,
+                        parent_experiment_id TEXT,
+                        dataset_id TEXT,
+                        grouping_strategy TEXT NOT NULL,
+                        is_sealed INTEGER NOT NULL DEFAULT 0,
+                        result_hash TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL,
+                        completed_at TEXT
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_manifests (
+                        manifest_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        app_version TEXT NOT NULL,
+                        git_commit TEXT NOT NULL,
+                        source_session_ids_json TEXT NOT NULL,
+                        source_checksums_json TEXT NOT NULL,
+                        channel_names_json TEXT NOT NULL,
+                        sampling_rate REAL NOT NULL,
+                        montage TEXT NOT NULL,
+                        clock_config_json TEXT NOT NULL,
+                        qc_config_json TEXT NOT NULL,
+                        dsp_config_json TEXT NOT NULL,
+                        epoch_config_json TEXT NOT NULL,
+                        feature_config_json TEXT NOT NULL,
+                        csp_config_json TEXT NOT NULL,
+                        model_id TEXT NOT NULL,
+                        model_version TEXT NOT NULL,
+                        personalization_profile_json TEXT NOT NULL,
+                        adaptation_state_json TEXT NOT NULL,
+                        confidence_policy_json TEXT NOT NULL,
+                        intent_policy_json TEXT NOT NULL,
+                        safety_policy_json TEXT NOT NULL,
+                        hil_profile_json TEXT NOT NULL,
+                        seed INTEGER NOT NULL,
+                        numerical_tolerances_json TEXT NOT NULL,
+                        analysis_parameters_json TEXT NOT NULL,
+                        export_version TEXT NOT NULL,
+                        is_sealed INTEGER NOT NULL DEFAULT 0,
+                        manifest_hash TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        sealed_at TEXT,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_experiment_sources (
+                        source_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        session_id TEXT NOT NULL,
+                        subject_id TEXT NOT NULL,
+                        sample_count INTEGER NOT NULL,
+                        duration_sec REAL NOT NULL,
+                        checksum TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_stage_results (
+                        stage_result_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        stage TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        input_count INTEGER NOT NULL,
+                        output_count INTEGER NOT NULL,
+                        rejected_count INTEGER NOT NULL,
+                        latency_ms REAL NOT NULL,
+                        configuration_hash TEXT NOT NULL,
+                        stage_checksum TEXT NOT NULL,
+                        warnings_json TEXT NOT NULL,
+                        errors_json TEXT NOT NULL,
+                        metadata_json TEXT,
+                        timestamp TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_metric_results (
+                        metric_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        accuracy REAL,
+                        balanced_accuracy REAL,
+                        precision_macro REAL,
+                        recall_macro REAL,
+                        f1_macro REAL,
+                        per_class_precision_json TEXT,
+                        per_class_recall_json TEXT,
+                        per_class_f1_json TEXT,
+                        expected_calibration_error REAL,
+                        brier_score REAL,
+                        roc_auc_macro REAL,
+                        pr_auc_macro REAL,
+                        total_trials INTEGER NOT NULL,
+                        evaluated_trials INTEGER NOT NULL,
+                        rejected_trials INTEGER NOT NULL,
+                        rejection_rate REAL NOT NULL,
+                        evaluated_at TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_confusion_matrices (
+                        matrix_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        classes_json TEXT NOT NULL,
+                        matrix_json TEXT NOT NULL,
+                        normalized_matrix_json TEXT NOT NULL,
+                        total_samples INTEGER NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_latency_samples (
+                        sample_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        stage TEXT NOT NULL,
+                        latency_ms REAL NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_ablations (
+                        ablation_id TEXT PRIMARY KEY,
+                        parent_experiment_id TEXT NOT NULL,
+                        child_experiment_id TEXT NOT NULL,
+                        ablation_type TEXT NOT NULL,
+                        parameter_delta_json TEXT NOT NULL,
+                        baseline_accuracy REAL NOT NULL,
+                        ablated_accuracy REAL NOT NULL,
+                        accuracy_delta REAL NOT NULL,
+                        baseline_f1 REAL NOT NULL,
+                        ablated_f1 REAL NOT NULL,
+                        f1_delta REAL NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (parent_experiment_id) REFERENCES research_experiments(experiment_id),
+                        FOREIGN KEY (child_experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_robustness_runs (
+                        robustness_id TEXT PRIMARY KEY,
+                        parent_experiment_id TEXT NOT NULL,
+                        perturbation_type TEXT NOT NULL,
+                        perturbation_level REAL NOT NULL,
+                        seed INTEGER NOT NULL,
+                        resulting_accuracy REAL NOT NULL,
+                        resulting_f1 REAL NOT NULL,
+                        qc_degraded_rate REAL NOT NULL,
+                        rejection_rate REAL NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (parent_experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_comparisons (
+                        comparison_id TEXT PRIMARY KEY,
+                        comparison_type TEXT NOT NULL,
+                        baseline_experiment_id TEXT NOT NULL,
+                        candidate_experiment_id TEXT NOT NULL,
+                        metric_deltas_json TEXT NOT NULL,
+                        effect_size REAL,
+                        p_value REAL,
+                        confidence_interval_json TEXT,
+                        statistical_method TEXT NOT NULL,
+                        sample_size INTEGER NOT NULL,
+                        is_statistically_significant INTEGER NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (baseline_experiment_id) REFERENCES research_experiments(experiment_id),
+                        FOREIGN KEY (candidate_experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_statistical_results (
+                        stat_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        metric_name TEXT NOT NULL,
+                        sample_count INTEGER NOT NULL,
+                        mean REAL NOT NULL,
+                        median REAL NOT NULL,
+                        std REAL NOT NULL,
+                        variance REAL NOT NULL,
+                        min REAL NOT NULL,
+                        max REAL NOT NULL,
+                        p25 REAL NOT NULL,
+                        p75 REAL NOT NULL,
+                        ci_lower_95 REAL,
+                        ci_upper_95 REAL,
+                        bootstrap_iterations INTEGER,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_artifacts (
+                        artifact_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        artifact_type TEXT NOT NULL,
+                        checksum TEXT NOT NULL,
+                        file_name TEXT NOT NULL,
+                        content_json TEXT,
+                        generated_time TEXT NOT NULL,
+                        generator_version TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS research_replay_checkpoints (
+                        checkpoint_id TEXT PRIMARY KEY,
+                        experiment_id TEXT NOT NULL,
+                        stage TEXT NOT NULL,
+                        source_offset INTEGER NOT NULL,
+                        epoch_index INTEGER NOT NULL,
+                        manifest_hash TEXT NOT NULL,
+                        intermediate_checksum TEXT NOT NULL,
+                        model_version TEXT NOT NULL,
+                        state_payload_json TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id)
+                    );
+                    """
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version) VALUES ('016_research_analytics');"
+                )
                 conn.commit()
 
             self._is_initialized = True

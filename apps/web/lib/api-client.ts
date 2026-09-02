@@ -261,6 +261,38 @@ import {
   EegE2EExperimentSchema,
   EegE2EResult,
   EegE2EResultSchema,
+
+  // Phase 22
+  ResearchExperiment,
+  ResearchExperimentSchema,
+  ExperimentManifest,
+  ExperimentManifestSchema,
+  StageResult,
+  StageResultSchema,
+  MetricResult,
+  MetricResultSchema,
+  LatencyAnalytics,
+  LatencyAnalyticsSchema,
+  ConfidenceAnalytics,
+  ConfidenceAnalyticsSchema,
+  IntentAnalytics,
+  IntentAnalyticsSchema,
+  SafetyAnalytics,
+  SafetyAnalyticsSchema,
+  HilAnalytics,
+  HilAnalyticsSchema,
+  AblationRun,
+  AblationRunSchema,
+  RobustnessRun,
+  RobustnessRunSchema,
+  ComparisonResult,
+  ComparisonResultSchema,
+  ReproducibilityResult,
+  ReproducibilityResultSchema,
+  ResearchArtifact,
+  ResearchArtifactSchema,
+  ResearchDataset,
+  ResearchDatasetSchema,
 } from "@neuromove/contracts";
 import { z } from "zod";
 
@@ -2965,6 +2997,212 @@ export async function resetEegAcquisitionLab(): Promise<EegStreamHealthSnapshot>
   const data = await res.json();
   return EegStreamHealthSnapshotSchema.parse(data);
 }
+
+// ============================================================================
+// Phase 22: Deterministic Replay, Research Analytics & Scientific Evaluation
+// ============================================================================
+
+export async function fetchResearchExperiments(): Promise<ResearchExperiment[]> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(ResearchExperimentSchema).parse(data);
+}
+
+export async function createResearchExperiment(payload: {
+  title: string;
+  description: string;
+  analysis_type?: string;
+  replay_mode?: string;
+  dataset_id?: string;
+  source_session_ids?: string[];
+  seed?: number;
+}): Promise<ResearchExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResearchExperimentSchema.parse(data);
+}
+
+export async function fetchResearchExperiment(experimentId: string): Promise<ResearchExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResearchExperimentSchema.parse(data);
+}
+
+export async function sealResearchExperiment(experimentId: string): Promise<ResearchExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/seal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResearchExperimentSchema.parse(data);
+}
+
+export async function runResearchExperiment(
+  experimentId: string,
+  trialCount: number = 40,
+  checkpointId?: string
+): Promise<ResearchExperiment> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trial_count: trialCount, checkpoint_id: checkpointId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResearchExperimentSchema.parse(data);
+}
+
+export async function fetchResearchStages(experimentId: string): Promise<StageResult[]> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/stages`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(StageResultSchema).parse(data);
+}
+
+export async function fetchResearchMetrics(experimentId: string): Promise<MetricResult> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/metrics`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return MetricResultSchema.parse(data);
+}
+
+export async function fetchResearchLatency(experimentId: string): Promise<LatencyAnalytics> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/latency`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return LatencyAnalyticsSchema.parse(data);
+}
+
+export async function runResearchAblation(
+  experimentId: string,
+  ablationType: string,
+  parameterDelta: Record<string, any>
+): Promise<{ child_experiment: ResearchExperiment; ablation_record: AblationRun }> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/ablation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ablation_type: ablationType, parameter_delta: parameterDelta }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return {
+    child_experiment: ResearchExperimentSchema.parse(data.child_experiment),
+    ablation_record: AblationRunSchema.parse(data.ablation_record),
+  };
+}
+
+export async function runResearchRobustness(
+  experimentId: string,
+  perturbationType: string,
+  levels?: number[],
+  seed?: number
+): Promise<RobustnessRun[]> {
+  const res = await fetch(`${API_BASE_URL}/api/research/experiments/${experimentId}/robustness`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      perturbation_type: perturbationType,
+      levels: levels || [0.1, 0.25, 0.5, 0.75, 1.0],
+      seed: seed || 42,
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return z.array(RobustnessRunSchema).parse(data);
+}
+
+export async function runResearchComparison(
+  baselineId: string,
+  candidateId: string,
+  comparisonType: string = "MODEL_VS_MODEL"
+): Promise<ComparisonResult> {
+  const res = await fetch(`${API_BASE_URL}/api/research/comparisons`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      baseline_experiment_id: baselineId,
+      candidate_experiment_id: candidateId,
+      comparison_type: comparisonType,
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ComparisonResultSchema.parse(data);
+}
+
+export async function checkResearchReproducibility(
+  baselineExperimentId: string
+): Promise<ReproducibilityResult> {
+  const res = await fetch(`${API_BASE_URL}/api/research/reproducibility/check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ baseline_experiment_id: baselineExperimentId }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ReproducibilityResultSchema.parse(data);
+}
+
+export async function exportResearchArtifact(
+  experimentId: string,
+  artifactType: string
+): Promise<ResearchArtifact> {
+  const res = await fetch(`${API_BASE_URL}/api/research/export`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ experiment_id: experimentId, artifact_type: artifactType }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  return ResearchArtifactSchema.parse(data);
+}
+
+export async function runResearchScenario(scenarioId: string): Promise<Record<string, any>> {
+  const res = await fetch(`${API_BASE_URL}/api/research/scenarios/${scenarioId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
+export async function resetResearchLab(): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/research/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return res.json();
+}
+
 
 
 

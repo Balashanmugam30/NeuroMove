@@ -2852,6 +2852,226 @@ def post_eeg_acquisition_reset() -> Any:
     return default_eeg_acquisition_service.get_stream_health().model_dump()
 
 
+# ============================================================================
+# Phase 22: Deterministic Replay, Research Analytics & Evaluation Endpoints
+# ============================================================================
+
+from neuromove.research_analytics.models import (
+    AnalysisType,
+    ArtifactType,
+    GroupingStrategy,
+    ReplayMode,
+)
+from neuromove.research_analytics.scenarios import ResearchGoldenScenarios
+from neuromove.research_analytics.service import default_research_service
+
+
+@api_router.get("/research/experiments", tags=["Research Analytics"])
+def get_research_experiments() -> Any:
+    """List all registered research experiments."""
+    return [exp.model_dump() for exp in default_research_service.list_experiments()]
+
+
+@api_router.post("/research/experiments", tags=["Research Analytics"])
+def post_create_research_experiment(payload: dict[str, Any]) -> Any:
+    """Create a new research experiment with immutable initial manifest."""
+    title = payload.get("title", "Research Replay Experiment")
+    description = payload.get("description", "Evaluation study")
+    analysis_type = AnalysisType(payload.get("analysis_type", "BENCHMARK"))
+    replay_mode = ReplayMode(payload.get("replay_mode", "DETERMINISTIC_ACCELERATED"))
+    dataset_id = payload.get("dataset_id")
+    sources = payload.get("source_session_ids")
+    seed = payload.get("seed", 42)
+
+    exp = default_research_service.create_experiment(
+        title=title,
+        description=description,
+        analysis_type=analysis_type,
+        replay_mode=replay_mode,
+        dataset_id=dataset_id,
+        source_session_ids=sources,
+        seed=seed,
+    )
+    return exp.model_dump()
+
+
+@api_router.get("/research/experiments/{experiment_id}", tags=["Research Analytics"])
+def get_research_experiment(experiment_id: str) -> Any:
+    """Get research experiment by ID."""
+    exp = default_research_service.get_experiment(experiment_id)
+    if not exp:
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
+    return exp.model_dump()
+
+
+@api_router.post("/research/experiments/{experiment_id}/seal", tags=["Research Analytics"])
+def post_seal_research_experiment(experiment_id: str) -> Any:
+    """Seal an experiment manifest, freezing parameters and computing immutable SHA-256 hash."""
+    try:
+        sealed = default_research_service.seal_experiment(experiment_id)
+        return sealed.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.post("/research/experiments/{experiment_id}/run", tags=["Research Analytics"])
+def post_run_research_experiment(experiment_id: str, payload: dict[str, Any] | None = None) -> Any:
+    """Execute deterministic multi-stage replay and generate full analytical metrics."""
+    trials = payload.get("trial_count", 40) if payload else 40
+    checkpoint_id = payload.get("checkpoint_id") if payload else None
+    try:
+        res = default_research_service.run_experiment(
+            experiment_id=experiment_id,
+            trial_count=trials,
+            checkpoint_id=checkpoint_id,
+        )
+        return res.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.get("/research/experiments/{experiment_id}/stages", tags=["Research Analytics"])
+def get_research_experiment_stages(experiment_id: str) -> Any:
+    """Get all 15 pipeline stage results for an experiment."""
+    exp = default_research_service.get_experiment(experiment_id)
+    if not exp:
+        raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
+    return [stg.model_dump() for stg in exp.stages]
+
+
+@api_router.get("/research/experiments/{experiment_id}/metrics", tags=["Research Analytics"])
+def get_research_experiment_metrics(experiment_id: str) -> Any:
+    """Get scientific classification and calibration metrics for an experiment."""
+    exp = default_research_service.get_experiment(experiment_id)
+    if not exp or not exp.metrics:
+        raise HTTPException(status_code=404, detail="Metrics not available")
+    return exp.metrics.model_dump()
+
+
+@api_router.get("/research/experiments/{experiment_id}/latency", tags=["Research Analytics"])
+def get_research_experiment_latency(experiment_id: str) -> Any:
+    """Get per-stage and total pipeline latency percentiles for an experiment."""
+    exp = default_research_service.get_experiment(experiment_id)
+    if not exp or not exp.latency_analytics:
+        raise HTTPException(status_code=404, detail="Latency analytics not available")
+    return exp.latency_analytics.model_dump()
+
+
+@api_router.get("/research/experiments/{experiment_id}/reproducibility", tags=["Research Analytics"])
+def get_research_experiment_reproducibility(experiment_id: str) -> Any:
+    """Get reproducibility audit results for an experiment."""
+    exp = default_research_service.get_experiment(experiment_id)
+    if not exp or not exp.reproducibility:
+        raise HTTPException(status_code=404, detail="Reproducibility audit not available")
+    return exp.reproducibility.model_dump()
+
+
+@api_router.post("/research/experiments/{experiment_id}/ablation", tags=["Research Analytics"])
+def post_run_ablation(experiment_id: str, payload: dict[str, Any]) -> Any:
+    """Execute ablation study, spawning an immutable child experiment."""
+    ablation_type = payload.get("ablation_type", "CHANNEL_DROPOUT")
+    parameter_delta = payload.get("parameter_delta", {})
+    try:
+        child, abl_rec = default_research_service.run_ablation(
+            parent_experiment_id=experiment_id,
+            ablation_type=ablation_type,
+            parameter_delta=parameter_delta,
+        )
+        return {
+            "child_experiment": child.model_dump(),
+            "ablation_record": abl_rec.model_dump(),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.post("/research/experiments/{experiment_id}/robustness", tags=["Research Analytics"])
+def post_run_robustness(experiment_id: str, payload: dict[str, Any]) -> Any:
+    """Execute robustness sweep across perturbation levels."""
+    perturbation_type = payload.get("perturbation_type", "ADDITIVE_NOISE")
+    levels = payload.get("levels", [0.1, 0.25, 0.5, 0.75, 1.0])
+    seed = payload.get("seed", 42)
+    runs = default_research_service.run_robustness_sweep(
+        parent_experiment_id=experiment_id,
+        perturbation_type=perturbation_type,
+        levels=levels,
+        seed=seed,
+    )
+    return [r.model_dump() for r in runs]
+
+
+@api_router.post("/research/comparisons", tags=["Research Analytics"])
+def post_run_comparison(payload: dict[str, Any]) -> Any:
+    """Execute comparative benchmarking between two experiments."""
+    b_id = payload.get("baseline_experiment_id", "")
+    c_id = payload.get("candidate_experiment_id", "")
+    comp_type = payload.get("comparison_type", "MODEL_VS_MODEL")
+    try:
+        res = default_research_service.run_comparison(
+            baseline_id=b_id,
+            candidate_id=c_id,
+            comparison_type=comp_type,
+        )
+        return res.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.post("/research/reproducibility/check", tags=["Research Analytics"])
+def post_check_reproducibility(payload: dict[str, Any]) -> Any:
+    """Audit reproducibility by rerunning baseline experiment under identical parameters."""
+    base_id = payload.get("baseline_experiment_id", "")
+    try:
+        audit = default_research_service.check_reproducibility(baseline_experiment_id=base_id)
+        return audit.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.post("/research/export", tags=["Research Analytics"])
+def post_export_artifact(payload: dict[str, Any]) -> Any:
+    """Generate and return a checksummed export artifact."""
+    exp_id = payload.get("experiment_id", "")
+    art_type = ArtifactType(payload.get("artifact_type", "MANIFEST_JSON"))
+    try:
+        art = default_research_service.export_artifact(experiment_id=exp_id, artifact_type=art_type)
+        return art.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@api_router.post("/research/scenarios/{scenario_id}", tags=["Research Analytics"])
+def post_run_research_scenario(scenario_id: str) -> Any:
+    """Run one of the 12 Golden Verification Scenarios (A through L)."""
+    scenarios = ResearchGoldenScenarios(service=default_research_service)
+    method_map = {
+        "SCENARIO_A": scenarios.run_scenario_a_deterministic_replay_twice,
+        "SCENARIO_B": scenarios.run_scenario_b_tampered_source,
+        "SCENARIO_C": scenarios.run_scenario_c_changed_preprocessing_child_manifest,
+        "SCENARIO_D": scenarios.run_scenario_d_model_comparison,
+        "SCENARIO_E": scenarios.run_scenario_e_personalized_vs_generic_no_leakage,
+        "SCENARIO_F": scenarios.run_scenario_f_channel_ablation,
+        "SCENARIO_G": scenarios.run_scenario_g_robustness_sweep,
+        "SCENARIO_H": scenarios.run_scenario_h_confidence_analysis,
+        "SCENARIO_I": scenarios.run_scenario_i_safety_replay_non_transmission,
+        "SCENARIO_J": scenarios.run_scenario_j_authorized_replay_hil_ack,
+        "SCENARIO_K": scenarios.run_scenario_k_restart_reproducibility,
+        "SCENARIO_L": scenarios.run_scenario_l_multiple_children_parent_unchanged,
+    }
+
+    handler = method_map.get(scenario_id.upper())
+    if not handler:
+        raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found")
+    return handler()
+
+
+@api_router.post("/research/reset", tags=["Research Analytics"])
+def post_reset_research_lab() -> Any:
+    """Reset the research analytics laboratory state."""
+    default_research_service.reset_lab()
+    return {"status": "RESET_SUCCESSFUL"}
+
+
 # --- WebSocket Stream Endpoints ---
 
 
@@ -2906,7 +3126,14 @@ async def ws_eeg_acquisition_endpoint(websocket: WebSocket) -> None:
     await ws_manager.connect_eeg_acquisition(websocket)
 
 
+@ws_router.websocket("/research")
+async def ws_research_endpoint(websocket: WebSocket) -> None:
+    """Real-time Research Replay & Analytics telemetry stream socket."""
+    await ws_manager.connect_research(websocket)
+
+
 @ws_router.websocket("/stream")
 async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
     """Multiplexed real-time WebSocket carrying all subscribed channels."""
     await ws_manager.connect_all(websocket)
+
