@@ -8,8 +8,6 @@ robustness sweeps, comparisons, reproducibility audits, artifact exports, 12 Gol
 from __future__ import annotations
 
 import copy
-import json
-from datetime import UTC, datetime
 
 import numpy as np
 import pytest
@@ -19,23 +17,22 @@ from neuromove.api.app import app
 from neuromove.database.connection import default_db_manager
 from neuromove.research_analytics.ablation import AblationEngine
 from neuromove.research_analytics.artifacts import ResearchArtifactGenerator
-from neuromove.research_analytics.comparison import ComparisonEngine
 from neuromove.research_analytics.confidence import ConfidenceAnalyticsEngine
 from neuromove.research_analytics.dataset import ResearchDatasetManager
+from neuromove.research_analytics.hil import HilAnalyticsEngine
 from neuromove.research_analytics.intent import IntentAnalyticsEngine
-from neuromove.research_analytics.latency import LatencyAnalyticsEngine, SignalQualityAnalyticsEngine
+from neuromove.research_analytics.latency import (
+    LatencyAnalyticsEngine,
+    SignalQualityAnalyticsEngine,
+)
 from neuromove.research_analytics.manifest import ExperimentManifestManager
 from neuromove.research_analytics.metrics import ScientificMetricsEngine
 from neuromove.research_analytics.models import (
-    AnalysisType,
     ArtifactType,
-    GroupingStrategy,
     PipelineStage,
-    ReplayCheckpoint,
     ReplayMode,
     ReproducibilityStatus,
     ResearchArtifact,
-    ResearchDataset,
     ResearchExperiment,
     ResearchExperimentStatus,
 )
@@ -43,7 +40,6 @@ from neuromove.research_analytics.replay import DeterministicReplayEngine
 from neuromove.research_analytics.reproducibility import ReproducibilityChecker
 from neuromove.research_analytics.robustness import RobustnessEngine
 from neuromove.research_analytics.safety import SafetyAnalyticsEngine
-from neuromove.research_analytics.hil import HilAnalyticsEngine
 from neuromove.research_analytics.scenarios import ResearchGoldenScenarios
 from neuromove.research_analytics.service import ResearchAnalyticsService
 from neuromove.research_analytics.statistics import ResearchStatisticsEngine
@@ -173,7 +169,9 @@ def test_leakage_safe_partitioning():
         {"item_id": 4, "subject_id": "sub-02", "label": "RIGHT"},
         {"item_id": 5, "subject_id": "sub-03", "label": "FORWARD"},
     ]
-    train, test = ResearchDatasetManager.partition_folds(items, group_key="subject_id", test_ratio=0.33)
+    train, test = ResearchDatasetManager.partition_folds(
+        items, group_key="subject_id", test_ratio=0.33
+    )
     train_subs = {x["subject_id"] for x in train}
     test_subs = {x["subject_id"] for x in test}
     assert len(train_subs & test_subs) == 0
@@ -187,7 +185,10 @@ def test_leakage_safe_partitioning():
 def test_metrics_perfect_classification():
     y_true = ["LEFT", "RIGHT", "FORWARD", "STOP"] * 5
     y_pred = ["LEFT", "RIGHT", "FORWARD", "STOP"] * 5
-    y_prob = [{c: (0.9 if c == t else 0.033) for c in ["LEFT", "RIGHT", "FORWARD", "STOP"]} for t in y_true]
+    y_prob = [
+        {c: (0.9 if c == t else 0.033) for c in ["LEFT", "RIGHT", "FORWARD", "STOP"]}
+        for t in y_true
+    ]
 
     metrics = ScientificMetricsEngine.compute_metrics(
         experiment_id="exp_met_01",
@@ -219,7 +220,9 @@ def test_metrics_empty_trials_handled_gracefully():
 def test_metrics_brier_score_and_ece():
     y_true = ["LEFT", "RIGHT"] * 10
     y_pred = ["LEFT", "RIGHT"] * 10
-    y_prob = [{"LEFT": 0.8, "RIGHT": 0.2} if t == "LEFT" else {"LEFT": 0.2, "RIGHT": 0.8} for t in y_true]
+    y_prob = [
+        {"LEFT": 0.8, "RIGHT": 0.2} if t == "LEFT" else {"LEFT": 0.2, "RIGHT": 0.8} for t in y_true
+    ]
 
     metrics = ScientificMetricsEngine.compute_metrics(
         experiment_id="exp_brier",
@@ -239,7 +242,9 @@ def test_metrics_brier_score_and_ece():
 
 def test_statistics_summary_and_bootstrap():
     values = [0.82, 0.84, 0.85, 0.86, 0.88, 0.90, 0.85, 0.87]
-    stats = ResearchStatisticsEngine.compute_summary("accuracy", values, bootstrap_iterations=500, seed=42)
+    stats = ResearchStatisticsEngine.compute_summary(
+        "accuracy", values, bootstrap_iterations=500, seed=42
+    )
     assert stats.sample_count == 8
     assert 0.80 < stats.mean < 0.90
     assert stats.ci_lower_95 is not None
@@ -335,8 +340,18 @@ def test_safety_analytics_zero_transmission():
 
 def test_hil_analytics():
     events = [
-        {"is_authorized": True, "transmitted": True, "status": "COMMAND_ACCEPTED", "roundtrip_latency_ms": 2.1},
-        {"is_authorized": True, "transmitted": True, "status": "COMMAND_ACCEPTED", "roundtrip_latency_ms": 2.3},
+        {
+            "is_authorized": True,
+            "transmitted": True,
+            "status": "COMMAND_ACCEPTED",
+            "roundtrip_latency_ms": 2.1,
+        },
+        {
+            "is_authorized": True,
+            "transmitted": True,
+            "status": "COMMAND_ACCEPTED",
+            "roundtrip_latency_ms": 2.3,
+        },
     ]
     ha = HilAnalyticsEngine.analyze(events)
     assert ha.candidates == 2
@@ -654,9 +669,18 @@ def test_api_export_artifact():
 
 def test_api_run_scenarios():
     for sc in [
-        "SCENARIO_A", "SCENARIO_B", "SCENARIO_C", "SCENARIO_D",
-        "SCENARIO_E", "SCENARIO_F", "SCENARIO_G", "SCENARIO_H",
-        "SCENARIO_I", "SCENARIO_J", "SCENARIO_K", "SCENARIO_L",
+        "SCENARIO_A",
+        "SCENARIO_B",
+        "SCENARIO_C",
+        "SCENARIO_D",
+        "SCENARIO_E",
+        "SCENARIO_F",
+        "SCENARIO_G",
+        "SCENARIO_H",
+        "SCENARIO_I",
+        "SCENARIO_J",
+        "SCENARIO_K",
+        "SCENARIO_L",
     ]:
         resp = client.post(f"/api/research/scenarios/{sc}")
         assert resp.status_code == 200
@@ -761,4 +785,3 @@ def test_storage_checkpoint_and_artifact_roundtrip():
     listed = storage.list_artifacts("exp_storage_test")
     assert len(listed) >= 1
     assert listed[0].artifact_id == "art_rnd_01"
-

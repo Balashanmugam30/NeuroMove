@@ -97,12 +97,12 @@ const mockExperiment: ResearchExperiment = {
       timestamp: new Date().toISOString(),
     },
   ],
+  is_sealed: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
 
 const mockMetrics: MetricResult = {
-  metric_id: "met_01",
   experiment_id: "exp_test_01",
   accuracy: 0.92,
   balanced_accuracy: 0.915,
@@ -113,8 +113,6 @@ const mockMetrics: MetricResult = {
   per_class_recall: { MOVE_FORWARD: 0.93, TURN_LEFT: 0.91 },
   per_class_f1: { MOVE_FORWARD: 0.935, TURN_LEFT: 0.905 },
   confusion_matrix: {
-    matrix_id: "cm_01",
-    experiment_id: "exp_test_01",
     classes: ["MOVE_FORWARD", "TURN_LEFT"],
     matrix: [[10, 1], [1, 8]],
     normalized_matrix: [[0.91, 0.09], [0.11, 0.89]],
@@ -122,6 +120,8 @@ const mockMetrics: MetricResult = {
   },
   expected_calibration_error: 0.038,
   brier_score: 0.065,
+  roc_auc_macro: 0.95,
+  pr_auc_macro: 0.93,
   total_trials: 20,
   evaluated_trials: 20,
   rejected_trials: 0,
@@ -150,6 +150,7 @@ const mockLatency: LatencyAnalytics = {
 const mockAudit: ReproducibilityResult = {
   audit_id: "aud_01",
   baseline_experiment_id: "exp_test_01",
+  reproduced_experiment_id: "exp_test_01_replay",
   status: "PASS",
   source_hash_match: true,
   manifest_hash_match: true,

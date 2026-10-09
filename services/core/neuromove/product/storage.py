@@ -51,14 +51,20 @@ class ProductStorage:
                     session.session_id,
                     session.title,
                     session.subject_id,
-                    session.source_type.value if hasattr(session.source_type, "value") else str(session.source_type),
-                    session.status.value if hasattr(session.status, "value") else str(session.status),
+                    session.source_type.value
+                    if hasattr(session.source_type, "value")
+                    else str(session.source_type),
+                    session.status.value
+                    if hasattr(session.status, "value")
+                    else str(session.status),
                     session.acquisition_session_id,
                     session.sensor_session_id,
                     session.model_version,
                     session.confidence_policy,
                     session.intent_id,
-                    session.safety_decision.value if hasattr(session.safety_decision, "value") else str(session.safety_decision),
+                    session.safety_decision.value
+                    if hasattr(session.safety_decision, "value")
+                    else str(session.safety_decision),
                     session.hil_session_id,
                     session.experiment_id,
                     session.manifest_hash,
@@ -126,16 +132,22 @@ class ProductStorage:
                 """,
                 (
                     run.run_id,
-                    run.scenario_id.value if hasattr(run.scenario_id, "value") else str(run.scenario_id),
+                    run.scenario_id.value
+                    if hasattr(run.scenario_id, "value")
+                    else str(run.scenario_id),
                     run.product_session_id,
                     run.state.value if hasattr(run.state, "value") else str(run.state),
                     run.current_step,
                     run.total_steps,
-                    run.source_type.value if hasattr(run.source_type, "value") else str(run.source_type),
+                    run.source_type.value
+                    if hasattr(run.source_type, "value")
+                    else str(run.source_type),
                     steps_json,
                     run.candidate_intent,
                     run.confidence_score,
-                    run.safety_verdict.value if hasattr(run.safety_verdict, "value") else str(run.safety_verdict),
+                    run.safety_verdict.value
+                    if hasattr(run.safety_verdict, "value")
+                    else str(run.safety_verdict),
                     1 if run.hil_ack else 0,
                     1 if run.is_blocked else 0,
                     run.block_reason,
@@ -210,12 +222,18 @@ class ProductStorage:
                 (
                     res.result_id,
                     res.run_id,
-                    res.scenario_id.value if hasattr(res.scenario_id, "value") else str(res.scenario_id),
+                    res.scenario_id.value
+                    if hasattr(res.scenario_id, "value")
+                    else str(res.scenario_id),
                     res.status.value if hasattr(res.status, "value") else str(res.status),
-                    res.source_type.value if hasattr(res.source_type, "value") else str(res.source_type),
+                    res.source_type.value
+                    if hasattr(res.source_type, "value")
+                    else str(res.source_type),
                     res.candidate_intent,
                     res.confidence_score,
-                    res.safety_verdict.value if hasattr(res.safety_verdict, "value") else str(res.safety_verdict),
+                    res.safety_verdict.value
+                    if hasattr(res.safety_verdict, "value")
+                    else str(res.safety_verdict),
                     res.hil_status,
                     latency_json,
                     prov_json,

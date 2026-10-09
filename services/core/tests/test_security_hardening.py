@@ -45,7 +45,9 @@ class TestSecurityHardening:
             assert len(rows) == 0
 
             # Verify table still exists (not dropped)
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='canonical_events';")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='canonical_events';"
+            )
             assert cursor.fetchone() is not None
 
         try:

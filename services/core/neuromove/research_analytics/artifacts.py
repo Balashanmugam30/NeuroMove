@@ -112,7 +112,11 @@ class ResearchArtifactGenerator:
     @classmethod
     def generate_confusion_matrix_artifact(cls, experiment: ResearchExperiment) -> ResearchArtifact:
         """Generate confusion matrix JSON artifact."""
-        cm_data = experiment.metrics.confusion_matrix.model_dump() if experiment.metrics and experiment.metrics.confusion_matrix else {}
+        cm_data = (
+            experiment.metrics.confusion_matrix.model_dump()
+            if experiment.metrics and experiment.metrics.confusion_matrix
+            else {}
+        )
         content = json.dumps(cm_data, indent=2)
         return cls._create_artifact(
             experiment_id=experiment.experiment_id,
@@ -122,7 +126,9 @@ class ResearchArtifactGenerator:
         )
 
     @classmethod
-    def generate_reproducibility_report_artifact(cls, audit: ReproducibilityResult) -> ResearchArtifact:
+    def generate_reproducibility_report_artifact(
+        cls, audit: ReproducibilityResult
+    ) -> ResearchArtifact:
         """Generate reproducibility report JSON artifact."""
         content = json.dumps(audit.model_dump(), indent=2)
         return cls._create_artifact(
@@ -135,9 +141,21 @@ class ResearchArtifactGenerator:
     @classmethod
     def generate_summary_markdown(cls, experiment: ResearchExperiment) -> ResearchArtifact:
         """Generate high-level scientific summary markdown document."""
-        acc = experiment.metrics.accuracy if experiment.metrics and experiment.metrics.accuracy is not None else "N/A"
-        f1 = experiment.metrics.f1_macro if experiment.metrics and experiment.metrics.f1_macro is not None else "N/A"
-        lat = experiment.latency_analytics.total_pipeline.mean_ms if experiment.latency_analytics else "N/A"
+        acc = (
+            experiment.metrics.accuracy
+            if experiment.metrics and experiment.metrics.accuracy is not None
+            else "N/A"
+        )
+        f1 = (
+            experiment.metrics.f1_macro
+            if experiment.metrics and experiment.metrics.f1_macro is not None
+            else "N/A"
+        )
+        lat = (
+            experiment.latency_analytics.total_pipeline.mean_ms
+            if experiment.latency_analytics
+            else "N/A"
+        )
 
         md = f"""# Scientific Experiment Summary: {experiment.title}
 
@@ -147,7 +165,7 @@ class ResearchArtifactGenerator:
 - **Status**: `{experiment.status}`
 - **Replay Mode**: `{experiment.replay_mode}`
 - **Manifest Hash**: `{experiment.manifest.manifest_hash}`
-- **Result Hash**: `{experiment.result_hash or 'N/A'}`
+- **Result Hash**: `{experiment.result_hash or "N/A"}`
 - **Sealed**: `{experiment.is_sealed}`
 
 ## Primary Performance Metrics

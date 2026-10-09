@@ -6,14 +6,8 @@ import copy
 import logging
 from typing import Any
 
-from neuromove.research_analytics.manifest import ExperimentManifestManager
 from neuromove.research_analytics.models import (
-    AnalysisType,
-    GroupingStrategy,
-    ReplayMode,
     ReproducibilityStatus,
-    ResearchExperiment,
-    ResearchExperimentStatus,
 )
 from neuromove.research_analytics.reproducibility import ReproducibilityChecker
 from neuromove.research_analytics.service import ResearchAnalyticsService
@@ -76,7 +70,7 @@ class ResearchGoldenScenarios:
         tampered.manifest.source_checksums["sess_mi_sub01_01"] = "corrupted_checksum_tampered_xyz"
 
         audit = ReproducibilityChecker.audit(res, tampered)
-        passed = (audit.status == ReproducibilityStatus.FAIL and audit.tamper_detected is True)
+        passed = audit.status == ReproducibilityStatus.FAIL and audit.tamper_detected is True
 
         return {
             "scenario": "SCENARIO_B",
@@ -220,7 +214,7 @@ class ResearchGoldenScenarios:
             levels=[0.1, 0.5, 1.0],
         )
 
-        passed = (len(runs) == 3 and runs[0].resulting_accuracy >= runs[2].resulting_accuracy)
+        passed = len(runs) == 3 and runs[0].resulting_accuracy >= runs[2].resulting_accuracy
 
         return {
             "scenario": "SCENARIO_G",
@@ -248,7 +242,9 @@ class ResearchGoldenScenarios:
         return {
             "scenario": "SCENARIO_H",
             "passed": passed,
-            "mean_confidence": res.confidence_analytics.mean_confidence if res.confidence_analytics else None,
+            "mean_confidence": res.confidence_analytics.mean_confidence
+            if res.confidence_analytics
+            else None,
             "ece": res.metrics.expected_calibration_error if res.metrics else None,
         }
 
@@ -261,13 +257,17 @@ class ResearchGoldenScenarios:
         self.service.seal_experiment(exp.experiment_id)
         res = self.service.run_experiment(exp.experiment_id, trial_count=20)
 
-        passed = (res.safety_analytics is not None)
+        passed = res.safety_analytics is not None
 
         return {
             "scenario": "SCENARIO_I",
             "passed": passed,
-            "authorized_count": res.safety_analytics.authorized_count if res.safety_analytics else 0,
-            "proof_count": res.safety_analytics.zero_transmission_proof_count if res.safety_analytics else 0,
+            "authorized_count": res.safety_analytics.authorized_count
+            if res.safety_analytics
+            else 0,
+            "proof_count": res.safety_analytics.zero_transmission_proof_count
+            if res.safety_analytics
+            else 0,
         }
 
     def run_scenario_j_authorized_replay_hil_ack(self) -> dict[str, Any]:
@@ -279,10 +279,7 @@ class ResearchGoldenScenarios:
         self.service.seal_experiment(exp.experiment_id)
         res = self.service.run_experiment(exp.experiment_id, trial_count=20)
 
-        passed = (
-            res.hil_analytics is not None
-            and res.hil_analytics.ack_count >= 0
-        )
+        passed = res.hil_analytics is not None and res.hil_analytics.ack_count >= 0
 
         return {
             "scenario": "SCENARIO_J",
@@ -302,7 +299,7 @@ class ResearchGoldenScenarios:
 
         # Audit
         audit = self.service.check_reproducibility(res1.experiment_id)
-        passed = (audit.status in [ReproducibilityStatus.PASS, ReproducibilityStatus.APPROXIMATE])
+        passed = audit.status in [ReproducibilityStatus.PASS, ReproducibilityStatus.APPROXIMATE]
 
         return {
             "scenario": "SCENARIO_K",
@@ -321,9 +318,15 @@ class ResearchGoldenScenarios:
         original_hash = parent.manifest.manifest_hash
 
         # Spawn 3 child ablations
-        c1, _ = self.service.run_ablation(parent.experiment_id, "CHANNEL_DROPOUT", {"channels": ["C3"]})
-        c2, _ = self.service.run_ablation(parent.experiment_id, "CONFIDENCE_THRESHOLD", {"threshold": 0.90})
-        c3, _ = self.service.run_ablation(parent.experiment_id, "PERSONALIZATION_TOGGLE", {"enabled": False})
+        c1, _ = self.service.run_ablation(
+            parent.experiment_id, "CHANNEL_DROPOUT", {"channels": ["C3"]}
+        )
+        c2, _ = self.service.run_ablation(
+            parent.experiment_id, "CONFIDENCE_THRESHOLD", {"threshold": 0.90}
+        )
+        c3, _ = self.service.run_ablation(
+            parent.experiment_id, "PERSONALIZATION_TOGGLE", {"enabled": False}
+        )
 
         # Check parent in storage
         stored_parent = self.service.get_experiment(parent.experiment_id)

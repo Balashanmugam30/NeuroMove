@@ -1,7 +1,8 @@
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Query, Response, WebSocket, status
+from fastapi import APIRouter, HTTPException, Query, Response, WebSocket, status
 from pydantic import BaseModel, Field
 
 from ..analysis.models import (
@@ -30,6 +31,14 @@ from ..domain.models import (
     UserProfile,
     utc_now,
 )
+from ..product.service import default_product_service
+from ..research_analytics.models import (
+    AnalysisType,
+    ArtifactType,
+    ReplayMode,
+)
+from ..research_analytics.scenarios import ResearchGoldenScenarios
+from ..research_analytics.service import default_research_service
 from ..safety.state_machine import default_safety_state_machine
 from ..simulation.runner import SimulationStatus, simulation_engine
 from ..simulation.scenarios import SimulationScenario, list_scenarios
@@ -2856,15 +2865,6 @@ def post_eeg_acquisition_reset() -> Any:
 # Phase 22: Deterministic Replay, Research Analytics & Evaluation Endpoints
 # ============================================================================
 
-from neuromove.research_analytics.models import (
-    AnalysisType,
-    ArtifactType,
-    GroupingStrategy,
-    ReplayMode,
-)
-from neuromove.research_analytics.scenarios import ResearchGoldenScenarios
-from neuromove.research_analytics.service import default_research_service
-
 
 @api_router.get("/research/experiments", tags=["Research Analytics"])
 def get_research_experiments() -> Any:
@@ -2957,7 +2957,9 @@ def get_research_experiment_latency(experiment_id: str) -> Any:
     return exp.latency_analytics.model_dump()
 
 
-@api_router.get("/research/experiments/{experiment_id}/reproducibility", tags=["Research Analytics"])
+@api_router.get(
+    "/research/experiments/{experiment_id}/reproducibility", tags=["Research Analytics"]
+)
 def get_research_experiment_reproducibility(experiment_id: str) -> Any:
     """Get reproducibility audit results for an experiment."""
     exp = default_research_service.get_experiment(experiment_id)
@@ -3122,7 +3124,7 @@ def post_disconnect_sensor(device_id: str) -> Any:
 
 
 @api_router.post("/sensors/devices/{device_id}/configure", tags=["Multimodal Sensors"])
-def post_configure_sensor(device_id: str, payload: dict[str, Any] = Body(...)) -> Any:
+def post_configure_sensor(device_id: str, payload: dict[str, Any]) -> Any:
     """Configure sensor sampling rate and channel map."""
     from neuromove.multimodal_sensors.service import MultimodalSensorService
 
@@ -3166,7 +3168,7 @@ def get_sensors_sync_state() -> Any:
 
 
 @api_router.post("/sensors/session/start", tags=["Multimodal Sensors"])
-def post_start_sensor_session(payload: dict[str, Any] = Body(...)) -> Any:
+def post_start_sensor_session(payload: dict[str, Any]) -> Any:
     """Start synchronized multimodal recording / streaming session."""
     from neuromove.multimodal_sensors.service import MultimodalSensorService
 
@@ -3211,7 +3213,7 @@ def get_multimodal_frame(
 
 
 @api_router.post("/sensors/inference", tags=["Multimodal Sensors"])
-def post_process_inference_frame(payload: dict[str, Any] = Body(...)) -> Any:
+def post_process_inference_frame(payload: dict[str, Any]) -> Any:
     """Run full canonical pipeline (Acquisition -> Sync -> QC -> Fusion -> Context -> Intent -> Safety -> HIL)."""
     from neuromove.multimodal_sensors.service import MultimodalSensorService
 
@@ -3223,7 +3225,7 @@ def post_process_inference_frame(payload: dict[str, Any] = Body(...)) -> Any:
 
 
 @api_router.post("/sensors/fault/inject", tags=["Multimodal Sensors"])
-def post_inject_sensor_fault(payload: dict[str, Any] = Body(...)) -> Any:
+def post_inject_sensor_fault(payload: dict[str, Any]) -> Any:
     """Inject simulated anomaly or fault into target sensor."""
     from neuromove.multimodal_sensors.service import MultimodalSensorService
 
@@ -3235,12 +3237,12 @@ def post_inject_sensor_fault(payload: dict[str, Any] = Body(...)) -> Any:
 
 
 @api_router.post("/sensors/fault/clear", tags=["Multimodal Sensors"])
-def post_clear_sensor_faults(payload: dict[str, Any] = Body(default={})) -> Any:
+def post_clear_sensor_faults(payload: dict[str, Any] | None = None) -> Any:
     """Clear active faults on sensors."""
     from neuromove.multimodal_sensors.service import MultimodalSensorService
 
     service = MultimodalSensorService.get_instance()
-    service.clear_faults(payload.get("sensor_id"))
+    service.clear_faults((payload or {}).get("sensor_id"))
     return {"status": "FAULTS_CLEARED"}
 
 
@@ -3376,8 +3378,6 @@ async def ws_multiplexed_endpoint(websocket: WebSocket) -> None:
 # Phase 24.1: Final Competition Product Foundation & Demo Orchestration
 # ============================================================================
 
-from ..product.service import default_product_service
-
 
 @api_router.get("/product/status", tags=["Product Platform"])
 def get_product_system_status() -> dict[str, Any]:
@@ -3461,5 +3461,3 @@ def post_reset_demo() -> dict[str, str]:
     """Reset active demo run state."""
     default_product_service.reset_demo()
     return {"status": "RESET"}
-
-

@@ -11,16 +11,14 @@ import pytest
 
 from neuromove.adaptation.policy import AdaptationPolicyEngine
 from neuromove.domain.enums import ProductDemoScenario, ProductExecutionOutcome, SafetyDecision
-from neuromove.hardware_hil.models import HardwareConnectionState, HardwareEndpointMode
+from neuromove.hardware_hil.models import HardwareConnectionState
 from neuromove.hardware_hil.service import HardwareHilService
 from neuromove.multimodal_sensors.models import (
     ContradictionRecord,
     SensorModality,
 )
-from neuromove.multimodal_sensors.service import MultimodalSensorService
 from neuromove.product.models import ProductSession
 from neuromove.product.orchestrator import DemoOrchestrator
-from neuromove.product.service import ProductCoordinatorService
 from neuromove.product.storage import ProductStorage
 from neuromove.safety.models import SafetyArbitrationState
 from neuromove.safety.service import SafetyService
@@ -78,7 +76,11 @@ class TestReleaseNegativeScenarios:
         evaluation = safety.evaluate_intent(
             intent,
             context_override={
-                "model_health": {"is_active": False, "is_rolled_back": True, "model_version_id": "deprecated_uncalibrated_model_v0"}
+                "model_health": {
+                    "is_active": False,
+                    "is_rolled_back": True,
+                    "model_version_id": "deprecated_uncalibrated_model_v0",
+                }
             },
         )
         assert evaluation.decision != SafetyDecision.AUTHORIZED
@@ -248,7 +250,9 @@ class TestReleaseNegativeScenarios:
     def test_scenario_06_transport_disconnected(self) -> None:
         """Transport in DISCONNECTED state -> Rejects command immediately with no retry leak."""
         hil = HardwareHilService()
-        hil.state_machine.transition_to(HardwareConnectionState.DISCONNECTED, "Simulated cable unplug")
+        hil.state_machine.transition_to(
+            HardwareConnectionState.DISCONNECTED, "Simulated cable unplug"
+        )
 
         auth = ExecutionAuthorization(
             authorization_id="auth_sc6",
@@ -275,7 +279,9 @@ class TestReleaseNegativeScenarios:
     # -------------------------------------------------------------------------
     def test_scenario_07_malformed_protocol_frame(self) -> None:
         """Corrupted CRC-32 or bad delimiter -> Transport unpacking raises FramingError or rejects."""
-        corrupted_frame = b"\xaa\x55\x01\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa"  # Corrupted CRC
+        corrupted_frame = (
+            b"\xaa\x55\x01\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa"  # Corrupted CRC
+        )
         with pytest.raises(FramingError):
             unpack_frame(corrupted_frame)
 

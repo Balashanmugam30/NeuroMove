@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import numpy as np
 
@@ -46,7 +45,8 @@ class ConfidenceAnalyticsEngine:
             upper = bin_edges[i + 1]
 
             indices = [
-                j for j, c in enumerate(confidences)
+                j
+                for j, c in enumerate(confidences)
                 if (lower <= c < upper) or (i == n_bins - 1 and c == 1.0)
             ]
             if not indices:
@@ -56,17 +56,22 @@ class ConfidenceAnalyticsEngine:
             avg_c = float(np.mean([confidences[j] for j in indices]))
 
             correct_cnt = sum(
-                1 for j in indices
-                if j < len(predictions) and j < len(ground_truth) and predictions[j] == ground_truth[j]
+                1
+                for j in indices
+                if j < len(predictions)
+                and j < len(ground_truth)
+                and predictions[j] == ground_truth[j]
             )
             acc = round(correct_cnt / sample_cnt, 4) if sample_cnt > 0 else 0.0
 
-            reliability_bins.append({
-                "bin_range": f"{lower:.1f}-{upper:.1f}",
-                "avg_confidence": round(avg_c, 4),
-                "accuracy": acc,
-                "sample_count": sample_cnt,
-            })
+            reliability_bins.append(
+                {
+                    "bin_range": f"{lower:.1f}-{upper:.1f}",
+                    "avg_confidence": round(avg_c, 4),
+                    "accuracy": acc,
+                    "sample_count": sample_cnt,
+                }
+            )
 
         confirmation_rate = round(1.0 - low_conf_rate, 4)
 

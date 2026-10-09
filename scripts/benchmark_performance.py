@@ -16,6 +16,7 @@ import json
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -32,7 +33,7 @@ from neuromove.transport_protocol.framing import pack_frame, unpack_frame
 from neuromove.transport_protocol.models import ExecutionAuthorization
 
 
-def run_benchmarks() -> dict[str, any]:
+def run_benchmarks() -> dict[str, Any]:
     print("=== NeuroMove Phase 24.3 Performance Baseline Benchmark ===")
     results = {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -41,7 +42,7 @@ def run_benchmarks() -> dict[str, any]:
 
     # 1. Startup Latency
     t0 = time.perf_counter()
-    safety = SafetyService()
+    _safety = SafetyService()
     t_safety = (time.perf_counter() - t0) * 1000.0
     print(f"[*] Safety Service Startup: {t_safety:.2f} ms")
     results["benchmarks"]["safety_service_startup_ms"] = round(t_safety, 2)
@@ -98,11 +99,13 @@ def run_benchmarks() -> dict[str, any]:
     )
     t0 = time.perf_counter()
     for _ in range(n_conf):
-        dec = evaluator.evaluate(inp, evaluation_timestamp=1000.0)
+        _ = evaluator.evaluate(inp, evaluation_timestamp=1000.0)
     t_conf = time.perf_counter() - t0
     conf_eps = n_conf / t_conf
     avg_conf_us = (t_conf / n_conf) * 1e6
-    print(f"[*] Confidence Evaluation Rate: {conf_eps:.0f} evaluations/sec ({avg_conf_us:.2f} us/eval)")
+    print(
+        f"[*] Confidence Evaluation Rate: {conf_eps:.0f} evaluations/sec ({avg_conf_us:.2f} us/eval)"
+    )
     results["benchmarks"]["confidence_rate_eps"] = round(conf_eps, 1)
     results["benchmarks"]["confidence_latency_us"] = round(avg_conf_us, 2)
 

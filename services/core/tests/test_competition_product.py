@@ -54,6 +54,7 @@ def product_service(product_storage):
 # 1. Product Models & Enums Tests
 # ============================================================================
 
+
 def test_product_session_defaults():
     sess = ProductSession(session_id="test_sess_01")
     assert sess.session_id == "test_sess_01"
@@ -114,6 +115,7 @@ def test_product_provenance_model():
 # ============================================================================
 # 2. Demo State Machine Tests
 # ============================================================================
+
 
 def test_state_machine_happy_path_transitions():
     fsm = DemoStateMachine()
@@ -178,6 +180,7 @@ def test_state_machine_safety_held_branch():
 # 3. Golden Scenarios Registry Tests
 # ============================================================================
 
+
 def test_golden_scenarios_listing():
     scenarios = ProductGoldenScenarios.list_scenarios()
     assert len(scenarios) == 6
@@ -210,6 +213,7 @@ def test_golden_scenarios_unknown_raises():
 # ============================================================================
 # 4. Storage Persistence Tests
 # ============================================================================
+
 
 def test_storage_save_and_get_product_session(product_storage):
     sess = ProductSession(
@@ -279,6 +283,7 @@ def test_storage_save_and_get_demo_result(product_storage):
 # ============================================================================
 # 5. Demo Orchestrator & Golden Scenario Execution Tests
 # ============================================================================
+
 
 def test_orchestrator_start_scenario(product_storage):
     orchestrator = DemoOrchestrator(product_storage)
@@ -377,6 +382,7 @@ def test_orchestrator_scenario_f_reset(product_storage):
 # 6. Product Coordinator Service Tests
 # ============================================================================
 
+
 def test_service_get_and_reset_session(product_service):
     sess1 = product_service.get_session()
     assert sess1.session_id.startswith("prod_sess_")
@@ -429,6 +435,7 @@ def test_service_execute_full_scenario(product_service):
 # ============================================================================
 # 7. FastAPI REST API Endpoint Tests
 # ============================================================================
+
 
 def test_api_get_product_status(client):
     resp = client.get("/api/product/status")
@@ -517,6 +524,7 @@ def test_api_reset_demo(client):
 # ============================================================================
 # 8. Competition Product Invariant & Architectural Safety Tests
 # ============================================================================
+
 
 def test_invariant_safety_block_guarantees_zero_transmission(product_storage):
     """Invariant: Safety-blocked demos have zero transport transmissions and zero HIL actions."""
@@ -654,8 +662,14 @@ def test_demo_run_explanation_contains_context_when_held(product_storage):
     sess = ProductSession(session_id="expl_sess")
     result = orchestrator.execute_full_run(ProductDemoScenario.PRODUCT_B, sess)
 
-    assert "interlocked" in result.explanation_text.lower() or "held" in result.explanation_text.lower()
-    assert "0 actuator commands" in result.explanation_text or "safety" in result.explanation_text.lower()
+    assert (
+        "interlocked" in result.explanation_text.lower()
+        or "held" in result.explanation_text.lower()
+    )
+    assert (
+        "0 actuator commands" in result.explanation_text
+        or "safety" in result.explanation_text.lower()
+    )
 
 
 def test_api_get_active_demo_run_lifecycle(client):
@@ -674,4 +688,3 @@ def test_api_reset_session_creates_fresh_id(client):
     res2 = client.post("/api/product/session/reset").json()
     assert res1["session_id"] != res2["session_id"]
     assert res2["status"] == "ACTIVE"
-

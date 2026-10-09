@@ -7,17 +7,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from neuromove.domain.enums import (
-    Intent,
-    MotionContaminationState,
-    RuntimeState,
     SafetyDecision,
     SensorModality,
-    SensorSource,
     SensorState,
-    SynchronizationStatus,
 )
 from neuromove.events.dispatcher import EventDispatcher
-from neuromove.events.envelope import EventEnvelope
 from neuromove.multimodal_sensors.adapters.simulated import SimulatedSensorAdapter
 from neuromove.multimodal_sensors.calibration import MultimodalCalibrationManager
 from neuromove.multimodal_sensors.context import NeurophysiologyContextEngine
@@ -133,21 +127,27 @@ class MultimodalSensorService:
         self.storage.save_calibration(snapshot)
         return snapshot
 
-    def start_session(self, session_id: str, sensor_ids: list[str] | None = None) -> MultimodalSession:
+    def start_session(
+        self, session_id: str, sensor_ids: list[str] | None = None
+    ) -> MultimodalSession:
         self._active_session_id = session_id
         if sensor_ids:
             self._active_sensor_ids = sensor_ids
 
         self.sync_coordinator = MultimodalSyncCoordinator(
             session_id=session_id,
-            primary_sensor_id=self._active_sensor_ids[0] if self._active_sensor_ids else "sensor_eeg_sim",
+            primary_sensor_id=self._active_sensor_ids[0]
+            if self._active_sensor_ids
+            else "sensor_eeg_sim",
         )
 
         for s_id in self._active_sensor_ids:
             adapter = self.registry.get_adapter(s_id)
             if adapter:
                 adapter.start_stream(session_id)
-                self.sync_coordinator.register_sensor(s_id, sampling_rate=adapter.descriptor.default_sampling_rate)
+                self.sync_coordinator.register_sensor(
+                    s_id, sampling_rate=adapter.descriptor.default_sampling_rate
+                )
 
         self._is_streaming = True
         session = MultimodalSession(
@@ -213,7 +213,9 @@ class MultimodalSensorService:
         if imu_pkt and imu_pkt.data:
             accel_data = imu_pkt.data[:3]
             if accel_data and len(accel_data[0]) > 0:
-                imu_energy = sum(abs(accel_data[0][i]) for i in range(len(accel_data[0]))) / len(accel_data[0])
+                imu_energy = sum(abs(accel_data[0][i]) for i in range(len(accel_data[0]))) / len(
+                    accel_data[0]
+                )
 
         eog_pkt = next((p for p in packets.values() if p.modality == SensorModality.EOG), None)
         eog_blink = False
@@ -221,7 +223,9 @@ class MultimodalSensorService:
             max_eog = max(max(abs(v) for v in ch) for ch in eog_pkt.data if ch)
             eog_blink = max_eog > 80.0
 
-        calibrations_ready = all(self.calibration_mgr.is_calibrated(s) for s in self._active_sensor_ids)
+        calibrations_ready = all(
+            self.calibration_mgr.is_calibrated(s) for s in self._active_sensor_ids
+        )
 
         # Contradiction Detection
         contradictions = self.contradiction_detector.evaluate_contradictions(
@@ -277,13 +281,19 @@ class MultimodalSensorService:
         final_confidence = fusion.context_confidence
 
         # Intent State Machine & Safety Arbitration integration
-        if not context.is_movement_valid or fusion.has_contradiction and fusion.contradiction_outcome.value in ("HOLD", "INVALID"):
+        if (
+            not context.is_movement_valid
+            or fusion.has_contradiction
+            and fusion.contradiction_outcome.value in ("HOLD", "INVALID")
+        ):
             safety_verdict = SafetyDecision.HELD
             is_authorized = False
             hil_dispatched = False
             hil_reason = f"Safety hold due to multimodal context invalidation: {fusion.contradiction_reason or 'Context invalid'}"
         else:
-            safety_verdict = SafetyDecision.AUTHORIZED if final_confidence >= 0.70 else SafetyDecision.HELD
+            safety_verdict = (
+                SafetyDecision.AUTHORIZED if final_confidence >= 0.70 else SafetyDecision.HELD
+            )
             is_authorized = safety_verdict == SafetyDecision.AUTHORIZED
             hil_dispatched = is_authorized
             hil_reason = "Authorized intent dispatched to Phase 20 ESP32 virtual emulator (0 physical motors)"
@@ -358,7 +368,9 @@ class MultimodalSensorService:
         return MultimodalAnalyticsSummary(
             session_count=1,
             sensor_availability_pct=100.0,
-            sync_coverage_pct=100.0 if (self._latest_sync and self._latest_sync.is_aligned) else 80.0,
+            sync_coverage_pct=100.0
+            if (self._latest_sync and self._latest_sync.is_aligned)
+            else 80.0,
             modality_dropout_rate=0.0,
             fusion_agreement_rate=0.95,
             contradiction_rate=0.05 if self._active_contradictions else 0.0,

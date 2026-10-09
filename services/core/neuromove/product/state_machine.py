@@ -105,9 +105,7 @@ class DemoStateMachine:
             logger.error(msg)
             raise DemoStateMachineError(msg)
 
-        logger.debug(
-            "Demo state transitioned: %s -> %s", self._current_state, target
-        )
+        logger.debug("Demo state transitioned: %s -> %s", self._current_state, target)
         self._current_state = target
         return self._current_state
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import UTC, datetime
 
 from neuromove.research_analytics.models import ComparisonResult, ResearchExperiment
 from neuromove.research_analytics.statistics import ResearchStatisticsEngine
@@ -25,16 +24,40 @@ class ComparisonEngine:
         """Compare baseline and candidate experiment results across multiple metric dimensions."""
         comp_id = f"cmp_{uuid.uuid4().hex[:10]}"
 
-        b_acc = baseline.metrics.accuracy if baseline.metrics and baseline.metrics.accuracy is not None else 0.80
-        c_acc = candidate.metrics.accuracy if candidate.metrics and candidate.metrics.accuracy is not None else 0.85
+        b_acc = (
+            baseline.metrics.accuracy
+            if baseline.metrics and baseline.metrics.accuracy is not None
+            else 0.80
+        )
+        c_acc = (
+            candidate.metrics.accuracy
+            if candidate.metrics and candidate.metrics.accuracy is not None
+            else 0.85
+        )
         acc_delta = round(c_acc - b_acc, 4)
 
-        b_f1 = baseline.metrics.f1_macro if baseline.metrics and baseline.metrics.f1_macro is not None else 0.79
-        c_f1 = candidate.metrics.f1_macro if candidate.metrics and candidate.metrics.f1_macro is not None else 0.84
+        b_f1 = (
+            baseline.metrics.f1_macro
+            if baseline.metrics and baseline.metrics.f1_macro is not None
+            else 0.79
+        )
+        c_f1 = (
+            candidate.metrics.f1_macro
+            if candidate.metrics and candidate.metrics.f1_macro is not None
+            else 0.84
+        )
         f1_delta = round(c_f1 - b_f1, 4)
 
-        b_lat = baseline.latency_analytics.total_pipeline.mean_ms if baseline.latency_analytics else 15.0
-        c_lat = candidate.latency_analytics.total_pipeline.mean_ms if candidate.latency_analytics else 14.2
+        b_lat = (
+            baseline.latency_analytics.total_pipeline.mean_ms
+            if baseline.latency_analytics
+            else 15.0
+        )
+        c_lat = (
+            candidate.latency_analytics.total_pipeline.mean_ms
+            if candidate.latency_analytics
+            else 14.2
+        )
         lat_delta = round(c_lat - b_lat, 2)
 
         # Generate synthetic evaluation sample series for paired testing
@@ -51,10 +74,12 @@ class ComparisonEngine:
             metric_name="accuracy",
         )
 
-        res.metric_deltas.update({
-            "accuracy_delta": acc_delta,
-            "f1_delta": f1_delta,
-            "mean_latency_delta_ms": lat_delta,
-        })
+        res.metric_deltas.update(
+            {
+                "accuracy_delta": acc_delta,
+                "f1_delta": f1_delta,
+                "mean_latency_delta_ms": lat_delta,
+            }
+        )
 
         return res

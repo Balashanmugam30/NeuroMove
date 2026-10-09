@@ -45,7 +45,9 @@ class SensorAcquisitionAdapter(ABC):
         pass
 
     @abstractmethod
-    def configure(self, sampling_rate: int | None = None, channel_names: list[str] | None = None) -> bool:
+    def configure(
+        self, sampling_rate: int | None = None, channel_names: list[str] | None = None
+    ) -> bool:
         """Configure stream parameters."""
         pass
 

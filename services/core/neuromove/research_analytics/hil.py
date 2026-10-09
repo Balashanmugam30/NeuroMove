@@ -25,14 +25,24 @@ class HilAnalyticsEngine:
         candidates = len(hil_events)
         authorized = sum(1 for e in hil_events if e.get("is_authorized", True))
         transmitted = sum(1 for e in hil_events if e.get("transmitted", True))
-        acks = sum(1 for e in hil_events if e.get("status") == "COMMAND_ACCEPTED" or e.get("status") == "ACK")
-        nacks = sum(1 for e in hil_events if e.get("status") == "COMMAND_REJECTED" or e.get("status") == "NACK")
+        acks = sum(
+            1
+            for e in hil_events
+            if e.get("status") == "COMMAND_ACCEPTED" or e.get("status") == "ACK"
+        )
+        nacks = sum(
+            1
+            for e in hil_events
+            if e.get("status") == "COMMAND_REJECTED" or e.get("status") == "NACK"
+        )
         retries = sum(e.get("retry_count", 0) for e in hil_events)
         crc_fails = sum(1 for e in hil_events if e.get("crc_error", False))
         seq_gaps = sum(1 for e in hil_events if e.get("sequence_gap", False))
         disconnects = sum(1 for e in hil_events if e.get("disconnected", False))
 
-        latencies = [e.get("roundtrip_latency_ms", 2.5) for e in hil_events if "roundtrip_latency_ms" in e]
+        latencies = [
+            e.get("roundtrip_latency_ms", 2.5) for e in hil_events if "roundtrip_latency_ms" in e
+        ]
         mean_lat = round(sum(latencies) / len(latencies), 2) if latencies else 2.4
 
         return HilAnalytics(

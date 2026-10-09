@@ -105,10 +105,26 @@ class TestReleaseSafetyInvariants:
     @pytest.mark.parametrize(
         "decision, state, reason",
         [
-            (SafetyDecision.DENIED, SafetyArbitrationState.EMERGENCY_STOP, "EMERGENCY_STOP_TRIGGERED"),
-            (SafetyDecision.DENIED, SafetyArbitrationState.LOCKED_OUT, "MAX_CONSECUTIVE_REJECTIONS_EXCEEDED"),
-            (SafetyDecision.DENIED, SafetyArbitrationState.DENIED, "CRITICAL_HEALTH_HEARTBEAT_LOST"),
-            (SafetyDecision.DENIED, SafetyArbitrationState.DENIED, "HARD_CONSTRAINT_BOUNDARY_EXCEEDED"),
+            (
+                SafetyDecision.DENIED,
+                SafetyArbitrationState.EMERGENCY_STOP,
+                "EMERGENCY_STOP_TRIGGERED",
+            ),
+            (
+                SafetyDecision.DENIED,
+                SafetyArbitrationState.LOCKED_OUT,
+                "MAX_CONSECUTIVE_REJECTIONS_EXCEEDED",
+            ),
+            (
+                SafetyDecision.DENIED,
+                SafetyArbitrationState.DENIED,
+                "CRITICAL_HEALTH_HEARTBEAT_LOST",
+            ),
+            (
+                SafetyDecision.DENIED,
+                SafetyArbitrationState.DENIED,
+                "HARD_CONSTRAINT_BOUNDARY_EXCEEDED",
+            ),
             (SafetyDecision.HELD, SafetyArbitrationState.HELD, "CONTEXT_STALE_TIMESTAMP"),
             (SafetyDecision.HELD, SafetyArbitrationState.HELD, "OPERATOR_HOLD_ENGAGED"),
             (SafetyDecision.HELD, SafetyArbitrationState.HELD, "TEMPORARY_HOLD_SNR_DEGRADED"),

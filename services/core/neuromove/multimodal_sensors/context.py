@@ -68,9 +68,13 @@ class NeurophysiologyContextEngine:
 
         # 4. Pressure Contact
         contact_present = True
-        press_pkt = next((p for p in packets.values() if p.modality == SensorModality.PRESSURE), None)
+        press_pkt = next(
+            (p for p in packets.values() if p.modality == SensorModality.PRESSURE), None
+        )
         if press_pkt and press_pkt.data:
-            mean_press = sum(sum(ch) for ch in press_pkt.data) / max(1, sum(len(ch) for ch in press_pkt.data))
+            mean_press = sum(sum(ch) for ch in press_pkt.data) / max(
+                1, sum(len(ch) for ch in press_pkt.data)
+            )
             contact_present = mean_press > 10.0
 
         # 5. PPG Pulse estimate
@@ -80,18 +84,13 @@ class NeurophysiologyContextEngine:
             pulse_bpm = 72.0  # Synthetic cardiac rate
 
         is_eeg_contaminated = (
-            motion_contamination == MotionContaminationState.LIKELY_CONTAMINATED
-            or eog_detected
+            motion_contamination == MotionContaminationState.LIKELY_CONTAMINATED or eog_detected
         )
 
-        is_movement_valid = (
-            contact_present
-            and not is_eeg_contaminated
-            and fusion_result.is_valid
-        )
+        is_movement_valid = contact_present and not is_eeg_contaminated and fusion_result.is_valid
 
         return MultimodalContext(
-            context_id=f"ctx_{int(datetime.now(UTC).timestamp()*1000)}",
+            context_id=f"ctx_{int(datetime.now(UTC).timestamp() * 1000)}",
             timestamp=now_iso,
             session_id=session_id,
             motion_state=motion_state,

@@ -35,15 +35,60 @@ class DemoOrchestrator:
     """Orchestrates deterministic 9-step product demonstration workflows."""
 
     STEP_DEFINITIONS = [
-        ("DATA_SOURCE", "Select Signal Source", "Initialize simulator, recorded dataset, or physical interface.", ProductStage.SENSORS),
-        ("ACQUISITION", "Bio-Signal Acquisition", "Ingest EEG channels with real-time sequence and sample rate tracking.", ProductStage.SIGNAL),
-        ("MULTIMODAL_CONTEXT", "Multi-Sensor Synchronization", "Align clocks, run modality QC, and compute neurophysiological context.", ProductStage.SENSORS),
-        ("DECODING", "Neural Feature Decoding", "Filter bands, project CSP spatial components, and classify motor imagery.", ProductStage.DECODING),
-        ("CONFIDENCE", "Confidence & Temporal Evidence", "Verify evidence stability against strict research threshold.", ProductStage.CONFIDENCE),
-        ("INTENT", "Intent State Progression", "Transition intent state machine to candidate or confirmed.", ProductStage.INTENT),
-        ("SAFETY", "Safety Arbitration Gate", "Evaluate Phase 17 rules, sensor constraints, and execution authorization.", ProductStage.SAFETY),
-        ("HIL_EXECUTION", "Hardware-in-the-Loop Validation", "Frame transport protocol and verify ESP32 virtual emulator response.", ProductStage.HIL),
-        ("RESULT", "Scientific Result & Lineage", "Seal provenance checksums and export reproducible demonstration artifact.", ProductStage.RESEARCH),
+        (
+            "DATA_SOURCE",
+            "Select Signal Source",
+            "Initialize simulator, recorded dataset, or physical interface.",
+            ProductStage.SENSORS,
+        ),
+        (
+            "ACQUISITION",
+            "Bio-Signal Acquisition",
+            "Ingest EEG channels with real-time sequence and sample rate tracking.",
+            ProductStage.SIGNAL,
+        ),
+        (
+            "MULTIMODAL_CONTEXT",
+            "Multi-Sensor Synchronization",
+            "Align clocks, run modality QC, and compute neurophysiological context.",
+            ProductStage.SENSORS,
+        ),
+        (
+            "DECODING",
+            "Neural Feature Decoding",
+            "Filter bands, project CSP spatial components, and classify motor imagery.",
+            ProductStage.DECODING,
+        ),
+        (
+            "CONFIDENCE",
+            "Confidence & Temporal Evidence",
+            "Verify evidence stability against strict research threshold.",
+            ProductStage.CONFIDENCE,
+        ),
+        (
+            "INTENT",
+            "Intent State Progression",
+            "Transition intent state machine to candidate or confirmed.",
+            ProductStage.INTENT,
+        ),
+        (
+            "SAFETY",
+            "Safety Arbitration Gate",
+            "Evaluate Phase 17 rules, sensor constraints, and execution authorization.",
+            ProductStage.SAFETY,
+        ),
+        (
+            "HIL_EXECUTION",
+            "Hardware-in-the-Loop Validation",
+            "Frame transport protocol and verify ESP32 virtual emulator response.",
+            ProductStage.HIL,
+        ),
+        (
+            "RESULT",
+            "Scientific Result & Lineage",
+            "Seal provenance checksums and export reproducible demonstration artifact.",
+            ProductStage.RESEARCH,
+        ),
     ]
 
     def __init__(self, storage: ProductStorage | None = None) -> None:
@@ -200,16 +245,32 @@ class DemoOrchestrator:
             # 1. DATA_SOURCE
             self._fsm.transition_to(DemoState.ACQUIRING)
             run.steps[0].status = "COMPLETED"
-            run.steps[0].metrics = {"source": run.source_type.value, "channels": 8, "sampling_rate": 250}
-            run.steps[0].explanation = f"Initialized {run.source_type.value} signal provider with 8 EEG channels."
+            run.steps[0].metrics = {
+                "source": run.source_type.value,
+                "channels": 8,
+                "sampling_rate": 250,
+            }
+            run.steps[
+                0
+            ].explanation = (
+                f"Initialized {run.source_type.value} signal provider with 8 EEG channels."
+            )
             run.current_step = 2
 
         elif step_idx == 2:
             # 2. ACQUISITION
             self._fsm.transition_to(DemoState.CONTEXT_READY)
             run.steps[1].status = "COMPLETED"
-            run.steps[1].metrics = {"packet_loss": 0.0, "snr_db": 24.5, "sequence_continuity": "NOMINAL"}
-            run.steps[1].explanation = "Raw samples acquired at 250 Hz with 0.0% packet loss and 24.5 dB mean SNR."
+            run.steps[1].metrics = {
+                "packet_loss": 0.0,
+                "snr_db": 24.5,
+                "sequence_continuity": "NOMINAL",
+            }
+            run.steps[
+                1
+            ].explanation = (
+                "Raw samples acquired at 250 Hz with 0.0% packet loss and 24.5 dB mean SNR."
+            )
             run.current_step = 3
 
         elif step_idx == 3:
@@ -218,16 +279,33 @@ class DemoOrchestrator:
                 # Contradiction: motion spike
                 self._fsm.transition_to(DemoState.HELD)
                 run.steps[2].status = "BLOCKED"
-                run.steps[2].metrics = {"motion_state": "MOVING", "contradiction": "CONTRADICTION_INTENT_VS_MOTION"}
-                run.steps[2].explanation = "Violent head/chassis acceleration spike detected. Context invalidated."
+                run.steps[2].metrics = {
+                    "motion_state": "MOVING",
+                    "contradiction": "CONTRADICTION_INTENT_VS_MOTION",
+                }
+                run.steps[
+                    2
+                ].explanation = (
+                    "Violent head/chassis acceleration spike detected. Context invalidated."
+                )
                 run.is_blocked = True
-                run.block_reason = "Multimodal Motion Contradiction (CONTRADICTION_INTENT_VS_MOTION)"
+                run.block_reason = (
+                    "Multimodal Motion Contradiction (CONTRADICTION_INTENT_VS_MOTION)"
+                )
                 run.safety_verdict = SafetyDecision.HELD
             else:
                 self._fsm.transition_to(DemoState.DECODING)
                 run.steps[2].status = "COMPLETED"
-                run.steps[2].metrics = {"sync_status": "SYNCHRONIZED", "drift_ppm": 4.2, "motion_state": "STATIONARY"}
-                run.steps[2].explanation = "Clocks synchronized (offset < 2.5ms, drift 4.2 ppm). Motion context is quiet."
+                run.steps[2].metrics = {
+                    "sync_status": "SYNCHRONIZED",
+                    "drift_ppm": 4.2,
+                    "motion_state": "STATIONARY",
+                }
+                run.steps[
+                    2
+                ].explanation = (
+                    "Clocks synchronized (offset < 2.5ms, drift 4.2 ppm). Motion context is quiet."
+                )
                 run.current_step = 4
 
         elif step_idx == 4:
@@ -236,8 +314,14 @@ class DemoOrchestrator:
             run.candidate_intent = candidate
             self._fsm.transition_to(DemoState.CONFIRMING)
             run.steps[3].status = "COMPLETED"
-            run.steps[3].metrics = {"bandpass": "8-30 Hz", "csp_components": 4, "raw_prediction": candidate}
-            run.steps[3].explanation = f"Bandpass filtering and CSP spatial projection classified motor imagery: {candidate}."
+            run.steps[3].metrics = {
+                "bandpass": "8-30 Hz",
+                "csp_components": 4,
+                "raw_prediction": candidate,
+            }
+            run.steps[
+                3
+            ].explanation = f"Bandpass filtering and CSP spatial projection classified motor imagery: {candidate}."
             run.current_step = 5
 
         elif step_idx == 5:
@@ -246,8 +330,16 @@ class DemoOrchestrator:
                 run.confidence_score = 0.42
                 self._fsm.transition_to(DemoState.HELD)
                 run.steps[4].status = "BLOCKED"
-                run.steps[4].metrics = {"confidence": 0.42, "threshold": 0.70, "temporal_window": "UNCONFIRMED"}
-                run.steps[4].explanation = "Confidence score (0.42) fell below required safety threshold (0.70)."
+                run.steps[4].metrics = {
+                    "confidence": 0.42,
+                    "threshold": 0.70,
+                    "temporal_window": "UNCONFIRMED",
+                }
+                run.steps[
+                    4
+                ].explanation = (
+                    "Confidence score (0.42) fell below required safety threshold (0.70)."
+                )
                 run.is_blocked = True
                 run.block_reason = "Confidence threshold not satisfied (0.42 < 0.70)"
                 run.safety_verdict = SafetyDecision.HELD
@@ -255,8 +347,16 @@ class DemoOrchestrator:
                 run.confidence_score = 0.92
                 self._fsm.transition_to(DemoState.INTENT_READY)
                 run.steps[4].status = "COMPLETED"
-                run.steps[4].metrics = {"confidence": 0.92, "threshold": 0.70, "temporal_window": "CONFIRMED"}
-                run.steps[4].explanation = "Confidence score (0.92) confirmed over 4 consecutive temporal epochs."
+                run.steps[4].metrics = {
+                    "confidence": 0.92,
+                    "threshold": 0.70,
+                    "temporal_window": "CONFIRMED",
+                }
+                run.steps[
+                    4
+                ].explanation = (
+                    "Confidence score (0.92) confirmed over 4 consecutive temporal epochs."
+                )
                 run.current_step = 6
 
         elif step_idx == 6:
@@ -264,7 +364,9 @@ class DemoOrchestrator:
             self._fsm.transition_to(DemoState.SAFETY_CHECK)
             run.steps[5].status = "COMPLETED"
             run.steps[5].metrics = {"intent_lifecycle": "ACTIVATED", "intent": run.candidate_intent}
-            run.steps[5].explanation = f"Intent state machine transitioned to ACTIVATED for command: {run.candidate_intent}."
+            run.steps[
+                5
+            ].explanation = f"Intent state machine transitioned to ACTIVATED for command: {run.candidate_intent}."
             run.current_step = 7
 
         elif step_idx == 7:
@@ -272,13 +374,23 @@ class DemoOrchestrator:
             if run.is_blocked:
                 run.steps[6].status = "BLOCKED"
                 run.steps[6].metrics = {"decision": "HELD", "reason": run.block_reason}
-                run.steps[6].explanation = f"Safety arbitration gate active: {run.block_reason}. Execution prevented."
+                run.steps[
+                    6
+                ].explanation = (
+                    f"Safety arbitration gate active: {run.block_reason}. Execution prevented."
+                )
             else:
                 self._fsm.transition_to(DemoState.AUTHORIZED)
                 run.safety_verdict = SafetyDecision.AUTHORIZED
                 run.steps[6].status = "COMPLETED"
-                run.steps[6].metrics = {"decision": "AUTHORIZED", "rules_evaluated": 12, "violations": 0}
-                run.steps[6].explanation = "All 12 safety constraints passed. Execution Authorization granted."
+                run.steps[6].metrics = {
+                    "decision": "AUTHORIZED",
+                    "rules_evaluated": 12,
+                    "violations": 0,
+                }
+                run.steps[
+                    6
+                ].explanation = "All 12 safety constraints passed. Execution Authorization granted."
                 run.current_step = 8
 
         elif step_idx == 8:
@@ -296,13 +408,26 @@ class DemoOrchestrator:
                 self._fsm.transition_to(DemoState.HIL_EXECUTING)
                 self._fsm.transition_to(DemoState.COMPLETED)
                 run.steps[7].status = "COMPLETED"
-                run.steps[7].metrics = {"transport_protocol": "ESP32_FRAMED", "hil_response": "ACK", "round_trip_ms": rtt}
-                run.steps[7].explanation = "ESP32 virtual emulator acknowledged framed command frame over serial interface."
+                run.steps[7].metrics = {
+                    "transport_protocol": "ESP32_FRAMED",
+                    "hil_response": "ACK",
+                    "round_trip_ms": rtt,
+                }
+                run.steps[
+                    7
+                ].explanation = "ESP32 virtual emulator acknowledged framed command frame over serial interface."
                 run.current_step = 9
             else:
                 run.steps[7].status = "BLOCKED"
-                run.steps[7].metrics = {"transport_protocol": "NONE", "hil_response": "ZERO_TRANSMISSION"}
-                run.steps[7].explanation = "No transport packet was framed or transmitted due to prior safety hold."
+                run.steps[7].metrics = {
+                    "transport_protocol": "NONE",
+                    "hil_response": "ZERO_TRANSMISSION",
+                }
+                run.steps[
+                    7
+                ].explanation = (
+                    "No transport packet was framed or transmitted due to prior safety hold."
+                )
 
         elif step_idx == 9:
             # 9. RESULT
@@ -315,7 +440,11 @@ class DemoOrchestrator:
                 "reproducibility": "100%",
                 "provenance_hash": hashlib.sha256(run.run_id.encode()).hexdigest()[:12],
             }
-            run.steps[8].explanation = "Pipeline sealed. Cryptographic provenance verified across all 9 stages."
+            run.steps[
+                8
+            ].explanation = (
+                "Pipeline sealed. Cryptographic provenance verified across all 9 stages."
+            )
             run.reproducibility_status = "PASS"
 
         run.state = self._fsm.state

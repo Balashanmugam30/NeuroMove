@@ -38,7 +38,7 @@ class ContradictionDetector:
         if candidate_intent in ("FORWARD", "BACKWARD", "LEFT", "RIGHT") and imu_energy > 6.0:
             contradictions.append(
                 ContradictionRecord(
-                    contradiction_id=f"contra_motion_{int(datetime.now(UTC).timestamp()*1000)}",
+                    contradiction_id=f"contra_motion_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     rule_name="CONTRADICTION_INTENT_VS_MOTION",
                     conflicting_sensor_ids=["sensor_eeg_sim", "sensor_imu_sim"],
@@ -56,7 +56,7 @@ class ContradictionDetector:
         ):
             contradictions.append(
                 ContradictionRecord(
-                    contradiction_id=f"contra_sync_{int(datetime.now(UTC).timestamp()*1000)}",
+                    contradiction_id=f"contra_sync_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     rule_name="CONTRADICTION_DESYNCHRONIZATION",
                     conflicting_sensor_ids=[sync_state.primary_clock_sensor_id],
@@ -87,7 +87,7 @@ class ContradictionDetector:
         if not calibrations_ready:
             contradictions.append(
                 ContradictionRecord(
-                    contradiction_id=f"contra_calib_{int(datetime.now(UTC).timestamp()*1000)}",
+                    contradiction_id=f"contra_calib_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     rule_name="CONTRADICTION_CALIBRATION_INVALID",
                     conflicting_sensor_ids=list(sensor_healths.keys()),
@@ -102,7 +102,7 @@ class ContradictionDetector:
         if eog_blink_detected and candidate_intent in ("FORWARD", "LEFT", "RIGHT"):
             contradictions.append(
                 ContradictionRecord(
-                    contradiction_id=f"contra_eog_{int(datetime.now(UTC).timestamp()*1000)}",
+                    contradiction_id=f"contra_eog_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     rule_name="CONTRADICTION_OCULAR_CONTAMINATION",
                     conflicting_sensor_ids=["sensor_eeg_sim", "sensor_eog_sim"],

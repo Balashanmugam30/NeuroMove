@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 from neuromove.domain.enums import SensorModality, TrialQuality
 from neuromove.multimodal_sensors.models import SensorChannelHealth, SensorStreamPacket
@@ -26,7 +25,9 @@ class MultimodalQcEngine:
         self._packet_loss_counters.clear()
         self._total_packet_counters.clear()
 
-    def evaluate_packet(self, packet: SensorStreamPacket) -> tuple[list[SensorChannelHealth], list[str]]:
+    def evaluate_packet(
+        self, packet: SensorStreamPacket
+    ) -> tuple[list[SensorChannelHealth], list[str]]:
         """Evaluate QC metrics for an incoming sample packet.
 
         Returns:
@@ -96,7 +97,9 @@ class MultimodalQcEngine:
             range_valid = self._check_modality_range(modality, clean_samples)
 
             # Usability verdict
-            is_usable = not (has_nonfinite or is_flatline or is_dropout or is_saturated or not range_valid)
+            is_usable = not (
+                has_nonfinite or is_flatline or is_dropout or is_saturated or not range_valid
+            )
             qc_status = TrialQuality.VALID if is_usable else TrialQuality.REJECTED
 
             # Estimate SNR (dB)

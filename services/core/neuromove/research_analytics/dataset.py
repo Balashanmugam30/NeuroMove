@@ -105,6 +105,8 @@ class ResearchDatasetManager:
         # Verify zero leakage
         train_subjects = {item.get(group_key) for item in train_set}
         test_subjects = {item.get(group_key) for item in test_set}
-        assert not (train_subjects & test_subjects), "Data leakage detected across evaluation folds!"
+        assert not (train_subjects & test_subjects), (
+            "Data leakage detected across evaluation folds!"
+        )
 
         return train_set, test_set

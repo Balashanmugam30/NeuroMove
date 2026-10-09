@@ -39,8 +39,8 @@ class MultimodalSyncCoordinator:
         for norm in self._clock_normalizers.values():
             norm.reset()
         self._last_normalized_timestamps.clear()
-        self._offsets_ms = {s: 0.0 for s in self._clock_normalizers}
-        self._drifts_ppm = {s: 0.0 for s in self._clock_normalizers}
+        self._offsets_ms = dict.fromkeys(self._clock_normalizers, 0.0)
+        self._drifts_ppm = dict.fromkeys(self._clock_normalizers, 0.0)
         self._max_jitter_ms = 0.0
         self._alignment_quality_pct = 100.0
         self._status = SynchronizationStatus.SYNCHRONIZED
@@ -83,9 +83,7 @@ class MultimodalSyncCoordinator:
 
         # Calculate max offset difference from primary clock
         primary_offset = self._offsets_ms.get(self.primary_sensor_id, 0.0)
-        max_disparity_ms = max(
-            abs(offset - primary_offset) for offset in self._offsets_ms.values()
-        )
+        max_disparity_ms = max(abs(offset - primary_offset) for offset in self._offsets_ms.values())
         max_drift_ppm = max(abs(drift) for drift in self._drifts_ppm.values())
 
         self._max_jitter_ms = max_disparity_ms

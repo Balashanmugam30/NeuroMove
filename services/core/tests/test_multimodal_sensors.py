@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import math
 from datetime import UTC, datetime
+
 import pytest
 
 from neuromove.domain.enums import (
     ContradictionOutcome,
     MotionContaminationState,
-    SafetyDecision,
     SensorModality,
     SensorSource,
     SensorState,
@@ -27,20 +26,16 @@ from neuromove.multimodal_sensors.devices import SensorDeviceRegistry
 from neuromove.multimodal_sensors.fusion import SensorFusionEngine
 from neuromove.multimodal_sensors.models import (
     ContradictionRecord,
-    FusionEvidence,
     FusionResult,
     MultimodalContext,
-    MultimodalReplayFixture,
     MultimodalSession,
     MultimodalSyncState,
     SensorCalibrationSnapshot,
-    SensorChannelHealth,
     SensorDeviceDescriptor,
     SensorHealthSnapshot,
     SensorStreamPacket,
 )
 from neuromove.multimodal_sensors.qc import MultimodalQcEngine
-from neuromove.multimodal_sensors.replay import MultimodalReplayEngine
 from neuromove.multimodal_sensors.scenarios import MultimodalGoldenScenarios
 from neuromove.multimodal_sensors.service import MultimodalSensorService
 from neuromove.multimodal_sensors.sync import MultimodalSyncCoordinator
@@ -53,8 +48,9 @@ def device_registry():
 
 @pytest.fixture
 def service():
-    from neuromove.safety.service import SafetyService
     from neuromove.safety.models import SafetyArbitrationState
+    from neuromove.safety.service import SafetyService
+
     safety = SafetyService()
     if safety.state_machine.current_state == SafetyArbitrationState.EMERGENCY_STOP:
         safety.clear_emergency_stop()
@@ -80,6 +76,7 @@ def golden_scenarios(service):
 # ============================================================================
 # 1. Adapter & Device Registry Tests (1-15)
 # ============================================================================
+
 
 def test_registry_initialization(device_registry):
     devices = device_registry.list_devices()
@@ -336,6 +333,7 @@ def test_simulated_adapter_fault_injection():
 # 2. Clock Normalization & Synchronization Tests (16-30)
 # ============================================================================
 
+
 def test_clock_normalizer_monotonic():
     norm = MultimodalClockNormalizer(sensor_id="sensor_test", sampling_rate=250)
     ts1, is_mono1, offset1, drift1 = norm.normalize(device_timestamp=0.0, sample_count=10)
@@ -359,7 +357,9 @@ def test_clock_normalizer_drift_calculation():
 
     # 1 second later on host, but device timestamp elapsed 1.001s (1000 ppm drift)
     t1 = datetime(2026, 1, 1, 12, 0, 1, tzinfo=UTC)
-    ts, is_mono, offset, drift = norm.normalize(host_receive_dt=t1, device_timestamp=1.001, sample_count=10)
+    ts, is_mono, offset, drift = norm.normalize(
+        host_receive_dt=t1, device_timestamp=1.001, sample_count=10
+    )
     assert abs(drift - 1000.0) < 50.0
 
 
@@ -422,6 +422,7 @@ def test_sync_coordinator_reset():
 # ============================================================================
 # 3. Quality Control (QC) Engine Tests (31-45)
 # ============================================================================
+
 
 def test_qc_engine_clean_packet():
     qc = MultimodalQcEngine()
@@ -538,6 +539,7 @@ def test_qc_engine_dropout_detection():
 # 4. Calibration Manager Tests (46-55)
 # ============================================================================
 
+
 def test_calibration_manager_flow():
     mgr = MultimodalCalibrationManager()
     assert mgr.is_calibrated("sensor_imu_01") is False
@@ -566,6 +568,7 @@ def test_calibration_manager_check_all_ready():
 # ============================================================================
 # 5. Contradiction Detection Tests (56-65)
 # ============================================================================
+
 
 def test_contradiction_intent_vs_motion():
     det = ContradictionDetector()
@@ -629,13 +632,17 @@ def test_contradiction_degraded_sensor():
 # 6. Sensor Fusion & Context Engine Tests (66-80)
 # ============================================================================
 
+
 def test_sensor_fusion_engine_healthy():
     engine = SensorFusionEngine()
     pkt_eeg = SensorStreamPacket(
         sensor_id="eeg", modality=SensorModality.EEG, session_id="s1", data=[[1.0] * 10]
     )
     pkt_imu = SensorStreamPacket(
-        sensor_id="imu", modality=SensorModality.IMU, session_id="s1", data=[[0.05] * 10, [0.05] * 10, [9.81] * 10]
+        sensor_id="imu",
+        modality=SensorModality.IMU,
+        session_id="s1",
+        data=[[0.05] * 10, [0.05] * 10, [9.81] * 10],
     )
     res = engine.fuse(
         eeg_confidence=0.90,
@@ -686,7 +693,10 @@ def test_context_engine_quiet_vs_contaminated():
 
     # Quiet IMU
     pkt_quiet = SensorStreamPacket(
-        sensor_id="imu", modality=SensorModality.IMU, session_id="s1", data=[[0.0] * 10, [0.0] * 10, [9.81] * 10]
+        sensor_id="imu",
+        modality=SensorModality.IMU,
+        session_id="s1",
+        data=[[0.0] * 10, [0.0] * 10, [9.81] * 10],
     )
     ctx_quiet = ctx_engine.evaluate_context(
         session_id="s1",
@@ -700,7 +710,10 @@ def test_context_engine_quiet_vs_contaminated():
 
     # Moving / high variance IMU
     pkt_moving = SensorStreamPacket(
-        sensor_id="imu", modality=SensorModality.IMU, session_id="s1", data=[[float(i % 5) for i in range(10)], [0.0] * 10, [9.81] * 10]
+        sensor_id="imu",
+        modality=SensorModality.IMU,
+        session_id="s1",
+        data=[[float(i % 5) for i in range(10)], [0.0] * 10, [9.81] * 10],
     )
     ctx_moving = ctx_engine.evaluate_context(
         session_id="s1",
@@ -714,6 +727,7 @@ def test_context_engine_quiet_vs_contaminated():
 # ============================================================================
 # 7. 12 Golden Scenarios Tests (81-95)
 # ============================================================================
+
 
 def test_golden_scenario_a_eeg_imu_healthy(golden_scenarios):
     res = golden_scenarios.scenario_a_eeg_imu_healthy()
@@ -796,6 +810,7 @@ def test_golden_scenario_l_unsafe_state(golden_scenarios):
 # 8. End-to-End Multimodal Service Integration Tests (96-105)
 # ============================================================================
 
+
 def test_service_read_multimodal_frame(service):
     service.start_session("s_e2e", ["sensor_eeg_sim", "sensor_imu_sim"])
     packets, context, fusion, sync = service.read_multimodal_frame(chunk_size=10)
@@ -828,6 +843,7 @@ def test_service_analytics_summary(service):
 # ============================================================================
 # 9. Modality Ablation & Multi-Sensor Combinations (106-125)
 # ============================================================================
+
 
 def test_ablation_all_modalities_active(service):
     modalities = [
@@ -915,7 +931,10 @@ def test_sampling_rate_mismatch_synchronization(service):
     service.calibrate_device("sensor_emg_sim")
     service.calibrate_device("sensor_press_sim")
 
-    service.start_session("s_mismatch_rate", ["sensor_eeg_sim", "sensor_imu_sim", "sensor_emg_sim", "sensor_press_sim"])
+    service.start_session(
+        "s_mismatch_rate",
+        ["sensor_eeg_sim", "sensor_imu_sim", "sensor_emg_sim", "sensor_press_sim"],
+    )
     packets, context, fusion, sync = service.read_multimodal_frame(chunk_size=10)
 
     assert len(packets) == 4
@@ -926,6 +945,7 @@ def test_sampling_rate_mismatch_synchronization(service):
 # ============================================================================
 # 10. Storage & Serialization Verification (126-140)
 # ============================================================================
+
 
 def test_storage_save_and_retrieve_session(service):
     sess = MultimodalSession(
@@ -984,6 +1004,7 @@ def test_storage_save_context_event(service):
 # 11. Strict Non-Actuation & Safety Invariant Tests (141-150)
 # ============================================================================
 
+
 def test_safety_non_actuation_guarantee(service):
     service.connect_device("sensor_eeg_sim")
     service.calibrate_device("sensor_eeg_sim")
@@ -1036,15 +1057,19 @@ def test_replay_fixture_immutability(service):
 # 12. Parametric Modality & Protocol Verification (151-180)
 # ============================================================================
 
-@pytest.mark.parametrize("modality", [
-    SensorModality.EEG,
-    SensorModality.IMU,
-    SensorModality.EMG,
-    SensorModality.EOG,
-    SensorModality.PPG,
-    SensorModality.PRESSURE,
-    SensorModality.AUXILIARY,
-])
+
+@pytest.mark.parametrize(
+    "modality",
+    [
+        SensorModality.EEG,
+        SensorModality.IMU,
+        SensorModality.EMG,
+        SensorModality.EOG,
+        SensorModality.PPG,
+        SensorModality.PRESSURE,
+        SensorModality.AUXILIARY,
+    ],
+)
 def test_modality_adapter_creation_and_streaming(modality):
     desc = SensorDeviceDescriptor(
         device_id=f"param_test_{modality.value.lower()}",
@@ -1067,40 +1092,54 @@ def test_modality_adapter_creation_and_streaming(modality):
     adapter.disconnect()
 
 
-@pytest.mark.parametrize("fault_type", [
-    "DROPOUT",
-    "FLATLINE",
-    "SATURATION",
-    "NOISE",
-    "MOTION_BURST",
-    "BLINK",
-    "DISCONNECT",
-])
+@pytest.mark.parametrize(
+    "fault_type",
+    [
+        "DROPOUT",
+        "FLATLINE",
+        "SATURATION",
+        "NOISE",
+        "MOTION_BURST",
+        "BLINK",
+        "DISCONNECT",
+    ],
+)
 def test_service_all_fault_types(service, fault_type):
     service.connect_device("sensor_eeg_sim")
     service.connect_device("sensor_imu_sim")
     service.connect_device("sensor_eog_sim")
-    service.start_session(f"sess_fault_{fault_type}", ["sensor_eeg_sim", "sensor_imu_sim", "sensor_eog_sim"])
+    service.start_session(
+        f"sess_fault_{fault_type}", ["sensor_eeg_sim", "sensor_imu_sim", "sensor_eog_sim"]
+    )
 
-    target_sensor = "sensor_eog_sim" if fault_type == "BLINK" else "sensor_imu_sim" if fault_type == "MOTION_BURST" else "sensor_eeg_sim"
+    target_sensor = (
+        "sensor_eog_sim"
+        if fault_type == "BLINK"
+        else "sensor_imu_sim"
+        if fault_type == "MOTION_BURST"
+        else "sensor_eeg_sim"
+    )
     assert service.inject_fault(target_sensor, fault_type) is True
     service.clear_faults()
 
 
-@pytest.mark.parametrize("scenario_id", [
-    "SCENARIO_A",
-    "SCENARIO_B",
-    "SCENARIO_C",
-    "SCENARIO_D",
-    "SCENARIO_E",
-    "SCENARIO_F",
-    "SCENARIO_G",
-    "SCENARIO_H",
-    "SCENARIO_I",
-    "SCENARIO_J",
-    "SCENARIO_K",
-    "SCENARIO_L",
-])
+@pytest.mark.parametrize(
+    "scenario_id",
+    [
+        "SCENARIO_A",
+        "SCENARIO_B",
+        "SCENARIO_C",
+        "SCENARIO_D",
+        "SCENARIO_E",
+        "SCENARIO_F",
+        "SCENARIO_G",
+        "SCENARIO_H",
+        "SCENARIO_I",
+        "SCENARIO_J",
+        "SCENARIO_K",
+        "SCENARIO_L",
+    ],
+)
 def test_golden_scenario_runner_dispatch(golden_scenarios, scenario_id):
     res = golden_scenarios.run_scenario(scenario_id)
     assert res["passed"] is True
@@ -1162,5 +1201,3 @@ def test_service_list_devices_filtered(service):
     imu_list = service.list_devices(SensorModality.IMU)
     assert all(d.modality == SensorModality.IMU for d in imu_list)
     assert len(imu_list) >= 1
-
-

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-from neuromove.domain.enums import SensorModality, SensorSource, SensorState
+from neuromove.domain.enums import SensorModality, SensorSource
 from neuromove.multimodal_sensors.adapters.base import SensorAcquisitionAdapter
 from neuromove.multimodal_sensors.adapters.physical import PhysicalSensorAdapter
 from neuromove.multimodal_sensors.adapters.recorded import RecordedSensorAdapter
@@ -210,7 +209,7 @@ class SensorDeviceRegistry:
     def list_devices(self, modality: SensorModality | None = None) -> list[SensorDeviceDescriptor]:
         """List all registered device descriptors, optionally filtered by modality."""
         devices = []
-        for dev_id, adapter in self._adapters.items():
+        for adapter in self._adapters.values():
             discovered = adapter.discover()
             for d in discovered:
                 if modality is None or d.modality == modality:

@@ -5,11 +5,10 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from neuromove.domain.enums import SensorModality, SensorSource, SensorState, TrialQuality
+from neuromove.domain.enums import SensorState
 from neuromove.multimodal_sensors.adapters.base import SensorAcquisitionAdapter
 from neuromove.multimodal_sensors.models import (
     SensorCalibrationSnapshot,
-    SensorChannelHealth,
     SensorDeviceDescriptor,
     SensorHealthSnapshot,
     SensorStreamPacket,
@@ -46,6 +45,7 @@ class PhysicalSensorAdapter(SensorAcquisitionAdapter):
         # Optional pyserial check if installed
         try:
             import serial.tools.list_ports
+
             ports = [p.device for p in serial.tools.list_ports.comports()]
             return self.descriptor.connection_path in ports
         except Exception:
@@ -67,7 +67,9 @@ class PhysicalSensorAdapter(SensorAcquisitionAdapter):
         self.descriptor.is_connected = True
         return True
 
-    def configure(self, sampling_rate: int | None = None, channel_names: list[str] | None = None) -> bool:
+    def configure(
+        self, sampling_rate: int | None = None, channel_names: list[str] | None = None
+    ) -> bool:
         if not self._physical_connected:
             return False
         self.state = SensorState.STREAMING

@@ -8,7 +8,7 @@ import random
 from datetime import UTC, datetime
 from typing import Any
 
-from neuromove.domain.enums import SensorModality, SensorSource, SensorState, TrialQuality
+from neuromove.domain.enums import SensorModality, SensorState, TrialQuality
 from neuromove.multimodal_sensors.adapters.base import SensorAcquisitionAdapter
 from neuromove.multimodal_sensors.models import (
     SensorCalibrationSnapshot,
@@ -55,7 +55,9 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
         self.descriptor.is_connected = True
         return True
 
-    def configure(self, sampling_rate: int | None = None, channel_names: list[str] | None = None) -> bool:
+    def configure(
+        self, sampling_rate: int | None = None, channel_names: list[str] | None = None
+    ) -> bool:
         if sampling_rate:
             self.sampling_rate = sampling_rate
         if channel_names:
@@ -138,7 +140,9 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
             return None
 
         channel_count = self.descriptor.channel_count
-        channel_names = self.descriptor.channel_names or [f"CH_{i+1}" for i in range(channel_count)]
+        channel_names = self.descriptor.channel_names or [
+            f"CH_{i + 1}" for i in range(channel_count)
+        ]
 
         data: list[list[float]] = [[] for _ in range(channel_count)]
         dt = 1.0 / self.sampling_rate
@@ -170,7 +174,9 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
         device_ts = self._sample_index * dt + self._timestamp_offset_s
 
         # Compute checksum
-        chk = hashlib.sha256(f"{self.sensor_id}_{self._sequence_number}_{device_ts}".encode()).hexdigest()[:12]
+        chk = hashlib.sha256(
+            f"{self.sensor_id}_{self._sequence_number}_{device_ts}".encode()
+        ).hexdigest()[:12]
 
         units_map = {
             SensorModality.EEG: "uV",
@@ -198,7 +204,9 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
             units=units_map.get(self.modality, "uV"),
             quality_flags=["SIMULATED_DATA"],
             checksum=chk,
-            configuration_hash=hashlib.sha256(f"{self.sampling_rate}_{channel_count}".encode()).hexdigest()[:8],
+            configuration_hash=hashlib.sha256(
+                f"{self.sampling_rate}_{channel_count}".encode()
+            ).hexdigest()[:8],
         )
 
     def _generate_sample_vector(self, t: float, channel_count: int) -> list[float]:
@@ -228,15 +236,21 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
                 gyro_z += 250.0 * math.sin(2.0 * math.pi * 1.5 * t)
 
             imu_vals = [accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z]
-            return imu_vals[:channel_count] if channel_count <= 6 else (imu_vals + [0.0] * (channel_count - 6))
+            return (
+                imu_vals[:channel_count]
+                if channel_count <= 6
+                else (imu_vals + [0.0] * (channel_count - 6))
+            )
 
         elif self.modality == SensorModality.EMG:
             # EMG: baseline noise + bursts
             res = []
-            for ch in range(channel_count):
+            for _ in range(channel_count):
                 base = self.rng.gauss(0.0, 3.0)
                 if self._emg_burst_active:
-                    burst = 80.0 * math.sin(2.0 * math.pi * 65.0 * t) * (0.8 + 0.4 * self.rng.random())
+                    burst = (
+                        80.0 * math.sin(2.0 * math.pi * 65.0 * t) * (0.8 + 0.4 * self.rng.random())
+                    )
                     base += burst
                 res.append(base)
             return res
@@ -244,11 +258,11 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
         elif self.modality == SensorModality.EOG:
             # EOG: low freq baseline + blink pulses
             res = []
-            for ch in range(channel_count):
+            for _ in range(channel_count):
                 base = 5.0 * math.sin(2.0 * math.pi * 0.3 * t) + self.rng.gauss(0.0, 2.0)
                 if self._eog_blink_active:
                     # Periodic blink pulse every 2 seconds
-                    phase = (t % 2.0)
+                    phase = t % 2.0
                     if 0.0 <= phase <= 0.2:
                         blink_pulse = 200.0 * math.sin(math.pi * phase / 0.2)
                         base += blink_pulse
@@ -257,13 +271,17 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
 
         elif self.modality == SensorModality.PPG:
             # PPG: ~1.2 Hz cardiac pulse (72 bpm)
-            cardiac = 50.0 * math.sin(2.0 * math.pi * 1.2 * t) + 15.0 * math.sin(2.0 * math.pi * 2.4 * t)
+            cardiac = 50.0 * math.sin(2.0 * math.pi * 1.2 * t) + 15.0 * math.sin(
+                2.0 * math.pi * 2.4 * t
+            )
             res = [100.0 + cardiac + self.rng.gauss(0.0, 1.0) for _ in range(channel_count)]
             return res
 
         elif self.modality == SensorModality.PRESSURE:
             # Pressure: contact force in kPa
-            res = [25.0 + 2.0 * math.sin(2.0 * math.pi * 0.1 * t + ch) for ch in range(channel_count)]
+            res = [
+                25.0 + 2.0 * math.sin(2.0 * math.pi * 0.1 * t + ch) for ch in range(channel_count)
+            ]
             return res
 
         else:
@@ -291,19 +309,25 @@ class SimulatedSensorAdapter(SensorAcquisitionAdapter):
 
     def get_health(self) -> SensorHealthSnapshot:
         channel_count = self.descriptor.channel_count
-        channel_names = self.descriptor.channel_names or [f"CH_{i+1}" for i in range(channel_count)]
+        channel_names = self.descriptor.channel_names or [
+            f"CH_{i + 1}" for i in range(channel_count)
+        ]
 
         ch_health = [
             SensorChannelHealth(
                 channel_name=name,
                 modality=self.modality,
-                qc_status=TrialQuality.VALID if not (self._fault_dropout or self._fault_flatline or self._fault_saturation) else TrialQuality.REJECTED,
+                qc_status=TrialQuality.VALID
+                if not (self._fault_dropout or self._fault_flatline or self._fault_saturation)
+                else TrialQuality.REJECTED,
                 mean_amplitude=15.0,
                 snr_db=24.5 if not self._fault_dropout else 0.0,
                 flatline_rate=1.0 if self._fault_flatline else 0.0,
                 saturation_rate=1.0 if self._fault_saturation else 0.0,
                 dropout_rate=1.0 if self._fault_dropout else 0.0,
-                is_usable=not (self._fault_dropout or self._fault_flatline or self._fault_saturation),
+                is_usable=not (
+                    self._fault_dropout or self._fault_flatline or self._fault_saturation
+                ),
             )
             for name in channel_names
         ]

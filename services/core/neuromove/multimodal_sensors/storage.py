@@ -6,19 +6,14 @@ import json
 import logging
 import sqlite3
 from datetime import UTC, datetime
-from typing import Any
 
 from neuromove.database.connection import DatabaseManager
-from neuromove.domain.enums import SensorModality, SensorSource
 from neuromove.multimodal_sensors.models import (
-    ContradictionRecord,
     FusionResult,
     MultimodalContext,
     MultimodalSession,
-    MultimodalSyncState,
     SensorCalibrationSnapshot,
     SensorDeviceDescriptor,
-    SensorHealthSnapshot,
 )
 
 logger = logging.getLogger(__name__)

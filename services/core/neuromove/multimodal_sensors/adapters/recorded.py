@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, datetime
-from typing import Any
 
-from neuromove.domain.enums import SensorModality, SensorSource, SensorState, TrialQuality
+from neuromove.domain.enums import SensorSource, SensorState, TrialQuality
 from neuromove.multimodal_sensors.adapters.base import SensorAcquisitionAdapter
 from neuromove.multimodal_sensors.models import (
     SensorCalibrationSnapshot,
@@ -44,7 +43,9 @@ class RecordedSensorAdapter(SensorAcquisitionAdapter):
         self.descriptor.is_connected = True
         return True
 
-    def configure(self, sampling_rate: int | None = None, channel_names: list[str] | None = None) -> bool:
+    def configure(
+        self, sampling_rate: int | None = None, channel_names: list[str] | None = None
+    ) -> bool:
         if sampling_rate:
             self.sampling_rate = sampling_rate
         if channel_names:
@@ -89,7 +90,9 @@ class RecordedSensorAdapter(SensorAcquisitionAdapter):
             return None
 
         channel_count = self.descriptor.channel_count
-        channel_names = self.descriptor.channel_names or [f"CH_{i+1}" for i in range(channel_count)]
+        channel_names = self.descriptor.channel_names or [
+            f"CH_{i + 1}" for i in range(channel_count)
+        ]
 
         data: list[list[float]] = [[] for _ in range(channel_count)]
         for i in range(chunk_size):
@@ -104,7 +107,9 @@ class RecordedSensorAdapter(SensorAcquisitionAdapter):
         dt = 1.0 / self.sampling_rate
         host_ts = datetime.now(UTC).isoformat()
         device_ts = self._playback_index * dt
-        chk = hashlib.sha256(f"{self.sensor_id}_{self._sequence_number}_{device_ts}".encode()).hexdigest()[:12]
+        chk = hashlib.sha256(
+            f"{self.sensor_id}_{self._sequence_number}_{device_ts}".encode()
+        ).hexdigest()[:12]
 
         return SensorStreamPacket(
             sensor_id=self.sensor_id,
@@ -122,7 +127,9 @@ class RecordedSensorAdapter(SensorAcquisitionAdapter):
             units="uV",
             quality_flags=["RECORDED_FIXTURE"],
             checksum=chk,
-            configuration_hash=hashlib.sha256(f"{self.sampling_rate}_{channel_count}".encode()).hexdigest()[:8],
+            configuration_hash=hashlib.sha256(
+                f"{self.sampling_rate}_{channel_count}".encode()
+            ).hexdigest()[:8],
         )
 
     def pause(self) -> bool:
@@ -146,7 +153,9 @@ class RecordedSensorAdapter(SensorAcquisitionAdapter):
 
     def get_health(self) -> SensorHealthSnapshot:
         channel_count = self.descriptor.channel_count
-        channel_names = self.descriptor.channel_names or [f"CH_{i+1}" for i in range(channel_count)]
+        channel_names = self.descriptor.channel_names or [
+            f"CH_{i + 1}" for i in range(channel_count)
+        ]
         ch_health = [
             SensorChannelHealth(
                 channel_name=name,

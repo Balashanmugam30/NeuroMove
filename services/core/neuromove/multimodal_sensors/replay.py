@@ -3,16 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import math
-from typing import Any
 
 from neuromove.domain.enums import SensorModality
-from neuromove.multimodal_sensors.adapters.recorded import RecordedSensorAdapter
 from neuromove.multimodal_sensors.models import (
     MultimodalReplayFixture,
-    SensorDeviceDescriptor,
-    SensorStreamPacket,
 )
 
 
@@ -34,9 +29,16 @@ class MultimodalReplayEngine:
             for ch in range(8)
         ]
         imu_data = [
-            [0.05 * math.sin(2.0 * math.pi * 0.5 * (i / 100.0)) for i in range(imu_samples)],  # Accel X
-            [0.05 * math.cos(2.0 * math.pi * 0.5 * (i / 100.0)) for i in range(imu_samples)],  # Accel Y
-            [9.81 + 0.01 * math.sin(2.0 * math.pi * 1.0 * (i / 100.0)) for i in range(imu_samples)],  # Accel Z
+            [
+                0.05 * math.sin(2.0 * math.pi * 0.5 * (i / 100.0)) for i in range(imu_samples)
+            ],  # Accel X
+            [
+                0.05 * math.cos(2.0 * math.pi * 0.5 * (i / 100.0)) for i in range(imu_samples)
+            ],  # Accel Y
+            [
+                9.81 + 0.01 * math.sin(2.0 * math.pi * 1.0 * (i / 100.0))
+                for i in range(imu_samples)
+            ],  # Accel Z
             [0.02 * math.sin(i / 100.0) for i in range(imu_samples)],  # Gyro X
             [0.02 * math.cos(i / 100.0) for i in range(imu_samples)],  # Gyro Y
             [0.01 * math.sin(i / 100.0) for i in range(imu_samples)],  # Gyro Z
@@ -68,7 +70,11 @@ class MultimodalReplayEngine:
         emg_samples = 5000
         emg_data = [
             [
-                (80.0 * math.sin(2.0 * math.pi * 65.0 * (i / 500.0)) if 1500 <= i <= 2500 else 2.0 * math.sin(i))
+                (
+                    80.0 * math.sin(2.0 * math.pi * 65.0 * (i / 500.0))
+                    if 1500 <= i <= 2500
+                    else 2.0 * math.sin(i)
+                )
                 for i in range(emg_samples)
             ]
             for _ in range(2)

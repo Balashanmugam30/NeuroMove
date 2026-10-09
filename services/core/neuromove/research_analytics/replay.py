@@ -3,26 +3,20 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
-import time
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
 
-from neuromove.eeg_acquisition.adapters.recorded import RecordedEegAcquisitionAdapter
 from neuromove.eeg_acquisition.adapters.simulated import SimulatedEegAcquisitionAdapter
 from neuromove.eeg_acquisition.pipeline_bridge import LiveNeurophysiologyBridge
-from neuromove.research_analytics.manifest import ExperimentManifestManager
 from neuromove.research_analytics.models import (
     ExperimentManifest,
     PipelineStage,
     ReplayCheckpoint,
     ReplayMode,
-    ResearchExperiment,
-    ResearchExperimentStatus,
     StageResult,
 )
 
@@ -41,7 +35,9 @@ class DeterministicReplayEngine:
         replay_mode: ReplayMode = ReplayMode.DETERMINISTIC_ACCELERATED,
         trial_count: int = 50,
         checkpoint: ReplayCheckpoint | None = None,
-    ) -> tuple[list[StageResult], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], str]:
+    ) -> tuple[
+        list[StageResult], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], str
+    ]:
         """Execute the complete 15-stage replay pipeline for the given manifest.
         Returns:
             (stage_results, predictions_info, safety_decisions, hil_events, result_hash)
@@ -65,11 +61,12 @@ class DeterministicReplayEngine:
         safety_decisions: list[dict[str, Any]] = []
         hil_events: list[dict[str, Any]] = []
 
-        rng = np.random.default_rng(manifest.seed)
         intents = ["MOVE_FORWARD", "TURN_LEFT", "TURN_RIGHT", "STOP"]
 
         # Stage 1: SOURCE
-        source_hash = hashlib.sha256(f"source_{manifest.seed}_{manifest.manifest_hash}".encode("utf-8")).hexdigest()
+        source_hash = hashlib.sha256(
+            f"source_{manifest.seed}_{manifest.manifest_hash}".encode()
+        ).hexdigest()
         stages.append(
             StageResult(
                 stage=PipelineStage.SOURCE,
@@ -94,7 +91,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=1.2,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"acq_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"acq_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -109,7 +106,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=0.3,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"clock_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"clock_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -124,7 +121,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=0.8,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"qc_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"qc_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -139,7 +136,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=1.5,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"dsp_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"dsp_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -154,7 +151,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=0.9,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"epoch_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"epoch_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -169,7 +166,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=1.8,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"feat_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"feat_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -184,7 +181,7 @@ class DeterministicReplayEngine:
                 rejected_count=0,
                 latency_ms=1.4,
                 configuration_hash=manifest.manifest_hash[:16],
-                stage_checksum=hashlib.sha256(f"csp_{source_hash}".encode("utf-8")).hexdigest(),
+                stage_checksum=hashlib.sha256(f"csp_{source_hash}".encode()).hexdigest(),
                 timestamp=datetime.now(UTC).isoformat(),
             )
         )
@@ -207,39 +204,46 @@ class DeterministicReplayEngine:
                 channel_names=manifest.channel_names,
                 sampling_rate=int(manifest.sampling_rate),
                 model_version_id=manifest.model_id,
-                session_id=manifest.source_session_ids[0] if manifest.source_session_ids else "sess_01",
+                session_id=manifest.source_session_ids[0]
+                if manifest.source_session_ids
+                else "sess_01",
                 subject_id="sub-01",
                 calibration_ready=True,
             )
 
             # Build prediction info
-            prob_dict = {
-                c: (0.85 if c == inference.predicted_class else 0.05)
-                for c in intents
-            }
-            predictions.append({
-                "trial_idx": idx,
-                "ground_truth": true_label,
-                "predicted_class": inference.predicted_class,
-                "confidence": inference.calibrated_confidence,
-                "probabilities": prob_dict,
-            })
+            prob_dict = {c: (0.85 if c == inference.predicted_class else 0.05) for c in intents}
+            predictions.append(
+                {
+                    "trial_idx": idx,
+                    "ground_truth": true_label,
+                    "predicted_class": inference.predicted_class,
+                    "confidence": inference.calibrated_confidence,
+                    "probabilities": prob_dict,
+                }
+            )
 
-            safety_decisions.append({
-                "trial_idx": idx,
-                "safety_decision": inference.safety_decision.value if hasattr(inference.safety_decision, "value") else str(inference.safety_decision),
-                "will_transmit": inference.will_transmit,
-                "reason_code": "NOMINAL",
-                "safety_latency_ms": 1.2,
-            })
+            safety_decisions.append(
+                {
+                    "trial_idx": idx,
+                    "safety_decision": inference.safety_decision.value
+                    if hasattr(inference.safety_decision, "value")
+                    else str(inference.safety_decision),
+                    "will_transmit": inference.will_transmit,
+                    "reason_code": "NOMINAL",
+                    "safety_latency_ms": 1.2,
+                }
+            )
 
-            hil_events.append({
-                "trial_idx": idx,
-                "is_authorized": inference.will_transmit,
-                "transmitted": inference.will_transmit,
-                "status": inference.transport_status,
-                "roundtrip_latency_ms": 2.4,
-            })
+            hil_events.append(
+                {
+                    "trial_idx": idx,
+                    "is_authorized": inference.will_transmit,
+                    "transmitted": inference.will_transmit,
+                    "status": inference.transport_status,
+                    "roundtrip_latency_ms": 2.4,
+                }
+            )
 
         # Stages 9 through 15 summaries
         for stg in [
@@ -260,7 +264,9 @@ class DeterministicReplayEngine:
                     rejected_count=0,
                     latency_ms=1.5,
                     configuration_hash=manifest.manifest_hash[:16],
-                    stage_checksum=hashlib.sha256(f"{stg.value}_{source_hash}".encode("utf-8")).hexdigest(),
+                    stage_checksum=hashlib.sha256(
+                        f"{stg.value}_{source_hash}".encode()
+                    ).hexdigest(),
                     timestamp=datetime.now(UTC).isoformat(),
                 )
             )
@@ -271,7 +277,7 @@ class DeterministicReplayEngine:
         # Compute overall immutable result hash
         stage_hashes_str = "".join(s.stage_checksum for s in stages)
         result_hash = hashlib.sha256(
-            f"{manifest.manifest_hash}_{stage_hashes_str}_{len(predictions)}".encode("utf-8")
+            f"{manifest.manifest_hash}_{stage_hashes_str}_{len(predictions)}".encode()
         ).hexdigest()
 
         return stages, predictions, safety_decisions, hil_events, result_hash
@@ -288,7 +294,9 @@ class DeterministicReplayEngine:
     ) -> ReplayCheckpoint:
         """Create a resumable replay checkpoint."""
         chk_id = f"chk_{uuid.uuid4().hex[:10]}"
-        intermediate_str = f"{experiment_id}_{stage.value}_{source_offset}_{epoch_index}_{manifest_hash}"
+        intermediate_str = (
+            f"{experiment_id}_{stage.value}_{source_offset}_{epoch_index}_{manifest_hash}"
+        )
         intermediate_checksum = hashlib.sha256(intermediate_str.encode("utf-8")).hexdigest()
 
         return ReplayCheckpoint(

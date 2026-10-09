@@ -33,7 +33,9 @@ class TestDatabaseMigrationIntegrity:
         except PermissionError:
             pass
 
-    def test_clean_database_initialization_applies_all_migrations(self, clean_db_path: Path) -> None:
+    def test_clean_database_initialization_applies_all_migrations(
+        self, clean_db_path: Path
+    ) -> None:
         """Applying migrations from an empty database applies all migrations 001 through 018."""
         db_url = f"sqlite:///{clean_db_path.as_posix()}"
         manager = DatabaseManager(db_url=db_url)

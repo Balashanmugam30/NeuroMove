@@ -47,7 +47,6 @@ class LatencyAnalyticsEngine:
     ) -> LatencyAnalytics:
         """Aggregate per-stage latency samples and compute total pipeline percentiles."""
         per_stage: dict[str, LatencyPercentiles] = {}
-        all_samples_sum: list[float] = []
 
         for stage, samples in stage_observations.items():
             stage_key = stage.value if isinstance(stage, PipelineStage) else str(stage)

@@ -96,7 +96,12 @@ class ExperimentManifest(BaseModel):
     clock_config: dict[str, Any] = Field(default_factory=dict)
     qc_config: dict[str, Any] = Field(default_factory=dict)
     dsp_config: dict[str, Any] = Field(
-        default_factory=lambda: {"filter_type": "butterworth", "lowcut": 8.0, "highcut": 30.0, "order": 4}
+        default_factory=lambda: {
+            "filter_type": "butterworth",
+            "lowcut": 8.0,
+            "highcut": 30.0,
+            "order": 4,
+        }
     )
     epoch_config: dict[str, Any] = Field(
         default_factory=lambda: {"window_sec": 1.0, "step_sec": 0.1, "baseline_sec": 0.5}
@@ -112,7 +117,11 @@ class ExperimentManifest(BaseModel):
     personalization_profile: dict[str, Any] = Field(default_factory=dict)
     adaptation_state: dict[str, Any] = Field(default_factory=dict)
     confidence_policy: dict[str, Any] = Field(
-        default_factory=lambda: {"type": "TEMPORAL_CONFIRMATION", "threshold": 0.80, "window_samples": 3}
+        default_factory=lambda: {
+            "type": "TEMPORAL_CONFIRMATION",
+            "threshold": 0.80,
+            "window_samples": 3,
+        }
     )
     intent_policy: dict[str, Any] = Field(
         default_factory=lambda: {"persistence_ms": 300, "expiration_ms": 2000}

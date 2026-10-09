@@ -31,16 +31,18 @@ class ReproducibilityChecker:
         # Check 1: Source session checksum match
         b_sources = baseline.manifest.source_checksums
         r_sources = reproduced.manifest.source_checksums
-        source_match = (b_sources == r_sources)
+        source_match = b_sources == r_sources
         tamper = not source_match
 
         # Check 2: Manifest configuration hash match
-        manifest_match = (baseline.manifest.manifest_hash == reproduced.manifest.manifest_hash)
+        manifest_match = baseline.manifest.manifest_hash == reproduced.manifest.manifest_hash
 
         # Check 3: Stage results checksums match
         b_stage_hashes = [s.stage_checksum for s in baseline.stages if s.stage_checksum]
         r_stage_hashes = [s.stage_checksum for s in reproduced.stages if s.stage_checksum]
-        stage_match = (b_stage_hashes == r_stage_hashes) if (b_stage_hashes and r_stage_hashes) else True
+        stage_match = (
+            (b_stage_hashes == r_stage_hashes) if (b_stage_hashes and r_stage_hashes) else True
+        )
 
         # Check 4: Metric values deviation check
         deviations: dict[str, float] = {}
@@ -74,7 +76,12 @@ class ReproducibilityChecker:
         elif max_dev > abs_tol:
             status = ReproducibilityStatus.FAIL
             explanation = f"Reproducibility FAILED: Metric deviation ({max_dev:.6f}) exceeds numerical tolerance ({abs_tol:.6f})."
-        elif source_match and manifest_match and stage_match and (b_res_hash == r_res_hash and b_res_hash != ""):
+        elif (
+            source_match
+            and manifest_match
+            and stage_match
+            and (b_res_hash == r_res_hash and b_res_hash != "")
+        ):
             status = ReproducibilityStatus.PASS
             explanation = "Reproducibility PASSED: Exact byte-for-byte deterministic hash match across all stages."
         elif metrics_match:
@@ -82,7 +89,9 @@ class ReproducibilityChecker:
             explanation = f"Reproducibility APPROXIMATE: All metrics match within numerical tolerance ({abs_tol:.6f})."
         else:
             status = ReproducibilityStatus.FAIL
-            explanation = "Reproducibility FAILED: Unexplained deviation in stage hashes or metrics."
+            explanation = (
+                "Reproducibility FAILED: Unexplained deviation in stage hashes or metrics."
+            )
 
         return ReproducibilityResult(
             audit_id=audit_id,

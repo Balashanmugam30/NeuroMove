@@ -12,8 +12,12 @@ from neuromove.research_analytics.artifacts import ResearchArtifactGenerator
 from neuromove.research_analytics.comparison import ComparisonEngine
 from neuromove.research_analytics.confidence import ConfidenceAnalyticsEngine
 from neuromove.research_analytics.dataset import ResearchDatasetManager
+from neuromove.research_analytics.hil import HilAnalyticsEngine
 from neuromove.research_analytics.intent import IntentAnalyticsEngine
-from neuromove.research_analytics.latency import LatencyAnalyticsEngine, SignalQualityAnalyticsEngine
+from neuromove.research_analytics.latency import (
+    LatencyAnalyticsEngine,
+    SignalQualityAnalyticsEngine,
+)
 from neuromove.research_analytics.manifest import ExperimentManifestManager
 from neuromove.research_analytics.metrics import ScientificMetricsEngine
 from neuromove.research_analytics.models import (
@@ -35,7 +39,6 @@ from neuromove.research_analytics.replay import DeterministicReplayEngine
 from neuromove.research_analytics.reproducibility import ReproducibilityChecker
 from neuromove.research_analytics.robustness import RobustnessEngine
 from neuromove.research_analytics.safety import SafetyAnalyticsEngine
-from neuromove.research_analytics.hil import HilAnalyticsEngine
 from neuromove.research_analytics.storage import ResearchStorage
 
 logger = logging.getLogger(__name__)
@@ -69,7 +72,7 @@ class ResearchAnalyticsService:
         manifest = ExperimentManifestManager.create_manifest(
             experiment_id=exp_id,
             source_session_ids=ds.session_ids,
-            source_checksums={s: "a1b2c3d4e5f67890abcdef" for s in ds.session_ids},
+            source_checksums=dict.fromkeys(ds.session_ids, "a1b2c3d4e5f67890abcdef"),
         )
         exp = ResearchExperiment(
             experiment_id=exp_id,
@@ -214,8 +217,7 @@ class ResearchAnalyticsService:
 
         # Intent Analytics
         intent_events = [
-            {"intent_state": "CONFIRMED", "confirmation_latency_ms": 12.5}
-            for _ in predictions
+            {"intent_state": "CONFIRMED", "confirmation_latency_ms": 12.5} for _ in predictions
         ]
         intent_analytics = IntentAnalyticsEngine.analyze(intent_events)
 
@@ -264,14 +266,24 @@ class ResearchAnalyticsService:
         parameter_delta: dict[str, Any],
     ) -> tuple[ResearchExperiment, AblationRun]:
         """Execute ablation study, spawning an immutable child experiment."""
-        parent = self._experiments.get(parent_experiment_id) or self.storage.get_experiment(parent_experiment_id)
+        parent = self._experiments.get(parent_experiment_id) or self.storage.get_experiment(
+            parent_experiment_id
+        )
         if not parent:
             raise ValueError(f"Parent experiment {parent_experiment_id} not found")
 
         # Simulate slight drop in performance on ablation
-        base_acc = parent.metrics.accuracy if parent.metrics and parent.metrics.accuracy is not None else 0.88
+        base_acc = (
+            parent.metrics.accuracy
+            if parent.metrics and parent.metrics.accuracy is not None
+            else 0.88
+        )
         abl_acc = max(0.40, base_acc - 0.08)
-        base_f1 = parent.metrics.f1_macro if parent.metrics and parent.metrics.f1_macro is not None else 0.87
+        base_f1 = (
+            parent.metrics.f1_macro
+            if parent.metrics and parent.metrics.f1_macro is not None
+            else 0.87
+        )
         abl_f1 = max(0.38, base_f1 - 0.09)
 
         child, ablation_rec = AblationEngine.run_ablation(
@@ -324,7 +336,9 @@ class ResearchAnalyticsService:
         baseline_experiment_id: str,
     ) -> ReproducibilityResult:
         """Rerun an experiment and audit reproducibility against the baseline."""
-        base = self._experiments.get(baseline_experiment_id) or self.storage.get_experiment(baseline_experiment_id)
+        base = self._experiments.get(baseline_experiment_id) or self.storage.get_experiment(
+            baseline_experiment_id
+        )
         if not base:
             raise ValueError(f"Baseline experiment {baseline_experiment_id} not found")
 

@@ -24,16 +24,28 @@ class IntentAnalyticsEngine:
 
         candidates = sum(1 for e in intent_events if e.get("intent_state") == "CANDIDATE")
         confirmed = sum(1 for e in intent_events if e.get("intent_state") == "CONFIRMED")
-        active = sum(1 for e in intent_events if e.get("intent_state") == "EXECUTING" or e.get("intent_state") == "ACTIVE")
+        active = sum(
+            1
+            for e in intent_events
+            if e.get("intent_state") == "EXECUTING" or e.get("intent_state") == "ACTIVE"
+        )
         cancelled = sum(1 for e in intent_events if e.get("intent_state") == "CANCELLED")
         expired = sum(1 for e in intent_events if e.get("intent_state") == "EXPIRED")
         interrupted = sum(1 for e in intent_events if e.get("intent_state") == "INTERRUPTED")
 
         total = len(intent_events)
-        cand_to_conf = round(confirmed / candidates, 4) if candidates > 0 else (1.0 if confirmed > 0 else 0.0)
-        conf_to_act = round(active / confirmed, 4) if confirmed > 0 else (1.0 if active > 0 else 0.0)
+        cand_to_conf = (
+            round(confirmed / candidates, 4) if candidates > 0 else (1.0 if confirmed > 0 else 0.0)
+        )
+        conf_to_act = (
+            round(active / confirmed, 4) if confirmed > 0 else (1.0 if active > 0 else 0.0)
+        )
 
-        latencies = [e.get("confirmation_latency_ms", 12.0) for e in intent_events if "confirmation_latency_ms" in e]
+        latencies = [
+            e.get("confirmation_latency_ms", 12.0)
+            for e in intent_events
+            if "confirmation_latency_ms" in e
+        ]
         mean_lat = round(sum(latencies) / len(latencies), 2) if latencies else 14.5
 
         return IntentAnalytics(

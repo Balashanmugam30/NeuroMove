@@ -86,12 +86,8 @@ class ProductSession(BaseModel):
     experiment_id: str | None = None
     manifest_hash: str = ""
     provenance_hash: str = ""
-    created_at: str = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat()
-    )
-    updated_at: str = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat()
-    )
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
 
 
 class DemoStep(BaseModel):
@@ -127,9 +123,7 @@ class DemoRun(BaseModel):
     error_message: str | None = None
     reproducibility_status: str = "NOT_CHECKED"  # PASS | APPROXIMATE | FAIL | NOT_CHECKED
     duration_ms: float = 0.0
-    created_at: str = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat()
-    )
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
     completed_at: str | None = None
 
 
@@ -148,9 +142,7 @@ class DemoResult(BaseModel):
     latency_breakdown: dict[str, float] = Field(default_factory=dict)
     provenance: ProductProvenance | None = None
     explanation_text: str = ""
-    created_at: str = Field(
-        default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat()
-    )
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
 
 
 class DemoScenarioDescriptor(BaseModel):

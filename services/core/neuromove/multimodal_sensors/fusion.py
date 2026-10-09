@@ -63,14 +63,16 @@ class SensorFusionEngine:
                 is_quiet = std_mag < 0.5
                 evidence_list.append(
                     FusionEvidence(
-                        evidence_id=f"ev_imu_{int(datetime.now(UTC).timestamp()*1000)}",
+                        evidence_id=f"ev_imu_{int(datetime.now(UTC).timestamp() * 1000)}",
                         timestamp=now_iso,
                         sensor_id=imu_pkt.sensor_id,
                         modality=SensorModality.IMU,
                         feature_name="motion_stability",
                         feature_value=std_mag,
                         confidence=0.95 if is_quiet else 0.70,
-                        interpretation="Stationary head/chassis context" if is_quiet else "Active motion / disturbance",
+                        interpretation="Stationary head/chassis context"
+                        if is_quiet
+                        else "Active motion / disturbance",
                     )
                 )
                 if not is_quiet:
@@ -81,21 +83,23 @@ class SensorFusionEngine:
         emg_pkt = next((p for p in packets.values() if p.modality == SensorModality.EMG), None)
         if emg_pkt and emg_pkt.data:
             emg_rms = [
-                math.sqrt(sum(v ** 2 for v in ch_data) / max(1, len(ch_data)))
+                math.sqrt(sum(v**2 for v in ch_data) / max(1, len(ch_data)))
                 for ch_data in emg_pkt.data
             ]
             max_rms = max(emg_rms) if emg_rms else 0.0
             is_active = max_rms > 40.0
             evidence_list.append(
                 FusionEvidence(
-                    evidence_id=f"ev_emg_{int(datetime.now(UTC).timestamp()*1000)}",
+                    evidence_id=f"ev_emg_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     sensor_id=emg_pkt.sensor_id,
                     modality=SensorModality.EMG,
                     feature_name="muscle_activation_rms",
                     feature_value=max_rms,
                     confidence=0.90,
-                    interpretation="Peripheral muscle burst detected" if is_active else "Quiet baseline EMG",
+                    interpretation="Peripheral muscle burst detected"
+                    if is_active
+                    else "Quiet baseline EMG",
                 )
             )
 
@@ -106,34 +110,42 @@ class SensorFusionEngine:
             has_blink = max_eog > 120.0
             evidence_list.append(
                 FusionEvidence(
-                    evidence_id=f"ev_eog_{int(datetime.now(UTC).timestamp()*1000)}",
+                    evidence_id=f"ev_eog_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     sensor_id=eog_pkt.sensor_id,
                     modality=SensorModality.EOG,
                     feature_name="ocular_amplitude_max",
                     feature_value=max_eog,
                     confidence=0.90,
-                    interpretation="Ocular blink spike detected" if has_blink else "Clean ocular baseline",
+                    interpretation="Ocular blink spike detected"
+                    if has_blink
+                    else "Clean ocular baseline",
                 )
             )
             if has_blink:
                 context_score *= 0.9
 
         # 4. Evaluate Pressure evidence
-        press_pkt = next((p for p in packets.values() if p.modality == SensorModality.PRESSURE), None)
+        press_pkt = next(
+            (p for p in packets.values() if p.modality == SensorModality.PRESSURE), None
+        )
         if press_pkt and press_pkt.data:
-            mean_press = sum(sum(ch) for ch in press_pkt.data) / max(1, sum(len(ch) for ch in press_pkt.data))
+            mean_press = sum(sum(ch) for ch in press_pkt.data) / max(
+                1, sum(len(ch) for ch in press_pkt.data)
+            )
             has_contact = mean_press > 10.0
             evidence_list.append(
                 FusionEvidence(
-                    evidence_id=f"ev_press_{int(datetime.now(UTC).timestamp()*1000)}",
+                    evidence_id=f"ev_press_{int(datetime.now(UTC).timestamp() * 1000)}",
                     timestamp=now_iso,
                     sensor_id=press_pkt.sensor_id,
                     modality=SensorModality.PRESSURE,
                     feature_name="seating_contact_pressure",
                     feature_value=mean_press,
                     confidence=0.95,
-                    interpretation="User seated / contact confirmed" if has_contact else "Loss of seating contact",
+                    interpretation="User seated / contact confirmed"
+                    if has_contact
+                    else "Loss of seating contact",
                 )
             )
             if not has_contact:
@@ -146,7 +158,10 @@ class SensorFusionEngine:
             alignment_quality = sync_state.alignment_quality_pct / 100.0
             if sync_state.status == SynchronizationStatus.DEGRADED:
                 context_score *= 0.85
-            elif sync_state.status in (SynchronizationStatus.UNSYNCHRONIZED, SynchronizationStatus.FAILED):
+            elif sync_state.status in (
+                SynchronizationStatus.UNSYNCHRONIZED,
+                SynchronizationStatus.FAILED,
+            ):
                 context_score *= 0.2
                 confidence_multiplier *= 0.2
 
@@ -173,10 +188,13 @@ class SensorFusionEngine:
             contra_reason = "; ".join(c.reason for c in contradictions)
 
         final_context_confidence = min(1.0, max(0.0, eeg_confidence * confidence_multiplier))
-        is_valid = contra_outcome not in (ContradictionOutcome.INVALID, ContradictionOutcome.HOLD) and context_score >= 0.5
+        is_valid = (
+            contra_outcome not in (ContradictionOutcome.INVALID, ContradictionOutcome.HOLD)
+            and context_score >= 0.5
+        )
 
         return FusionResult(
-            fusion_id=f"fuse_{int(datetime.now(UTC).timestamp()*1000)}",
+            fusion_id=f"fuse_{int(datetime.now(UTC).timestamp() * 1000)}",
             timestamp=now_iso,
             strategy=strategy,
             participating_sensor_ids=participating_ids,

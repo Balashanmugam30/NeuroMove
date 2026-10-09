@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from neuromove.domain.enums import SafetyDecision, SensorModality
 from neuromove.multimodal_sensors.adapters.simulated import SimulatedSensorAdapter
 from neuromove.multimodal_sensors.service import MultimodalSensorService
 
@@ -236,12 +235,16 @@ class MultimodalGoldenScenarios:
 
         # Inject fault
         self.service.inject_fault("sensor_imu_sim", "MOTION_BURST")
-        res_fault = self.service.process_inference_frame(candidate_intent="FORWARD", eeg_confidence=0.90)
+        res_fault = self.service.process_inference_frame(
+            candidate_intent="FORWARD", eeg_confidence=0.90
+        )
 
         # Clear fault and recalibrate
         self.service.clear_faults("sensor_imu_sim")
         self.service.calibrate_device("sensor_imu_sim")
-        res_recovery = self.service.process_inference_frame(candidate_intent="FORWARD", eeg_confidence=0.92)
+        res_recovery = self.service.process_inference_frame(
+            candidate_intent="FORWARD", eeg_confidence=0.92
+        )
 
         passed = (
             res_fault["has_contradiction"] is True
@@ -252,7 +255,10 @@ class MultimodalGoldenScenarios:
             "scenario_id": "SCENARIO_J",
             "name": "Multimodal Fault Recovery & Recalibration",
             "passed": passed,
-            "data": {"fault_verdict": res_fault["safety_verdict"], "recovery_verdict": res_recovery["safety_verdict"]},
+            "data": {
+                "fault_verdict": res_fault["safety_verdict"],
+                "recovery_verdict": res_recovery["safety_verdict"],
+            },
         }
 
     def scenario_k_authorized_end_to_end(self) -> dict[str, Any]:
@@ -263,7 +269,9 @@ class MultimodalGoldenScenarios:
         self.service.calibrate_device("sensor_eeg_sim")
         self.service.calibrate_device("sensor_imu_sim")
         self.service.calibrate_device("sensor_press_sim")
-        self.service.start_session("session_scenario_k", ["sensor_eeg_sim", "sensor_imu_sim", "sensor_press_sim"])
+        self.service.start_session(
+            "session_scenario_k", ["sensor_eeg_sim", "sensor_imu_sim", "sensor_press_sim"]
+        )
 
         res = self.service.process_inference_frame(candidate_intent="FORWARD", eeg_confidence=0.94)
         passed = (

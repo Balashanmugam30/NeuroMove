@@ -82,25 +82,21 @@ class ExperimentManifestManager:
             or {"filter_type": "butterworth", "lowcut": 8.0, "highcut": 30.0, "order": 4},
             "epoch_config": epoch_config
             or {"window_sec": 1.0, "step_sec": 0.1, "baseline_sec": 0.5},
-            "feature_config": feature_config
-            or {"bands": {"mu": [8, 12], "beta": [16, 24]}},
-            "csp_config": csp_config
-            or {"n_components": 4, "log_power": True},
+            "feature_config": feature_config or {"bands": {"mu": [8, 12], "beta": [16, 24]}},
+            "csp_config": csp_config or {"n_components": 4, "log_power": True},
             "model_id": model_id,
             "model_version": model_version,
-            "personalization_profile": personalization_profile or {"enabled": True, "method": "EM_MAP"},
+            "personalization_profile": personalization_profile
+            or {"enabled": True, "method": "EM_MAP"},
             "adaptation_state": adaptation_state or {"enabled": True, "lr": 0.01},
             "confidence_policy": confidence_policy
             or {"type": "TEMPORAL_CONFIRMATION", "threshold": 0.80, "window_samples": 3},
-            "intent_policy": intent_policy
-            or {"persistence_ms": 300, "expiration_ms": 2000},
+            "intent_policy": intent_policy or {"persistence_ms": 300, "expiration_ms": 2000},
             "safety_policy": safety_policy
             or {"pre_flight_authorization": True, "strict_non_actuation": True},
-            "hil_profile": hil_profile
-            or {"target": "ESP32_EMULATOR_VIRTUAL", "timeout_ms": 250},
+            "hil_profile": hil_profile or {"target": "ESP32_EMULATOR_VIRTUAL", "timeout_ms": 250},
             "seed": seed,
-            "numerical_tolerances": numerical_tolerances
-            or {"abs_tol": 1e-5, "rel_tol": 1e-4},
+            "numerical_tolerances": numerical_tolerances or {"abs_tol": 1e-5, "rel_tol": 1e-4},
             "analysis_parameters": analysis_parameters or {},
             "export_version": "1.0.0",
             "is_sealed": False,

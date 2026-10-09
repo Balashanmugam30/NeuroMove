@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
 
 import numpy as np
 
@@ -30,7 +29,7 @@ class ScientificMetricsEngine:
         Handles edge cases, zero-division, and unsupported metric situations gracefully.
         """
         if not classes:
-            classes = sorted(list(set(y_true) | set(y_pred)))
+            classes = sorted(set(y_true) | set(y_pred))
 
         total_trials = len(y_true) + rejected_count
         evaluated_trials = len(y_true)
@@ -60,9 +59,7 @@ class ScientificMetricsEngine:
         norm_matrix = []
         for row in matrix:
             row_sum = sum(row)
-            norm_matrix.append(
-                [round(val / row_sum, 4) if row_sum > 0 else 0.0 for val in row]
-            )
+            norm_matrix.append([round(val / row_sum, 4) if row_sum > 0 else 0.0 for val in row])
 
         cm = ConfusionMatrix(
             classes=classes,
@@ -193,7 +190,8 @@ class ScientificMetricsEngine:
             bin_upper = bin_boundaries[i + 1]
 
             in_bin = [
-                j for j, c in enumerate(confidences)
+                j
+                for j, c in enumerate(confidences)
                 if (bin_lower <= c < bin_upper) or (i == n_bins - 1 and c == 1.0)
             ]
             if not in_bin:
@@ -262,7 +260,7 @@ class ScientificMetricsEngine:
                 fpr_prev = 0.0
                 auc_c = 0.0
 
-                for s, label in pairs:
+                for _s, label in pairs:
                     if label == 1:
                         tps += 1
                     else:

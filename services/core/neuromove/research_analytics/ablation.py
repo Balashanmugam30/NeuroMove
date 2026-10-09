@@ -35,8 +35,16 @@ class AblationEngine:
             delta_config=parameter_delta,
         )
 
-        base_acc = parent.metrics.accuracy if parent.metrics and parent.metrics.accuracy is not None else 0.85
-        base_f1 = parent.metrics.f1_macro if parent.metrics and parent.metrics.f1_macro is not None else 0.84
+        base_acc = (
+            parent.metrics.accuracy
+            if parent.metrics and parent.metrics.accuracy is not None
+            else 0.85
+        )
+        base_f1 = (
+            parent.metrics.f1_macro
+            if parent.metrics and parent.metrics.f1_macro is not None
+            else 0.84
+        )
 
         acc_delta = round(ablated_accuracy - base_acc, 4)
         f1_delta = round(ablated_f1 - base_f1, 4)

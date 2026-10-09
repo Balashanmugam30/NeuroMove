@@ -5,19 +5,13 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-from typing import Any
 
 from neuromove.database.connection import DatabaseManager, default_db_manager
 from neuromove.research_analytics.models import (
-    AblationRun,
-    ComparisonResult,
     ExperimentManifest,
     ReplayCheckpoint,
     ResearchArtifact,
-    ResearchDataset,
     ResearchExperiment,
-    ResearchExperimentStatus,
-    RobustnessRun,
     StageResult,
 )
 
@@ -59,12 +53,20 @@ class ResearchStorage:
                     experiment.experiment_id,
                     experiment.title,
                     experiment.description,
-                    experiment.analysis_type.value if hasattr(experiment.analysis_type, "value") else str(experiment.analysis_type),
-                    experiment.status.value if hasattr(experiment.status, "value") else str(experiment.status),
-                    experiment.replay_mode.value if hasattr(experiment.replay_mode, "value") else str(experiment.replay_mode),
+                    experiment.analysis_type.value
+                    if hasattr(experiment.analysis_type, "value")
+                    else str(experiment.analysis_type),
+                    experiment.status.value
+                    if hasattr(experiment.status, "value")
+                    else str(experiment.status),
+                    experiment.replay_mode.value
+                    if hasattr(experiment.replay_mode, "value")
+                    else str(experiment.replay_mode),
                     experiment.parent_experiment_id,
                     experiment.dataset_id,
-                    experiment.grouping_strategy.value if hasattr(experiment.grouping_strategy, "value") else str(experiment.grouping_strategy),
+                    experiment.grouping_strategy.value
+                    if hasattr(experiment.grouping_strategy, "value")
+                    else str(experiment.grouping_strategy),
                     1 if experiment.is_sealed else 0,
                     experiment.result_hash,
                     experiment.created_at,
@@ -320,7 +322,9 @@ class ResearchStorage:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT experiment_id FROM research_experiments ORDER BY created_at DESC;")
+                cursor.execute(
+                    "SELECT experiment_id FROM research_experiments ORDER BY created_at DESC;"
+                )
                 ids = [row[0] for row in cursor.fetchall()]
 
             return [exp for exp_id in ids if (exp := self.get_experiment(exp_id)) is not None]
@@ -341,7 +345,9 @@ class ResearchStorage:
                 (
                     artifact.artifact_id,
                     artifact.experiment_id,
-                    artifact.artifact_type.value if hasattr(artifact.artifact_type, "value") else str(artifact.artifact_type),
+                    artifact.artifact_type.value
+                    if hasattr(artifact.artifact_type, "value")
+                    else str(artifact.artifact_type),
                     artifact.checksum,
                     artifact.file_name,
                     artifact.content_json,
@@ -397,7 +403,9 @@ class ResearchStorage:
                 (
                     checkpoint.checkpoint_id,
                     checkpoint.experiment_id,
-                    checkpoint.stage.value if hasattr(checkpoint.stage, "value") else str(checkpoint.stage),
+                    checkpoint.stage.value
+                    if hasattr(checkpoint.stage, "value")
+                    else str(checkpoint.stage),
                     checkpoint.source_offset,
                     checkpoint.epoch_index,
                     checkpoint.manifest_hash,

@@ -54,4 +54,3 @@ __all__ = [
     "MultimodalGoldenScenarios",
     "default_multimodal_service",
 ]
-
